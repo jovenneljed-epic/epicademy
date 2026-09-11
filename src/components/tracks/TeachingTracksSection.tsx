@@ -1,0 +1,644 @@
+import { useState, useMemo, useEffect } from 'react';
+import type { Track, CategoryType } from '../../types';
+import { TrackCard } from './TrackCard';
+import { 
+  Search, 
+  Filter, 
+  Sparkles, 
+  Layers, 
+  BookOpen, 
+  Users, 
+  HeartPulse, 
+  Code2, 
+  Plus, 
+  Database,
+  RefreshCw,
+  Map,
+  LayoutGrid,
+  CheckCircle2,
+  ArrowRight,
+  ShieldCheck,
+  Flame,
+  Award
+} from 'lucide-react';
+import { fetchTracksFromDB, deleteTrackFromDB } from '../../lib/supabaseClient';
+import { getPhpPrice } from '../../lib/philippinePayment';
+import { TESDA_CSS_TRACK } from '../../data/tesdaCssNc2CourseData';
+
+interface TeachingTracksSectionProps {
+  onSelectTrack: (track: Track) => void;
+  onEnroll: (track: Track) => void;
+  onOpenAuth: (mode: 'signup' | 'signin') => void;
+  onOpenCourseBuilder: () => void;
+  refreshTrigger?: number;
+}
+
+export const TeachingTracksSection = ({
+  onSelectTrack,
+  onEnroll,
+  onOpenAuth: _onOpenAuth,
+  onOpenCourseBuilder,
+  refreshTrigger,
+}: TeachingTracksSectionProps) => {
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryType>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedLevel, setSelectedLevel] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'roadmap' | 'grid'>('roadmap');
+  const [activeBundleTab, setActiveBundleTab] = useState<1 | 2>(1);
+
+  const loadTracks = async () => {
+    setIsLoading(true);
+    const { tracks: dbTracks } = await fetchTracksFromDB();
+    if (dbTracks && dbTracks.length > 0) {
+      setTracks(dbTracks);
+    } else {
+      setTracks([]);
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    loadTracks();
+  }, [refreshTrigger]);
+
+  const categories = [
+    { id: 'all' as CategoryType, name: 'All Disciplines', icon: Layers },
+    { id: 'stem' as CategoryType, name: 'STEM & AI', icon: Code2 },
+    { id: 'business' as CategoryType, name: 'Business & SaaS', icon: Sparkles },
+    { id: 'creative' as CategoryType, name: 'Design & Spatial Arts', icon: BookOpen },
+    { id: 'humanities' as CategoryType, name: 'Languages & Humanities', icon: Users },
+    { id: 'wellness' as CategoryType, name: 'Health & Neuroscience', icon: HeartPulse },
+  ];
+
+  const filteredTracks = useMemo(() => {
+    return tracks.filter((track) => {
+      const matchesCategory = selectedCategory === 'all' || track.category === selectedCategory;
+      const matchesQuery = 
+        track.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        track.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        track.skills.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        track.instructor.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesLevel = selectedLevel === 'all' || track.level === selectedLevel;
+      return matchesCategory && matchesQuery && matchesLevel;
+    });
+  }, [tracks, selectedCategory, searchQuery, selectedLevel]);
+
+  const handleDeleteTrack = async (trackId: string) => {
+    if (confirm('Are you sure you want to delete this course from Supabase?')) {
+      await deleteTrackFromDB(trackId);
+      loadTracks();
+    }
+  };
+
+  return (
+    <section id="tracks" className="py-16 sm:py-24 bg-slate-50 border-t border-slate-200/80">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Section Heading */}
+        <div className="text-center max-w-3xl mx-auto mb-10">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <span className="text-xs font-bold uppercase tracking-widest text-blue-600 bg-blue-100/60 px-3 py-1 rounded-full border border-blue-200">
+              Eskwela & Zero to Hero Roadmap
+            </span>
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
+              <Database className="w-3 h-3 text-emerald-600" />
+              Supabase Live Connected
+            </span>
+          </div>
+
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            Mga Kurso sa Eskwela & 9-Level Career Roadmap
+          </h2>
+          <p className="text-base sm:text-lg text-slate-600 mt-3 leading-relaxed">
+            Hakbang-hakbang na pag-aaral mula sa unang linya ng HTML hanggang maging Hero Full-Stack AI Software Architect sa gabay ng ating mga tapat na mentors.
+          </p>
+        </div>
+
+        {/* Filter Bar & Course Creation CTA */}
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 mb-8 space-y-4">
+          
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Category Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none w-full sm:w-auto">
+              {categories.map((cat) => {
+                const Icon = cat.icon;
+                const isSelected = selectedCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
+                      isSelected
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{cat.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* + Create Course Button */}
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+              <button
+                onClick={loadTracks}
+                className="p-2.5 rounded-xl border border-slate-200 text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors"
+                title="Refresh from Supabase"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
+              </button>
+
+              <button
+                onClick={onOpenCourseBuilder}
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-blue-600/20 transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Create New Course</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Search & Level Filters & View Mode */}
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 pt-2 border-t border-slate-100">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search courses, modules, skills, or instructors..."
+                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-slate-400" />
+                <select
+                  value={selectedLevel}
+                  onChange={(e) => setSelectedLevel(e.target.value)}
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                >
+                  <option value="all">All Difficulty Levels</option>
+                  <option value="Beginner">Beginner (Levels 1-3)</option>
+                  <option value="Intermediate">Intermediate (Levels 4-6)</option>
+                  <option value="Advanced">Advanced & Hero (Levels 7-9)</option>
+                </select>
+              </div>
+
+              {/* View Mode Switcher */}
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('roadmap')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    viewMode === 'roadmap'
+                      ? 'bg-white text-blue-600 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Map className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Roadmap (Levels 1 → 9)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    viewMode === 'grid'
+                      ? 'bg-white text-blue-600 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Catalog Grid</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Tracks Display / Clean State */}
+        {isLoading ? (
+          <div className="py-20 text-center">
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-xs sm:text-sm font-semibold text-slate-500">
+              Loading courses from your Supabase database...
+            </p>
+          </div>
+        ) : filteredTracks.length > 0 ? (
+          viewMode === 'roadmap' ? (
+            /* ZERO TO HERO ROADMAP VIEW */
+            <div className="space-y-8">
+              {/* Flagship Course Bundles Switcher */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-3 flex-wrap bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-700">Official Flagship Bundles:</span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setActiveBundleTab(1)}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                        activeBundleTab === 1 
+                          ? 'bg-blue-600 text-white shadow-sm' 
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>Bundle #1: Full-Stack Web Dev (9 Levels)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveBundleTab(2)}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                        activeBundleTab === 2 
+                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-sm' 
+                          : 'text-amber-700 bg-amber-50 hover:bg-amber-100'
+                      }`}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>★ Bundle #2: TESDA CSS NC II (4 COCs)</span>
+                    </button>
+                  </div>
+                </div>
+
+                {activeBundleTab === 1 ? (
+                  /* BUNDLE #1 BANNER (Web Dev) */
+                  <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 rounded-3xl p-6 sm:p-8 text-white border border-indigo-800/50 shadow-xl relative overflow-hidden">
+                    <div className="absolute -right-12 -top-12 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
+                      <div className="space-y-2 text-center lg:text-left">
+                        <div className="flex items-center justify-center lg:justify-start gap-2">
+                          <span className="text-xs font-black uppercase tracking-widest text-amber-400 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-400/30 flex items-center gap-1">
+                            <Flame className="w-3.5 h-3.5 text-amber-400" /> Complete Career Fast-Track
+                          </span>
+                          <span className="text-xs font-bold text-blue-300 bg-blue-900/60 px-2.5 py-0.5 rounded-full">
+                            73% OFF Lifetime Bundle
+                          </span>
+                        </div>
+                        <h3 className="text-2xl sm:text-3xl font-black tracking-tight">
+                          The Complete Zero-to-Hero Developer Bundle (All 9 Courses)
+                        </h3>
+                        <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                          Instant lifetime access to all 9 progressive courses: HTML5, CSS3, JavaScript ES6+, Async APIs, React 19 & TypeScript, Node.js, PostgreSQL/Supabase, Security/DevOps, and the Full-Stack AI SaaS Hero Capstone. Includes all 70+ video lectures and Google Sheets classroom rubrics.
+                        </p>
+                        <div className="flex items-center justify-center lg:justify-start gap-4 pt-1 text-xs text-slate-300">
+                          <div className="flex items-center gap-1">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                            <span>All 9 Paid Courses</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Award className="w-4 h-4 text-amber-400" />
+                            <span>Full Verified Certificate</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <ShieldCheck className="w-4 h-4 text-blue-400" />
+                            <span>30-Day Money-Back Guarantee</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/10 text-center shrink-0 w-full sm:w-auto">
+                        <span className="text-xs text-slate-300 uppercase tracking-wide block">Bundle #1 Tuition (PHP)</span>
+                        <div className="flex items-baseline justify-center gap-2 mt-1">
+                          <span className="text-4xl font-black text-white">₱17,490</span>
+                          <span className="text-base text-slate-400 line-through">₱64,000</span>
+                        </div>
+                        <p className="text-[11px] text-emerald-400 font-bold mt-0.5">Save ₱46,510 Today (73% OFF)</p>
+                        <div className="text-[10px] text-blue-200 mt-1">
+                          🇵🇭 GCash • GoTyme • Maya • QRPh
+                        </div>
+                        <button
+                          onClick={() => {
+                            const lastCourse = filteredTracks.find(t => !t.isBundle && t.levelIndex === 9) || filteredTracks[0];
+                            if (lastCourse) onEnroll(lastCourse);
+                          }}
+                          className="w-full mt-3 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <span>Unlock All 9 Courses</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* BUNDLE #2 BANNER (TESDA CSS NC II) */
+                  <div className="bg-gradient-to-r from-slate-900 via-amber-950 to-blue-950 rounded-3xl p-6 sm:p-8 text-white border-2 border-amber-500/70 shadow-2xl relative overflow-hidden ring-4 ring-amber-400/20">
+                    <div className="absolute -right-12 -top-12 w-64 h-64 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
+                    <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
+                      <div className="space-y-2 text-center lg:text-left">
+                        <div className="flex items-center justify-center lg:justify-start gap-2 flex-wrap">
+                          <span className="text-xs font-black uppercase tracking-widest text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-300 px-3.5 py-1 rounded-full shadow-md flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-slate-950" /> ★ 2ND OFFICIAL COURSE BUNDLE
+                          </span>
+                          <span className="text-xs font-bold text-amber-300 bg-amber-900/60 px-2.5 py-0.5 rounded-full border border-amber-400/40">
+                            TESDA Training Regulations (TR) Compliant
+                          </span>
+                        </div>
+                        <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                          Computer Systems Servicing (CSS) NC II Masterclass & Certification Suite
+                        </h3>
+                        <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                          Ang opisyal na 2nd Course Bundle ng Epicademy na idinisenyo para sa TESDA National Certificate II. Sinasaklaw ang buong 4 Core Competencies (ICCS, SUCN, SUCS, MRCSN), 24 video lessons, job order inspection sheets, at mock institutional assessment rubrics sa gabay ni Engr. Joven Nel Jed Aviguetero, LPT, TM1.
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-xs">
+                          <div className="bg-white/10 rounded-lg p-2 border border-white/10">
+                            <span className="font-bold text-amber-400 block">COC 1</span>
+                            <span className="text-[11px] text-slate-300">PC Assembly & OHS</span>
+                          </div>
+                          <div className="bg-white/10 rounded-lg p-2 border border-white/10">
+                            <span className="font-bold text-amber-400 block">COC 2</span>
+                            <span className="text-[11px] text-slate-300">Networking & Cabling</span>
+                          </div>
+                          <div className="bg-white/10 rounded-lg p-2 border border-white/10">
+                            <span className="font-bold text-amber-400 block">COC 3</span>
+                            <span className="text-[11px] text-slate-300">Windows Servers & AD DS</span>
+                          </div>
+                          <div className="bg-white/10 rounded-lg p-2 border border-white/10">
+                            <span className="font-bold text-amber-400 block">COC 4</span>
+                            <span className="text-[11px] text-slate-300">Diagnostics & Repair</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-amber-400/40 text-center shrink-0 w-full sm:w-auto ring-2 ring-amber-400/20">
+                        <span className="text-xs text-amber-300 uppercase tracking-wide block font-black">Bundle #2 Tuition (PHP)</span>
+                        <div className="flex items-baseline justify-center gap-2 mt-1">
+                          <span className="text-4xl font-black text-white">₱2,499</span>
+                          <span className="text-base text-slate-400 line-through">₱6,500</span>
+                        </div>
+                        <p className="text-[11px] text-emerald-400 font-bold mt-0.5">Save ₱4,001 Today (61% OFF)</p>
+                        <div className="text-[10px] text-amber-200 mt-1">
+                          🇵🇭 GCash • GoTyme • Maya • QRPh
+                        </div>
+                        <button
+                          onClick={() => {
+                            const tesdaTrack = filteredTracks.find(t => t.id === 'track-tesda-css-nc2' || t.isBundle) || TESDA_CSS_TRACK;
+                            onEnroll(tesdaTrack);
+                          }}
+                          className="w-full mt-3 px-6 py-3 bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-300 hover:from-amber-300 hover:to-orange-300 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 hover:scale-[1.02]"
+                        >
+                          <span>Enroll in Bundle #2 • ₱2,499</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Step by Step Progression Ladder */}
+              <div className="relative pl-6 sm:pl-10 space-y-6 before:absolute before:left-3 sm:before:left-5 before:top-4 before:bottom-4 before:w-0.5 before:bg-gradient-to-b before:from-blue-600 before:via-indigo-500 before:to-emerald-500">
+                {filteredTracks.map((track, idx) => {
+                  const isBundle2 = Boolean(track.isBundle || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2);
+                  const levelNum = track.levelIndex || (idx + 1);
+                  const isHighest = levelNum === 9 && !isBundle2;
+                  const pricePhp = getPhpPrice(track.price || 49);
+                  const origPhp = track.originalPrice ? getPhpPrice(track.originalPrice) : null;
+
+                  return (
+                    <div key={track.id} className="relative group">
+                      {/* Connected Timeline Node */}
+                      <div className={`absolute -left-6 sm:-left-10 top-6 w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-black text-xs sm:text-sm shadow-md transition-transform group-hover:scale-110 ${
+                        isBundle2
+                          ? 'bg-gradient-to-tr from-amber-400 via-orange-400 to-yellow-300 text-slate-950 ring-4 ring-amber-300/80 shadow-lg shadow-amber-500/30 animate-pulse'
+                          : isHighest
+                          ? 'bg-amber-400 text-slate-950 ring-4 ring-amber-300/40 animate-pulse'
+                          : 'bg-blue-600 text-white ring-4 ring-blue-100'
+                      }`}>
+                        {isBundle2 ? '#2' : levelNum}
+                      </div>
+
+                      {/* Course Row Card */}
+                      <div className={`rounded-2xl border p-5 sm:p-6 transition-all duration-300 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative overflow-hidden ${
+                        isBundle2
+                          ? 'bg-gradient-to-r from-amber-50/90 via-white to-amber-50/30 border-2 border-amber-400 shadow-xl shadow-amber-500/10 hover:shadow-2xl ring-4 ring-amber-300/30'
+                          : isHighest 
+                          ? 'border-amber-300 bg-gradient-to-r from-white via-amber-50/20 to-emerald-50/20 shadow-sm hover:shadow-xl' 
+                          : 'bg-white border-slate-200/90 hover:border-blue-300 shadow-sm hover:shadow-xl'
+                      }`}>
+                        {isBundle2 && (
+                          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-500 via-orange-400 to-yellow-300" />
+                        )}
+
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {isBundle2 ? (
+                              <>
+                                <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-sm flex items-center gap-1.5">
+                                  <Sparkles className="w-3.5 h-3.5 text-slate-950" />
+                                  ★ 2ND OFFICIAL COURSE BUNDLE
+                                </span>
+                                <span className="text-xs font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full">
+                                  TESDA CSS NC II VOCATIONAL MASTERCLASS
+                                </span>
+                                <span className="text-xs font-bold text-blue-800 bg-blue-100 border border-blue-200 px-2.5 py-0.5 rounded-full">
+                                  4 Core Competencies • 280 Nominal Hours
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <span className={`text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                                  isHighest
+                                    ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                    : 'bg-slate-900 text-white'
+                                }`}>
+                                  Level {levelNum} of 9
+                                </span>
+                                <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100">
+                                  {track.badge}
+                                </span>
+                              </>
+                            )}
+
+                            {track.careerMilestone && (
+                              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                                🎯 Milestone: {track.careerMilestone}
+                              </span>
+                            )}
+                          </div>
+
+                          <h3 
+                            onClick={() => onSelectTrack(track)}
+                            className={`text-lg sm:text-xl font-bold transition-colors cursor-pointer flex items-center gap-2 flex-wrap ${
+                              isBundle2 ? 'text-slate-900 hover:text-amber-700 font-black' : 'text-slate-900 hover:text-blue-600'
+                            }`}
+                          >
+                            <span>{track.title}</span>
+                            {isBundle2 && (
+                              <span className="text-[11px] font-black uppercase bg-amber-400 text-slate-950 px-2 py-0.5 rounded-md shadow-xs">
+                                OFFICIAL BUNDLE #2
+                              </span>
+                            )}
+                          </h3>
+
+                          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-3xl">
+                            {track.description}
+                          </p>
+
+                          {/* 4 COCs Mini Grid if Bundle 2 */}
+                          {isBundle2 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 pb-1">
+                              <div className="flex items-center gap-2 text-xs bg-white/90 p-2 rounded-lg border border-amber-200">
+                                <span className="font-extrabold text-amber-900 shrink-0">COC 1:</span>
+                                <span className="text-slate-800 truncate font-medium">Install & Configure Computer Systems (ICCS)</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs bg-white/90 p-2 rounded-lg border border-amber-200">
+                                <span className="font-extrabold text-amber-900 shrink-0">COC 2:</span>
+                                <span className="text-slate-800 truncate font-medium">Set-up Computer Networks (SUCN)</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs bg-white/90 p-2 rounded-lg border border-amber-200">
+                                <span className="font-extrabold text-amber-900 shrink-0">COC 3:</span>
+                                <span className="text-slate-800 truncate font-medium">Set-up Computer Servers (SUCS)</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs bg-white/90 p-2 rounded-lg border border-amber-200">
+                                <span className="font-extrabold text-amber-900 shrink-0">COC 4:</span>
+                                <span className="text-slate-800 truncate font-medium">Maintain & Repair Systems & Networks (MRCSN)</span>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-3 text-xs text-slate-500 pt-1 flex-wrap">
+                            <span className="font-semibold text-slate-700">⏱️ {track.duration}</span>
+                            <span>•</span>
+                            <span className="font-semibold text-slate-700">📚 {track.lessonsCount || 8} Lessons</span>
+                            <span>•</span>
+                            <span>Instructor: {track.instructor.name}</span>
+                            <span>•</span>
+                            <span className="text-amber-500 font-bold">★ {track.rating} ({track.reviewCount} reviews)</span>
+                          </div>
+                        </div>
+
+                        {/* Pricing & CTA */}
+                        <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between w-full lg:w-auto shrink-0 gap-4 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                          <div className="text-left lg:text-right">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-2xl font-black text-slate-900">₱{pricePhp.toLocaleString()}</span>
+                              {origPhp && (
+                                <span className="text-xs text-slate-400 line-through">₱{origPhp.toLocaleString()}</span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-blue-600 font-bold block">
+                              GCash • GoTyme • Maya
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => onSelectTrack(track)}
+                              className={`px-3 py-2 text-xs font-bold rounded-xl transition-colors cursor-pointer ${
+                                isBundle2
+                                  ? 'text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300'
+                                  : 'text-slate-600 hover:text-blue-600 bg-slate-100 hover:bg-slate-200/80'
+                              }`}
+                            >
+                              {isBundle2 ? 'View TESDA Syllabus' : 'View Syllabus'}
+                            </button>
+                            <button
+                              onClick={() => onEnroll(track)}
+                              className={`px-4 py-2 text-xs font-black active:scale-95 rounded-xl shadow-md flex items-center gap-1.5 transition-all cursor-pointer ${
+                                isBundle2
+                                  ? 'text-slate-950 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 shadow-amber-500/25'
+                                  : 'text-white bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
+                              }`}
+                            >
+                              <span>{isBundle2 ? `Enroll in Bundle #2 • ₱${pricePhp.toLocaleString()}` : `Enroll • ₱${pricePhp.toLocaleString()}`}</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            /* STANDARD GRID VIEW */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTracks.map((track) => (
+                <TrackCard
+                  key={track.id}
+                  track={track}
+                  onSelectTrack={onSelectTrack}
+                  onEnroll={onEnroll}
+                  onDeleteTrack={handleDeleteTrack}
+                />
+              ))}
+            </div>
+          )
+        ) : (
+          /* Clean State: Zero fake data, clean database prompt */
+          <div className="bg-white rounded-3xl border-2 border-dashed border-slate-300 p-12 text-center max-w-xl mx-auto space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto shadow-sm">
+              <BookOpen className="w-8 h-8" />
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-slate-900">
+                {tracks.length === 0 ? 'Your Course Catalog is Clean & Ready' : 'No matching courses found'}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 mt-2 max-w-md mx-auto leading-relaxed">
+                {tracks.length === 0
+                  ? 'Your database is completely fresh with zero fake placeholder data. Click below to launch the Course Studio and build your very first course track!'
+                  : 'Try resetting your filter or search keywords.'}
+              </p>
+            </div>
+
+            {tracks.length === 0 ? (
+              <div className="pt-2">
+                <button
+                  onClick={onOpenCourseBuilder}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md transition-all inline-flex items-center gap-2 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Build My First Course Now</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setSelectedCategory('all');
+                  setSearchQuery('');
+                  setSelectedLevel('all');
+                }}
+                className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+              >
+                Reset all filters
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Educator Banner */}
+        <div className="mt-12 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+          <div className="space-y-2 text-center md:text-left">
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-300 bg-blue-800/60 px-3 py-1 rounded-full border border-blue-700">
+              Educator Course Studio
+            </span>
+            <h3 className="text-xl sm:text-2xl font-bold">
+              Ready to Expand Your Academy?
+            </h3>
+            <p className="text-xs sm:text-sm text-blue-200 max-w-xl">
+              Add new tracks, organize video lessons, set drip schedules, and issue completion certificates with zero transaction fees.
+            </p>
+          </div>
+          <button
+            onClick={onOpenCourseBuilder}
+            className="px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white font-bold text-sm rounded-xl shadow-lg transition-all shrink-0 hover:scale-105 cursor-pointer flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Launch Course Studio</span>
+          </button>
+        </div>
+
+      </div>
+    </section>
+  );
+};
