@@ -284,8 +284,9 @@ export function App() {
               </p>
               <button
                 onClick={() => {
+                  // Instead of closing, open the syllabus/lesson detail modal directly for this track!
                   setIsClassroomOpen(false);
-                  setSelectedActiveTrack(null);
+                  setSelectedTrack(selectedActiveTrack);
                 }}
                 className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg cursor-pointer transition-all"
               >
