@@ -382,7 +382,7 @@ export const TeachingTracksSection = ({
                       <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-amber-400/40 text-center shrink-0 w-full sm:w-auto ring-2 ring-amber-400/20">
                         <span className="text-xs text-amber-300 uppercase tracking-wide block font-black">Bundle #2 Tuition (PHP)</span>
                         <div className="flex items-baseline justify-center gap-2 mt-1">
-                          <span className="text-4xl font-black text-white">₱2,499</span>
+                          <span className="text-4xl font-black text-white">FREE</span>
                           <span className="text-base text-slate-400 line-through">₱6,500</span>
                         </div>
                         <p className="text-[11px] text-emerald-400 font-bold mt-0.5">Save ₱4,001 Today (61% OFF)</p>
@@ -397,7 +397,7 @@ export const TeachingTracksSection = ({
                           }}
                           className="w-full mt-3 px-6 py-3 bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-300 hover:from-amber-300 hover:to-orange-300 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 hover:scale-[1.02]"
                         >
-                          <span>Enroll in Bundle #2 • ₱2,499</span>
+                          <span>Enroll in Bundle #2 • FREE</span>
                           <ArrowRight className="w-4 h-4" />
                         </button>
                       </div>
