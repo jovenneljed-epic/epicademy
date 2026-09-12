@@ -14,6 +14,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
+// Guard to prevent concurrent multiple seed loops in the frontend
+let isSeedingInProgress = false;
+
 // ==========================================
 // Authentication & Teacher Profile Helpers
 // ==========================================
@@ -43,7 +46,7 @@ export async function signUpUser(email: string, password: string, role: 'educato
         { onConflict: 'id' }
       );
     } catch {
-      // Quietly continue if profiles table isn't created yet
+      // Ignore if profiles table is absent
     }
   }
 
@@ -219,13 +222,13 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
       return { tracks: combined, error: null };
     }
 
-    return { 
+    return {
       tracks: dbTracks.sort((a, b) => {
         if (a.isBundle && !b.isBundle) return 1;
         if (!a.isBundle && b.isBundle) return -1;
         return (a.levelIndex || 99) - (b.levelIndex || 99);
-      }), 
-      error: null 
+      }),
+      error: null,
     };
   } catch (err) {
     return { tracks: ZERO_TO_HERO_TRACKS, error: err };
@@ -233,9 +236,16 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
 }
 
 export async function seedZeroToHeroCoursesToSupabase(): Promise<{ success: boolean; error: any }> {
+  if (isSeedingInProgress) {
+    return { success: true, error: null };
+  }
+  isSeedingInProgress = true;
+
   try {
     for (const course of ZERO_TO_HERO_COURSES) {
       const { track, detailedModules } = course;
+      
+      // Upsert Track with onConflict
       await supabase.from('tracks').upsert(
         [
           {
@@ -267,13 +277,14 @@ export async function seedZeroToHeroCoursesToSupabase(): Promise<{ success: bool
             published: true,
           },
         ],
-        { onConflict: 'id' }
+        { onConflict: 'id', ignoreDuplicates: false }
       );
 
       for (let mIdx = 0; mIdx < detailedModules.length; mIdx++) {
         const mod = detailedModules[mIdx];
         const moduleId = `mod-${track.id}-${mIdx + 1}`;
 
+        // Upsert Module with onConflict
         await supabase.from('modules').upsert(
           [
             {
@@ -284,7 +295,7 @@ export async function seedZeroToHeroCoursesToSupabase(): Promise<{ success: bool
               order_index: mIdx + 1,
             },
           ],
-          { onConflict: 'id' }
+          { onConflict: 'id', ignoreDuplicates: false }
         );
 
         const lessonsToInsert = mod.lessons.map((les, lIdx) => ({
@@ -297,12 +308,15 @@ export async function seedZeroToHeroCoursesToSupabase(): Promise<{ success: bool
           order_index: lIdx + 1,
         }));
 
-        await supabase.from('lessons').upsert(lessonsToInsert, { onConflict: 'id' });
+        // Upsert Lessons with onConflict
+        await supabase.from('lessons').upsert(lessonsToInsert, { onConflict: 'id', ignoreDuplicates: false });
       }
     }
     return { success: true, error: null };
   } catch (err) {
     return { success: false, error: err };
+  } finally {
+    isSeedingInProgress = false;
   }
 }
 
@@ -324,7 +338,7 @@ export async function createTrackInDB(input: CreateTrackInput): Promise<{ track:
 
     const user = await getCurrentUser();
 
-    // 1. Upsert Track into public.tracks
+    // 1. Upsert Track
     const { data: trackRow, error: trackError } = await supabase
       .from('tracks')
       .upsert(
