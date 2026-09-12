@@ -253,13 +253,13 @@ export function App() {
         onClose={() => setApplyTenantOpen(false)}
       />
 
-      {/* Classroom Workspace Modal / View */}
+      {/* Classroom Workspace View */}
       {isClassroomOpen && selectedActiveTrack && (
         <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col animate-in fade-in duration-200">
           <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between text-white shrink-0">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                Active Classroom Workspace
+                Active Classroom Workspace • Lifetime Access
               </span>
               <h2 className="text-base sm:text-lg font-black mt-0.5">{selectedActiveTrack.title}</h2>
             </div>
@@ -273,25 +273,48 @@ export function App() {
               Exit Classroom ✕
             </button>
           </div>
-          <div className="flex-1 bg-slate-950 flex items-center justify-center p-6 text-center text-white">
-            <div className="max-w-md space-y-4">
-              <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto text-2xl font-black border border-emerald-500/30">
-                ✓
+
+          <div className="flex-1 bg-slate-950 overflow-y-auto p-6 text-white flex flex-col items-center">
+            <div className="max-w-4xl w-full space-y-6">
+              
+              {/* Success Banner */}
+              <div className="bg-emerald-950/40 border border-emerald-500/30 p-4 rounded-2xl flex items-center gap-4">
+                <div className="w-10 h-10 bg-emerald-500 text-slate-950 rounded-xl flex items-center justify-center font-black text-lg shrink-0">
+                  ✓
+                </div>
+                <div>
+                  <h4 className="font-black text-sm text-emerald-300">Tagumpay ang iyong pag-enroll!</h4>
+                  <p className="text-xs text-slate-300">Maligayang pagdating sa iyong opisyal na workspace. Piliin ang aralin sa ibaba upang simulan ang panonood.</p>
+                </div>
               </div>
-              <h3 className="text-xl font-black">Maligayang Pagdating sa Iyong Classroom!</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Naka-enroll ka na nang tagumpay. I-access ang iyong mga video masterclasses, Google Sheets assignments, at curriculum modules ngayon.
-              </p>
-              <button
-                onClick={() => {
-                  // Instead of closing, open the syllabus/lesson detail modal directly for this track!
-                  setIsClassroomOpen(false);
-                  setSelectedTrack(selectedActiveTrack);
-                }}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg cursor-pointer transition-all"
-              >
-                Simulan ang Pag-aaral →
-              </button>
+
+              {/* Video Player Box */}
+              <div className="aspect-video w-full rounded-2xl overflow-hidden border border-slate-800 bg-black shadow-2xl">
+                <iframe
+                  src="https://www.youtube.com/embed/IHXzkOO_n-I"
+                  title="TESDA CSS NC II Masterclass"
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+
+              {/* Lesson Overview Card */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <h3 className="text-lg font-black text-white">Lesson 1.1: OHS Policies, 5S Principles & PPE</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Maunawaan at maipatupad ang OHS standards, 5S of Good Housekeeping, tamang paggamit ng Anti-Static Wrist Strap, at paghahanda ng computer toolkit bago magbukas ng computer case.
+                </p>
+                <div className="flex items-center gap-3 pt-2">
+                  <span className="px-3 py-1.5 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-bold">
+                    📄 Google Sheets Rubric Included
+                  </span>
+                  <span className="px-3 py-1.5 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold">
+                    ⭐ Certified Training Module
+                  </span>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
