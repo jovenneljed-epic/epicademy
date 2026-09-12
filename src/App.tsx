@@ -22,6 +22,7 @@ import { ApplyTenantModal } from './components/modals/ApplyTenantModal';
 import { getCurrentUser, supabase } from './lib/supabaseClient';
 import type { Track, CommunityDeveloper } from './types';
 import { CreateCommunityModal } from './components/modals/CreateCommunityModal';
+import { CommunityFeed } from './components/community/CommunityFeed';
 
 // =========================================================================
 // COC 1: INSTALLING AND CONFIGURING COMPUTER SYSTEMS (14 Lessons)
@@ -113,6 +114,7 @@ export function App() {
   const [applyTenantOpen, setApplyTenantOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [createCommunityOpen, setCreateCommunityOpen] = useState(false);
+  const [currentView, setCurrentView] = useState<'home' | 'community'>('home');
 
   // Active Classroom / Workspace state
   const [isClassroomOpen, setIsClassroomOpen] = useState(false);
@@ -292,44 +294,63 @@ export function App() {
       />
 
       {/* Main Content Sections */}
-      <main className="flex-1">
-        <HeroSection
-          perspective={perspective}
-          onOpenAuth={handleOpenAuth}
-        />
-        <AllInOneGrid
-          onOpenAuth={handleOpenAuth}
-        />
-        <TeachingTracksSection
-          onSelectTrack={(track) => setSelectedTrack(track)}
-          onEnroll={handleEnrollTrack}
-          onOpenAuth={handleOpenAuth}
-          onOpenCourseBuilder={() => setCourseBuilderOpen(true)}
-          refreshTrigger={refreshTrigger}
-        />
-        <CommunityDevelopersSection
-          onSelectDeveloper={handleSelectDeveloper}
-          onEnrollTrack={handleEnrollTrack}
-          onViewSyllabus={handleViewSyllabus}
-          onOpenApplyTenant={() => setApplyTenantOpen(true)}
-        />
-        <CommunityHubSection
-          onOpenAuth={handleOpenAuth}
-        />
-        <FeatureDeepDives
-          onOpenAuth={handleOpenAuth}
-        />
-        <PricingSection
-          onOpenAuth={handleOpenAuth}
-        />
-        <TestimonialsSection />
-        <FAQSection
-          onOpenAuth={handleOpenAuth}
-        />
-        <FinalCTA
-          onOpenAuth={handleOpenAuth}
-        />
-      </main>
+     <main className="flex-1">
+  {currentView === 'home' ? (
+    <>
+      <HeroSection
+        perspective={perspective}
+        onOpenAuth={handleOpenAuth}
+      />
+      <AllInOneGrid
+        onOpenAuth={handleOpenAuth}
+      />
+      <TeachingTracksSection
+        onSelectTrack={(track) => setSelectedTrack(track)}
+        onEnroll={handleEnrollTrack}
+        onOpenAuth={handleOpenAuth}
+        onOpenCourseBuilder={() => setCourseBuilderOpen(true)}
+        refreshTrigger={refreshTrigger}
+      />
+      <CommunityDevelopersSection
+        onSelectDeveloper={handleSelectDeveloper}
+        onEnrollTrack={handleEnrollTrack}
+        onViewSyllabus={handleViewSyllabus}
+        onOpenApplyTenant={() => setApplyTenantOpen(true)}
+      />
+      <CommunityHubSection
+        onOpenAuth={handleOpenAuth}
+      />
+      <FeatureDeepDives
+        onOpenAuth={handleOpenAuth}
+      />
+      <PricingSection
+        onOpenAuth={handleOpenAuth}
+      />
+      <TestimonialsSection />
+      <FAQSection
+        onOpenAuth={handleOpenAuth}
+      />
+      <FinalCTA
+        onOpenAuth={handleOpenAuth}
+      />
+    </>
+  ) : (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center gap-4 mb-6">
+        <button
+          onClick={() => setCurrentView('home')}
+          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+        >
+          ← Back to Courses
+        </button>
+      </div>
+      <CommunityFeed
+        userEmail={currentUser?.email}
+        onOpenCreateCommunity={() => setCreateCommunityOpen(true)}
+      />
+    </div>
+  )}
+</main>
 
       {/* Footer */}
       <Footer
