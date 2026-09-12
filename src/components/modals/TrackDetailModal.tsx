@@ -157,8 +157,9 @@ export const TrackDetailModal = ({
     return url;
   };
 
-  const isFree = (track.price || 49) === 0;
-  const phpPrice = getPhpPrice(track.price || 49);
+  // Force TESDA track or bundle 2 or 0-priced tracks to be free
+  const isFree = (track.price || 49) === 0 || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2;
+  const phpPrice = isFree ? 0 : getPhpPrice(track.price || 49);
   const origPhp = track.originalPrice ? getPhpPrice(track.originalPrice) : null;
 
   return (
@@ -455,7 +456,7 @@ export const TrackDetailModal = ({
                   : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20'
               }`}
             >
-              <span>{isFree ? 'Enroll for Free' : `Enroll • ₱${phpPrice.toLocaleString()}`}</span>
+              <span>{isFree ? 'Enroll for Free' : `Enroll • ₱{phpPrice.toLocaleString()}`}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
