@@ -61,7 +61,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
     const targetPost = posts.find(p => p.id === postId);
     if (!targetPost) return;
 
-    const isLiked = targetPost.isLiked;
+    const isLiked = Boolean(targetPost.isLiked);
     const newLikes = isLiked ? Math.max(0, targetPost.likes - 1) : targetPost.likes + 1;
 
     setPosts(prev => prev.map(p => 

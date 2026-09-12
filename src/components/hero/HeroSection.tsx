@@ -3,7 +3,7 @@ import { ArrowRight, Star, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { InteractiveDashboardMockup } from './InteractiveDashboardMockup';
 
 interface HeroSectionProps {
-  onOpenAuth: (mode?: 'signup' | 'signin', email?: string) => void;
+ onOpenAuth: (mode: 'signup' | 'signin', email?: string, planId?: string) => void;
   perspective: 'educator' | 'student';
 }
 
@@ -111,7 +111,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenAuth, perspectiv
 
         {/* Live Interactive Platform Preview Mockup */}
         <div className="relative mx-auto max-w-5xl mt-12">
-          <InteractiveDashboardMockup perspective={perspective} onOpenAuth={onOpenAuth} />
+          <InteractiveDashboardMockup perspective={perspective} />
         </div>
 
         {/* Trust Badges Bar */}
