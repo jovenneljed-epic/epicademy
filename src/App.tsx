@@ -76,10 +76,18 @@ export function App() {
     setAuthModalOpen(true);
   };
 
-  const handleEnrollTrack = (track: Track) => {
-    setCheckoutTrack(track);
-    setCheckoutModalOpen(true);
-  };
+const handleEnroll = (track: Track) => {
+  const isFree = (track.price || 49) === 0 || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2;
+  
+  if (isFree) {
+    // Directly launch classroom workspace
+    setSelectedActiveTrack(track);
+    setIsClassroomOpen(true);
+  } else {
+    setSelectedTrackForCheckout(track);
+    setIsCheckoutOpen(true);
+  }
+};
 
   const handleSuccessEnroll = (track: Track) => {
     setSelectedTrack(track);
