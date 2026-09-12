@@ -91,7 +91,6 @@ export const TrackDetailModal = ({
   if (!track) return null;
 
   const handleSelectLesson = (lessonTitle: string) => {
-    // 1. Search in Zero to Hero course curriculum
     const zeroCourse = getZeroToHeroCourse(track.id);
     if (zeroCourse) {
       for (const mod of zeroCourse.detailedModules) {
@@ -104,7 +103,6 @@ export const TrackDetailModal = ({
       }
     }
 
-    // 2. Search detailed lesson in HTML curriculum
     for (const mod of HTML_COURSE_DETAILED_MODULES) {
       for (const les of mod.lessons) {
         if (les.title.toLowerCase() === lessonTitle.toLowerCase() || les.title.includes(lessonTitle)) {
@@ -114,7 +112,6 @@ export const TrackDetailModal = ({
       }
     }
 
-    // 3. Default fallback if custom course
     setActiveLessonPlan({
       title: lessonTitle,
       duration: '25 mins',
@@ -153,13 +150,16 @@ export const TrackDetailModal = ({
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  // Convert watch URL to embed URL
   const getEmbedUrl = (url: string) => {
     if (url.includes('youtube.com/watch?v=')) {
       return url.replace('youtube.com/watch?v=', 'youtube.com/embed/');
     }
     return url;
   };
+
+  const isFree = (track.price || 49) === 0;
+  const phpPrice = getPhpPrice(track.price || 49);
+  const origPhp = track.originalPrice ? getPhpPrice(track.originalPrice) : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -220,14 +220,10 @@ export const TrackDetailModal = ({
           </div>
         </div>
 
-        {/* Modal Body: Active Lesson Plan Workspace OR Curriculum Syllabus */}
+        {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
-          
           {activeLessonPlan ? (
-            /* ACTIVE LESSON CLASSROOM WORKSPACE */
             <div className="space-y-6 animate-in fade-in duration-200">
-              
-              {/* Back to Syllabus Button */}
               <button
                 onClick={() => setActiveLessonPlan(null)}
                 className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer bg-blue-50 px-3 py-1.5 rounded-lg"
@@ -236,7 +232,6 @@ export const TrackDetailModal = ({
                 <span>Back to Full Course Syllabus</span>
               </button>
 
-              {/* Lesson Title Header */}
               <div className="border-b border-slate-200 pb-4">
                 <div className="flex items-center gap-2 text-xs font-bold text-orange-600 uppercase tracking-wider mb-1">
                   <span>Classroom Lesson Plan</span>
@@ -251,7 +246,6 @@ export const TrackDetailModal = ({
                 </p>
               </div>
 
-              {/* Supporting Video Section */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
                   <span className="flex items-center gap-1.5">
@@ -279,7 +273,6 @@ export const TrackDetailModal = ({
                 </div>
               </div>
 
-              {/* Theory Content & Explanation */}
               <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-2.5">
                 <h4 className="font-bold text-sm text-slate-900 flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-blue-600" />
@@ -290,7 +283,6 @@ export const TrackDetailModal = ({
                 </p>
               </div>
 
-              {/* Code Snippet */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
                   <span className="flex items-center gap-1.5">
@@ -311,7 +303,6 @@ export const TrackDetailModal = ({
                 </pre>
               </div>
 
-              {/* Hands-on Activity Challenge */}
               <div className="bg-gradient-to-br from-amber-50 to-orange-50/50 rounded-2xl p-5 border border-amber-200 space-y-3">
                 <div className="flex items-center gap-2">
                   <Award className="w-5 h-5 text-amber-600" />
@@ -319,82 +310,15 @@ export const TrackDetailModal = ({
                     {activeLessonPlan.handsOnActivity.title}
                   </h4>
                 </div>
-
-                <div className="space-y-1.5">
-                  <span className="text-xs font-bold text-amber-900">Step-by-Step Instructions:</span>
-                  <ol className="list-decimal pl-5 text-xs text-amber-900/90 space-y-1">
-                    {activeLessonPlan.handsOnActivity.instructions.map((ins, iIdx) => (
-                      <li key={iIdx}>{ins}</li>
-                    ))}
-                  </ol>
-                </div>
-
-                <div className="pt-2 border-t border-amber-200/60 text-xs text-amber-900">
-                  <strong>Expected Outcome:</strong> {activeLessonPlan.handsOnActivity.expectedOutcome}
-                </div>
+                <ol className="list-decimal pl-5 text-xs text-amber-900/90 space-y-1">
+                  {activeLessonPlan.handsOnActivity.instructions.map((ins, iIdx) => (
+                    <li key={iIdx}>{ins}</li>
+                  ))}
+                </ol>
               </div>
-
-              {/* Google Sheets Classroom Assignment */}
-              <div className="bg-emerald-50/70 rounded-2xl p-5 sm:p-6 border-2 border-emerald-200 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md">
-                      <FileSpreadsheet className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-extrabold text-sm sm:text-base text-emerald-950">
-                        {activeLessonPlan.googleSheetsAssignment.title}
-                      </h4>
-                      <p className="text-xs text-emerald-800">
-                        {activeLessonPlan.googleSheetsAssignment.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  <a
-                    href={activeLessonPlan.googleSheetsAssignment.templateUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 shrink-0"
-                  >
-                    <span>Open Google Sheets Template</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </div>
-
-                {/* Assignment Deliverables */}
-                <div className="space-y-1.5 text-xs text-emerald-950">
-                  <span className="font-bold">Worksheet Deliverables:</span>
-                  <ul className="list-disc pl-5 space-y-0.5 text-emerald-900/90">
-                    {activeLessonPlan.googleSheetsAssignment.deliverables.map((del, dIdx) => (
-                      <li key={dIdx}>{del}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Grading Rubric Table */}
-                <div className="pt-2 border-t border-emerald-200/60">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-900 block mb-2">
-                    100-Point Grading Rubric:
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {activeLessonPlan.googleSheetsAssignment.rubric.map((item, rIdx) => (
-                      <div key={rIdx} className="p-2.5 rounded-xl bg-white border border-emerald-200/80 flex items-center justify-between text-xs">
-                        <span className="font-medium text-slate-800 truncate mr-2">{item.criteria}</span>
-                        <span className="font-bold font-mono text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded shrink-0">
-                          {item.points} pts
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
             </div>
           ) : (
-            /* COURSE SYLLABUS & CURRICULUM OVERVIEW */
             <>
-              {/* Instructor Card */}
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center gap-4">
                 <img
                   src={track.instructor.avatar}
@@ -420,7 +344,6 @@ export const TrackDetailModal = ({
                 </div>
               </div>
 
-              {/* Curriculum Modules from Supabase */}
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-bold text-sm text-slate-900 uppercase tracking-wider">
@@ -433,7 +356,7 @@ export const TrackDetailModal = ({
 
                 {isLoading ? (
                   <div className="p-8 text-center text-xs text-slate-500">
-                    Loading curriculum modules from Supabase...
+                    Loading curriculum modules...
                   </div>
                 ) : modules.length > 0 ? (
                   <div className="space-y-4">
@@ -451,7 +374,6 @@ export const TrackDetailModal = ({
                           </span>
                         </div>
 
-                        {/* Interactive Lessons List */}
                         {mod.lessonItems && mod.lessonItems.length > 0 ? (
                           <div className="pl-8 space-y-2">
                             {mod.lessonItems.map((les, lIdx) => (
@@ -477,27 +399,9 @@ export const TrackDetailModal = ({
                                     </div>
                                   </div>
                                 </div>
-
                                 <span className="text-xs font-bold text-orange-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                                   <span>Start Lesson</span>
                                   <ArrowRight className="w-3.5 h-3.5" />
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                        ) : mod.topics && mod.topics.length > 0 ? (
-                          <div className="pl-8 space-y-2">
-                            {mod.topics.map((topic, tIdx) => (
-                              <button
-                                key={tIdx}
-                                onClick={() => handleSelectLesson(topic)}
-                                className="w-full text-left p-2.5 rounded-xl bg-slate-50 hover:bg-orange-50 border border-slate-200/70 flex items-center justify-between text-xs cursor-pointer group"
-                              >
-                                <span className="font-medium text-slate-800 group-hover:text-orange-600">
-                                  • {topic}
-                                </span>
-                                <span className="text-[11px] font-bold text-orange-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  View Lesson Plan →
                                 </span>
                               </button>
                             ))}
@@ -512,36 +416,25 @@ export const TrackDetailModal = ({
                   </div>
                 )}
               </div>
-
-              {/* Credentials guarantee */}
-              <div className="p-4 bg-amber-50/60 rounded-2xl border border-amber-200/80 flex items-center gap-3">
-                <Award className="w-8 h-8 text-amber-600 shrink-0" />
-                <div>
-                  <p className="text-xs font-bold text-amber-900">Official EPIC HTML5 Developer Certificate Included</p>
-                  <p className="text-[11px] text-amber-800/80">
-                    Complete all 8 classroom lesson activities and submit your Google Sheets rubrics to receive accredited certification.
-                  </p>
-                </div>
-              </div>
             </>
           )}
-
         </div>
 
         {/* Modal Action Footer */}
         <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-4 shrink-0">
           <div>
-            <span className="text-xs text-slate-500 block">Course Tuition (PHP)</span>
+            <span className="text-xs text-slate-500 block">Course Tuition</span>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-xl font-black text-slate-900">₱{getPhpPrice(track.price || 49).toLocaleString()}</span>
-              {track.originalPrice && (
-                <span className="text-xs text-slate-400 line-through">₱{getPhpPrice(track.originalPrice).toLocaleString()}</span>
+              {isFree ? (
+                <span className="text-2xl font-black text-emerald-600">FREE</span>
+              ) : (
+                <>
+                  <span className="text-xl font-black text-slate-900">₱{phpPrice.toLocaleString()}</span>
+                  {origPhp && <span className="text-xs text-slate-400 line-through">₱{origPhp.toLocaleString()}</span>}
+                </>
               )}
-              <span className="text-xs font-bold text-emerald-600 ml-1">Lifetime Access</span>
+              <span className="text-xs font-bold text-slate-600 ml-1">Lifetime Access</span>
             </div>
-            <span className="text-[10px] text-blue-600 font-semibold block mt-0.5">
-              🇵🇭 GCash • GoTyme • Maya • QRPh
-            </span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -556,9 +449,13 @@ export const TrackDetailModal = ({
                 onClose();
                 onEnroll(track);
               }}
-              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              className={`px-6 py-2.5 font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer ${
+                isFree
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20'
+              }`}
             >
-              <span>Enroll • ₱{getPhpPrice(track.price || 49).toLocaleString()}</span>
+              <span>{isFree ? 'Enroll for Free' : `Enroll • ₱${phpPrice.toLocaleString()}`}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
