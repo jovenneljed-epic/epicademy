@@ -38,6 +38,10 @@ export function App() {
   const [applyTenantOpen, setApplyTenantOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // Active Classroom / Workspace state
+  const [isClassroomOpen, setIsClassroomOpen] = useState(false);
+  const [selectedActiveTrack, setSelectedActiveTrack] = useState<Track | null>(null);
+
   // Active Supabase user state
   const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string } | null>(null);
 
@@ -76,21 +80,22 @@ export function App() {
     setAuthModalOpen(true);
   };
 
-const handleEnroll = (track: Track) => {
-  const isFree = (track.price || 49) === 0 || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2;
-  
-  if (isFree) {
-    // Directly launch classroom workspace
-    setSelectedActiveTrack(track);
-    setIsClassroomOpen(true);
-  } else {
-    setSelectedTrackForCheckout(track);
-    setIsCheckoutOpen(true);
-  }
-};
+  const handleEnrollTrack = (track: Track) => {
+    const isFree = (track.price || 49) === 0 || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2;
+    
+    if (isFree) {
+      // Directly launch classroom workspace
+      setSelectedActiveTrack(track);
+      setIsClassroomOpen(true);
+    } else {
+      setCheckoutTrack(track);
+      setCheckoutModalOpen(true);
+    }
+  };
 
   const handleSuccessEnroll = (track: Track) => {
-    setSelectedTrack(track);
+    setSelectedActiveTrack(track);
+    setIsClassroomOpen(true);
   };
 
   const handleSelectDeveloper = (dev: CommunityDeveloper) => {
@@ -247,6 +252,49 @@ const handleEnroll = (track: Track) => {
         isOpen={applyTenantOpen}
         onClose={() => setApplyTenantOpen(false)}
       />
+
+      {/* Classroom Workspace Modal / View */}
+      {isClassroomOpen && selectedActiveTrack && (
+        <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col animate-in fade-in duration-200">
+          <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between text-white shrink-0">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                Active Classroom Workspace
+              </span>
+              <h2 className="text-base sm:text-lg font-black mt-0.5">{selectedActiveTrack.title}</h2>
+            </div>
+            <button
+              onClick={() => {
+                setIsClassroomOpen(false);
+                setSelectedActiveTrack(null);
+              }}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+            >
+              Exit Classroom ✕
+            </button>
+          </div>
+          <div className="flex-1 bg-slate-950 flex items-center justify-center p-6 text-center text-white">
+            <div className="max-w-md space-y-4">
+              <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto text-2xl font-black border border-emerald-500/30">
+                ✓
+              </div>
+              <h3 className="text-xl font-black">Maligayang Pagdating sa Iyong Classroom!</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Naka-enroll ka na nang tagumpay. I-access ang iyong mga video masterclasses, Google Sheets assignments, at curriculum modules ngayon.
+              </p>
+              <button
+                onClick={() => {
+                  setIsClassroomOpen(false);
+                  setSelectedActiveTrack(null);
+                }}
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-lg cursor-pointer transition-all"
+              >
+                Simulan ang Pag-aaral →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
