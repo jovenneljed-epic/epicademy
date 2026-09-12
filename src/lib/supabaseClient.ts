@@ -163,7 +163,7 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
       .order('level_index', { ascending: true });
 
     if (error || !data || data.length === 0) {
-      seedZeroToHeroCoursesToSupabase().catch(() => {});
+     
       return { tracks: ZERO_TO_HERO_TRACKS, error: null };
     }
 
@@ -218,7 +218,7 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
         if (!a.isBundle && b.isBundle) return -1;
         return (a.levelIndex || 99) - (b.levelIndex || 99);
       });
-      seedZeroToHeroCoursesToSupabase().catch(() => {});
+   
       return { tracks: combined, error: null };
     }
 
