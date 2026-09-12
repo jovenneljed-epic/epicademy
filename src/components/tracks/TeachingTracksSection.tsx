@@ -340,7 +340,7 @@ export const TeachingTracksSection = ({
                     </div>
                   </div>
                 ) : (
-                  /* BUNDLE #2 BANNER (TESDA CSS NC II) */
+                  /* BUNDLE #2 BANNER (TESDA CSS NC II) - FIXED TO FREE */
                   <div className="bg-gradient-to-r from-slate-900 via-amber-950 to-blue-950 rounded-3xl p-6 sm:p-8 text-white border-2 border-amber-500/70 shadow-2xl relative overflow-hidden ring-4 ring-amber-400/20">
                     <div className="absolute -right-12 -top-12 w-64 h-64 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
                     <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
@@ -380,22 +380,18 @@ export const TeachingTracksSection = ({
                       </div>
 
                       <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-amber-400/40 text-center shrink-0 w-full sm:w-auto ring-2 ring-amber-400/20">
-                        <span className="text-xs text-amber-300 uppercase tracking-wide block font-black">Bundle #2 Tuition (PHP)</span>
+                        <span className="text-xs text-amber-300 uppercase tracking-wide block font-black">Bundle #2 Tuition</span>
                         <div className="flex items-baseline justify-center gap-2 mt-1">
-                          <span className="text-4xl font-black text-white">FREE</span>
-                          <span className="text-base text-slate-400 line-through">₱6,500</span>
+                          <span className="text-4xl font-black text-emerald-400">FREE</span>
                         </div>
-                        <p className="text-[11px] text-emerald-400 font-bold mt-0.5">Save ₱4,001 Today (61% OFF)</p>
-                        <div className="text-[10px] text-amber-200 mt-1">
-                          GCash • GoTyme • Maya • QRPh
-                        </div>
+                        <p className="text-[11px] text-emerald-300 font-bold mt-0.5">100% Free Access</p>
                         <button
                           type="button"
                           onClick={() => {
                             const tesdaTrack = filteredTracks.find(t => t.id === 'track-tesda-css-nc2' || t.isBundle) || TESDA_CSS_TRACK;
                             onEnroll(tesdaTrack);
                           }}
-                          className="w-full mt-3 px-6 py-3 bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-300 hover:from-amber-300 hover:to-orange-300 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 hover:scale-[1.02]"
+                          className="w-full mt-3 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs sm:text-sm rounded-xl shadow-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 hover:scale-[1.02]"
                         >
                           <span>Enroll in Bundle #2 • FREE</span>
                           <ArrowRight className="w-4 h-4" />
@@ -412,6 +408,9 @@ export const TeachingTracksSection = ({
                   const isBundle2 = Boolean(track.isBundle || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2);
                   const levelNum = track.levelIndex || (idx + 1);
                   const isHighest = levelNum === 9 && !isBundle2;
+                  
+                  // Check if course is free
+                  const isFree = (track.price ?? 49) === 0 || isBundle2;
                   const pricePhp = getPhpPrice(track.price || 49);
                   const origPhp = track.originalPrice ? getPhpPrice(track.originalPrice) : null;
 
@@ -532,14 +531,22 @@ export const TeachingTracksSection = ({
                         <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between w-full lg:w-auto shrink-0 gap-4 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
                           <div className="text-left lg:text-right">
                             <div className="flex items-baseline gap-1.5">
-                              <span className="text-2xl font-black text-slate-900">₱{pricePhp.toLocaleString()}</span>
-                              {origPhp && (
-                                <span className="text-xs text-slate-400 line-through">₱{origPhp.toLocaleString()}</span>
+                              {isFree ? (
+                                <span className="text-2xl font-black text-emerald-600">FREE</span>
+                              ) : (
+                                <>
+                                  <span className="text-2xl font-black text-slate-900">₱{pricePhp.toLocaleString()}</span>
+                                  {origPhp && (
+                                    <span className="text-xs text-slate-400 line-through">₱{origPhp.toLocaleString()}</span>
+                                  )}
+                                </>
                               )}
                             </div>
-                            <span className="text-[11px] text-blue-600 font-bold block">
-                              GCash • GoTyme • Maya
-                            </span>
+                            {!isFree && (
+                              <span className="text-[11px] text-blue-600 font-bold block">
+                                GCash • GoTyme • Maya
+                              </span>
+                            )}
                           </div>
 
                           <div className="flex items-center gap-2">
@@ -558,12 +565,14 @@ export const TeachingTracksSection = ({
                               type="button"
                               onClick={() => onEnroll(track)}
                               className={`px-4 py-2 text-xs font-black active:scale-95 rounded-xl shadow-md flex items-center gap-1.5 transition-all cursor-pointer ${
-                                isBundle2
+                                isFree
+                                  ? 'text-white bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25'
+                                  : isBundle2
                                   ? 'text-slate-950 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 shadow-amber-500/25'
                                   : 'text-white bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
                               }`}
                             >
-                              <span>{isBundle2 ? `Enroll in Bundle #2 • ₱${pricePhp.toLocaleString()}` : `Enroll • ₱${pricePhp.toLocaleString()}`}</span>
+                              <span>{isFree ? `Enroll in Bundle #2 • FREE` : `Enroll • ₱${pricePhp.toLocaleString()}`}</span>
                               <ArrowRight className="w-3.5 h-3.5" />
                             </button>
                           </div>
