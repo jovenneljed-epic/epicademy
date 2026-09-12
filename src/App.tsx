@@ -23,28 +23,28 @@ import { getCurrentUser, supabase } from './lib/supabaseClient';
 import type { Track, CommunityDeveloper } from './types';
 
 // =========================================================================
-// COMPLETE 14-LESSON COC 1 CURRICULUM (INSTALLING AND CONFIGURING SYSTEMS)
+// COC 1: INSTALLING AND CONFIGURING COMPUTER SYSTEMS (14 Lessons)
 // =========================================================================
 const COC1_LESSONS = [
   {
     id: 1,
     title: 'Introduction to Computer Systems',
     duration: '4 Hours',
-    objective: 'Understand the fundamental architecture of modern computer systems, data processing cycle, and basic computer classifications.',
-    content: 'Covers input, processing, output, and storage devices. Explores von Neumann architecture and system performance factors.',
+    objective: 'Understand the fundamental architecture of modern computer systems and data processing cycle.',
+    content: 'Covers input, processing, output, and storage devices. Explores von Neumann architecture.',
     videoUrl: 'https://www.youtube.com/embed/kUMe1FH4CHE',
-    activity: 'Create a system block diagram classifying peripherals into input, output, and storage.',
-    quiz: 'Identify the primary function of the Arithmetic Logic Unit (ALU).',
+    activity: 'Create a system block diagram classifying peripherals.',
+    quiz: 'Identify the primary function of the ALU.',
     classroomLink: ''
   },
   {
     id: 2,
     title: 'Computer Hardware Components',
     duration: '6 Hours',
-    objective: 'Identify, inspect, and test internal and external computer hardware components including CPU, RAM, motherboards, and storage drives.',
-    content: 'Detailed study of CPU sockets, motherboard form factors (ATX, Micro-ATX), RAM types (DDR3/DDR4/DDR5), and NVMe vs SSD vs HDD storage.',
+    objective: 'Identify and inspect internal and external hardware components including CPU, RAM, and motherboards.',
+    content: 'Detailed study of CPU sockets, motherboard form factors, RAM types, and storage drives.',
     videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    activity: 'List motherboard specifications and compatibility check for a target CPU.',
+    activity: 'List motherboard specifications and compatibility check.',
     quiz: 'What is the difference between volatile and non-volatile memory?',
     classroomLink: ''
   },
@@ -52,8 +52,8 @@ const COC1_LESSONS = [
     id: 3,
     title: 'Occupational Health and Safety (OHS)',
     duration: '4 Hours',
-    objective: 'Apply OHS policies and procedures in computer laboratory environments, including ESD protection and ergonomic standards.',
-    content: 'Proper grounding techniques, anti-static wrist straps, mat usage, handling hazardous materials, and emergency response protocols.',
+    objective: 'Apply OHS policies and procedures in computer laboratory environments, including ESD protection.',
+    content: 'Proper grounding techniques, anti-static wrist straps, mat usage, and emergency protocols.',
     videoUrl: 'https://www.youtube.com/embed/3Q9X7vFjXU4',
     activity: 'Draft an OHS safety checklist for an IT workstation setup.',
     quiz: 'Why is an anti-static wrist strap critical when assembling a PC?',
@@ -63,107 +63,107 @@ const COC1_LESSONS = [
     id: 4,
     title: 'Computer Assembly and Disassembly',
     duration: '10 Hours',
-    objective: 'Safely assemble and disassemble a complete desktop computer system following manufacturer specifications and OHS standards.',
-    content: 'Step-by-step motherboard mounting, CPU installation, thermal paste application, heatsink fan mounting, PSU wiring, and front panel headers.',
+    objective: 'Safely assemble and disassemble a complete desktop computer system.',
+    content: 'Motherboard mounting, CPU installation, thermal paste application, heatsink mounting, PSU wiring.',
     videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA',
     activity: 'Perform physical assembly and cable management on a training PC rig.',
-    quiz: 'What is the correct pin orientation for power switch front panel connectors?',
+    quiz: 'What is the correct pin orientation for power switch headers?',
     classroomLink: ''
   },
   {
     id: 5,
     title: 'BIOS/UEFI Configuration',
     duration: '6 Hours',
-    objective: 'Navigate and configure BIOS/UEFI firmware settings, boot priorities, hardware monitoring, and security passwords.',
-    content: 'Accessing BIOS via hotkeys, configuring boot order for USB installation media, enabling virtualization (Intel VT-x / AMD-V), and setting supervisor passwords.',
+    objective: 'Navigate and configure BIOS/UEFI firmware settings and boot priorities.',
+    content: 'Accessing BIOS via hotkeys, configuring boot order for USB media, and enabling virtualization.',
     videoUrl: 'https://www.youtube.com/embed/W5kCg2dfnFk',
-    activity: 'Configure boot sequence and secure boot options in the BIOS utility.',
-    quiz: 'How do you reset a forgotten BIOS password on a desktop motherboard?',
+    activity: 'Configure boot sequence and secure boot options in BIOS.',
+    quiz: 'How do you reset a forgotten BIOS password?',
     classroomLink: ''
   },
   {
     id: 6,
     title: 'Operating System Installation',
     duration: '10 Hours',
-    objective: 'Install modern operating systems (Windows 10/11 or Linux Ubuntu) from bootable USB installation media.',
-    content: 'Creating bootable media using Rufus, partition formatting (GPT vs MBR), disk partitioning strategies, and clean OS installation steps.',
+    objective: 'Install modern operating systems from bootable USB media.',
+    content: 'Creating bootable media using Rufus, partition formatting (GPT vs MBR), and clean OS installation.',
     videoUrl: 'https://www.youtube.com/embed/5mY7y_x4ZlQ',
     activity: 'Execute a clean installation of Windows 11 on a formatted partition.',
-    quiz: 'What partition style is required for UEFI boot mode with drives over 2TB?',
+    quiz: 'What partition style is required for UEFI boot with drives over 2TB?',
     classroomLink: ''
   },
   {
     id: 7,
     title: 'Device Drivers Installation',
     duration: '6 Hours',
-    objective: 'Install, update, and troubleshoot hardware device drivers to ensure full system functionality and optimal performance.',
-    content: 'Using Device Manager to identify missing drivers (Unknown Devices), installing chipset, graphics, audio, and network interface card (NIC) drivers.',
+    objective: 'Install and update hardware device drivers for optimal performance.',
+    content: 'Using Device Manager to identify missing drivers and installing chipset, graphics, and network drivers.',
     videoUrl: 'https://www.youtube.com/embed/kUMe1FH4CHE',
-    activity: 'Verify all hardware drivers are installed without yellow warning triangles in Device Manager.',
-    quiz: 'Where can you check if a hardware driver failed to load correctly?',
+    activity: 'Verify all hardware drivers are installed without warning icons.',
+    quiz: 'Where can you check if a driver failed to load?',
     classroomLink: ''
   },
   {
     id: 8,
     title: 'Application Software Installation',
     duration: '6 Hours',
-    objective: 'Install and configure productivity suites, antivirus software, web browsers, and utility applications according to user requirements.',
-    content: 'Installing Microsoft Office / LibreOffice, antivirus packages, PDF readers, archiving tools, and managing user startup programs.',
+    objective: 'Install and configure productivity suites, antivirus, and utility applications.',
+    content: 'Installing Microsoft Office / LibreOffice, antivirus packages, PDF readers, and archiving tools.',
     videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    activity: 'Install standard productivity tools and verify license activation status.',
-    quiz: 'What is the purpose of installing a reputable anti-malware software?',
+    activity: 'Install standard productivity tools and verify activation.',
+    quiz: 'What is the purpose of installing anti-malware software?',
     classroomLink: ''
   },
   {
     id: 9,
     title: 'Computer Configuration',
     duration: '6 Hours',
-    objective: 'Configure operating system settings, user accounts, power options, network sharing, and system updates.',
-    content: 'Setting up local user accounts (Administrator vs Standard), configuring Windows Update, screen resolution, and regional time zones.',
+    objective: 'Configure operating system settings, user accounts, and power options.',
+    content: 'Setting up local user accounts, configuring Windows Update, and screen resolution.',
     videoUrl: 'https://www.youtube.com/embed/3Q9X7vFjXU4',
-    activity: 'Create custom user accounts and adjust system power performance profiles.',
-    quiz: 'What privilege level is required to install new system software?',
+    activity: 'Create custom user accounts and adjust power profiles.',
+    quiz: 'What privilege level is required to install system software?',
     classroomLink: ''
   },
   {
     id: 10,
     title: 'Network Configuration Basics',
     duration: '6 Hours',
-    objective: 'Configure TCP/IPv4 network settings, static and dynamic IP addressing, DNS servers, and basic local connectivity.',
-    content: 'Understanding IP addresses, subnet masks, default gateways, ping command testing, and verifying local network card connection status.',
+    objective: 'Configure TCP/IPv4 network settings, static IP addressing, and connectivity.',
+    content: 'Understanding IP addresses, subnet masks, default gateways, and ping command testing.',
     videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA',
-    activity: 'Assign a static IP address and test connectivity using the ping command.',
-    quiz: 'What command-line tool tests network reachability to another IP address?',
+    activity: 'Assign a static IP address and test connectivity.',
+    quiz: 'What command-line tool tests network reachability?',
     classroomLink: ''
   },
   {
     id: 11,
     title: 'Testing and Troubleshooting',
     duration: '8 Hours',
-    objective: 'Diagnose and resolve common hardware and software faults encountered during computer setup and configuration.',
-    content: 'POST beep code analysis, blue screen (BSOD) troubleshooting, RAM testing with MemTest, and peripheral connectivity checks.',
+    objective: 'Diagnose and resolve common hardware and software faults.',
+    content: 'POST beep code analysis, blue screen troubleshooting, and RAM testing.',
     videoUrl: 'https://www.youtube.com/embed/W5kCg2dfnFk',
-    activity: 'Simulate and resolve a RAM seating error and boot failure scenario.',
-    quiz: 'What do continuous short beeps during POST typically indicate?',
+    activity: 'Simulate and resolve a RAM seating error scenario.',
+    quiz: 'What do continuous short beeps during POST indicate?',
     classroomLink: ''
   },
   {
     id: 12,
     title: 'Preventive Maintenance',
     duration: '4 Hours',
-    objective: 'Perform scheduled preventive maintenance tasks to extend hardware lifespan and maintain system stability.',
-    content: 'Dust cleaning using compressed air, checking cooling fan health, disk cleanup, defragmentation, and updating system definitions.',
+    objective: 'Perform scheduled preventive maintenance to extend hardware lifespan.',
+    content: 'Dust cleaning using compressed air, disk cleanup, and defragmentation.',
     videoUrl: 'https://www.youtube.com/embed/5mY7y_x4ZlQ',
-    activity: 'Execute a digital disk cleanup and defragmentation task routine.',
-    quiz: 'How often should physical dust cleaning be performed on office workstations?',
+    activity: 'Execute a digital disk cleanup and defragmentation routine.',
+    quiz: 'How often should physical dust cleaning be performed?',
     classroomLink: ''
   },
   {
     id: 13,
     title: 'Documentation and Work Completion',
     duration: '4 Hours',
-    objective: 'Complete service reports, inventory logs, and customer turnover documentation adhering to professional standards.',
-    content: 'Recording serial numbers, software licenses, maintenance logs, and securing customer sign-off upon job completion.',
+    objective: 'Complete service reports, inventory logs, and customer turnover documentation.',
+    content: 'Recording serial numbers, software licenses, maintenance logs, and customer sign-off.',
     videoUrl: 'https://www.youtube.com/embed/kUMe1FH4CHE',
     activity: 'Fill out a standard IT Technical Service Report Form.',
     quiz: 'Why is maintaining an accurate hardware inventory log important?',
@@ -171,13 +171,427 @@ const COC1_LESSONS = [
   },
   {
     id: 14,
-    title: 'COC 1 Practical Assessment & Performance Tasks',
+    title: 'COC 1 Practical Assessment',
     duration: '10 Hours',
-    objective: 'Demonstrate complete mastery of COC 1 competencies through timed practical assembly, OS installation, and troubleshooting tasks.',
-    content: 'Comprehensive performance evaluation covering hardware assembly, BIOS setup, OS installation, driver configuration, and customer turnover.',
+    objective: 'Demonstrate complete mastery of COC 1 through timed practical performance tasks.',
+    content: 'Comprehensive performance evaluation covering assembly, BIOS, OS installation, and troubleshooting.',
     videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    activity: 'Complete the timed practical demonstration rubric for TESDA CSS NC II certification.',
+    activity: 'Complete the timed practical demonstration rubric.',
     quiz: 'Submit final performance checklist and practical competency log.',
+    classroomLink: ''
+  }
+];
+
+// =========================================================================
+// COC 2: SET UP COMPUTER NETWORKS (12 Lessons)
+// =========================================================================
+const COC2_LESSONS = [
+  {
+    id: 1,
+    title: 'Introduction to Computer Networking',
+    duration: '4 Hours',
+    objective: 'Understand network fundamentals including LAN, WAN, WLAN, topologies, and devices.',
+    content: 'What is a computer network? LAN vs WAN vs WLAN, topologies, and basic network devices.',
+    videoUrl: 'https://www.youtube.com/embed/3Q9X7vFjXU4',
+    activity: 'Draw a network topology diagram for a small office network.',
+    quiz: 'What topology uses a central switch or hub connecting all nodes?',
+    classroomLink: ''
+  },
+  {
+    id: 2,
+    title: 'Network Components and Tools',
+    duration: '6 Hours',
+    objective: 'Identify network media, hardware components, crimping tools, and LAN testers.',
+    content: 'NIC, switches, routers, access points, modems, UTP/STP cables, RJ45 connectors, crimping tools, LAN testers.',
+    videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA',
+    activity: 'Inspect and catalog network tools and cable connectors.',
+    quiz: 'What tool is used to test continuity on an RJ45 UTP cable?',
+    classroomLink: ''
+  },
+  {
+    id: 3,
+    title: 'Network Cabling (T568A / T568B)',
+    duration: '8 Hours',
+    objective: 'Make, terminate, and test straight-through and crossover UTP cables.',
+    content: 'UTP cable color standards T568A and T568B, straight-through vs crossover cables, cable termination.',
+    videoUrl: 'https://www.youtube.com/embed/W5kCg2dfnFk',
+    activity: 'Fabricate and test both a straight-through and crossover UTP cable.',
+    quiz: 'Which standard puts Orange-White on pin 1 for T568B?',
+    classroomLink: ''
+  },
+  {
+    id: 4,
+    title: 'IP Addressing (IPv4, Static, DHCP, Subnetting)',
+    duration: '8 Hours',
+    objective: 'Master IPv4 addressing, public vs private IPs, static assignment, DHCP, and subnet masks.',
+    content: 'IPv4 structure, public/private IP ranges, static IP, DHCP servers, subnet masks, default gateways, DNS.',
+    videoUrl: 'https://www.youtube.com/embed/5mY7y_x4ZlQ',
+    activity: 'Calculate subnet ranges and assign static IP configurations.',
+    quiz: 'What is the private IP class range starting with 192.168.0.0?',
+    classroomLink: ''
+  },
+  {
+    id: 5,
+    title: 'Setting Up a LAN',
+    duration: '8 Hours',
+    objective: 'Connect computers and network hardware to establish a functioning Local Area Network.',
+    content: 'Connecting computers, linking switches/routers, configuring network adapters, assigning IP addresses.',
+    videoUrl: 'https://www.youtube.com/embed/kUMe1FH4CHE',
+    activity: 'Build a small physical LAN and verify node-to-node connectivity.',
+    quiz: 'What command verifies basic IP layer reachability between two PCs?',
+    classroomLink: ''
+  },
+  {
+    id: 6,
+    title: 'Wireless Network Setup',
+    duration: '6 Hours',
+    objective: 'Configure Wi-Fi access points, SSIDs, and enterprise-grade wireless security.',
+    content: 'Wi-Fi configuration, SSID broadcasting, WPA2/WPA3 security protocols, and access point management.',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    activity: 'Configure a wireless router with WPA3 encryption and a custom SSID.',
+    quiz: 'Which wireless security protocol offers the highest standard encryption today?',
+    classroomLink: ''
+  },
+  {
+    id: 7,
+    title: 'Network Sharing & Permissions',
+    duration: '6 Hours',
+    objective: 'Set up file, folder, and printer sharing across local network users.',
+    content: 'File/folder sharing, network printer sharing, network discovery, and user security permissions.',
+    videoUrl: 'https://www.youtube.com/embed/3Q9X7vFjXU4',
+    activity: 'Share a network folder and assign read/write permissions to specific users.',
+    quiz: 'What Windows feature must be enabled to see other PCs on the network?',
+    classroomLink: ''
+  },
+  {
+    id: 8,
+    title: 'Network Troubleshooting',
+    duration: '8 Hours',
+    objective: 'Diagnose and resolve network connectivity issues using diagnostic CLI tools.',
+    content: 'Using ipconfig, ping, tracert, nslookup. Checking physical cables, switch ports, and IP conflicts.',
+    videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA',
+    activity: 'Trace packet routing paths and resolve a simulated IP conflict.',
+    quiz: 'What command diagnoses DNS name resolution issues?',
+    classroomLink: ''
+  },
+  {
+    id: 9,
+    title: 'Network Security Basics',
+    duration: '6 Hours',
+    objective: 'Implement fundamental network security practices including router hardening and firewalls.',
+    content: 'Strong passwords, router admin security, firewall basics, secure Wi-Fi practices.',
+    videoUrl: 'https://www.youtube.com/embed/W5kCg2dfnFk',
+    activity: 'Change default router administrator credentials and configure basic firewall rules.',
+    quiz: 'Why is changing default router credentials critical for network security?',
+    classroomLink: ''
+  },
+  {
+    id: 10,
+    title: 'Network Documentation',
+    duration: '4 Hours',
+    objective: 'Create accurate network diagrams, IP address tables, and cable labeling records.',
+    content: 'Network diagrams, IP address allocation tables, cable labeling standards, and configuration records.',
+    videoUrl: 'https://www.youtube.com/embed/5mY7y_x4ZlQ',
+    activity: 'Draft an IP assignment table and physical cable map for a network lab.',
+    quiz: 'What record tracks all active IP addresses assigned to devices?',
+    classroomLink: ''
+  },
+  {
+    id: 11,
+    title: 'Practical Performance Tasks',
+    duration: '10 Hours',
+    objective: 'Execute hands-on networking tasks from cabling and LAN setup to resource sharing.',
+    content: 'Making UTP cables, building a small LAN, static IP setup, DHCP configuration, Wi-Fi setup.',
+    videoUrl: 'https://www.youtube.com/embed/kUMe1FH4CHE',
+    activity: 'Complete the full practical network setup and troubleshooting checklist.',
+    quiz: 'Submit practical performance verification record.',
+    classroomLink: ''
+  },
+  {
+    id: 12,
+    title: 'COC 2 Assessment',
+    duration: '6 Hours',
+    objective: 'Pass written examinations, practical tests, and troubleshooting assessments for COC 2.',
+    content: 'Written test, identification, practical lab examination, troubleshooting assessment, and final checklist.',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    activity: 'Take the comprehensive COC 2 summative evaluation exam.',
+    quiz: 'Complete final competency review items.',
+    classroomLink: ''
+  }
+];
+
+// =========================================================================
+// COC 3: SET UP COMPUTER SERVERS (13 Lessons)
+// =========================================================================
+const COC3_LESSONS = [
+  {
+    id: 1,
+    title: 'Introduction to Computer Servers',
+    duration: '4 Hours',
+    objective: 'Understand server fundamentals, server vs workstation, and client-server architecture.',
+    content: 'What is a server? Server vs workstation, types of servers, server roles and functions, client-server architecture.',
+    videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA',
+    activity: 'Compare server hardware specifications against standard desktop PCs.',
+    quiz: 'What is the primary architectural difference between a server and a desktop workstation?',
+    classroomLink: ''
+  },
+  {
+    id: 2,
+    title: 'Server Hardware & RAID Basics',
+    duration: '6 Hours',
+    objective: 'Explore server motherboards, enterprise RAM, server racks, power supplies, and RAID levels.',
+    content: 'Server motherboard, CPU, RAM, storage, RAID basics (RAID 0, 1, 5, 10), power supply redundancy, network interface cards.',
+    videoUrl: 'https://www.youtube.com/embed/W5kCg2dfnFk',
+    activity: 'Design a redundant storage layout using RAID 5 specifications.',
+    quiz: 'What RAID level provides fault tolerance with striping and parity across at least 3 drives?',
+    classroomLink: ''
+  },
+  {
+    id: 3,
+    title: 'Server Operating Systems',
+    duration: '6 Hours',
+    objective: 'Understand server OS concepts, Windows Server fundamentals, and Linux server basics.',
+    content: 'Server OS concepts, Windows Server fundamentals, Linux server fundamentals, installation requirements.',
+    videoUrl: 'https://www.youtube.com/embed/5mY7y_x4ZlQ',
+    activity: 'Verify hardware compatibility and system requirements for Windows Server installation.',
+    quiz: 'What edition of Windows Server is commonly used for enterprise environments?',
+    classroomLink: ''
+  },
+  {
+    id: 4,
+    title: 'Server Installation & Configuration',
+    duration: '8 Hours',
+    objective: 'Install a server OS and perform initial host configurations including static IP and computer naming.',
+    content: 'Server installation, computer naming conventions, Administrator account setup, static IP addressing, DNS config, time synchronization.',
+    videoUrl: 'https://www.youtube.com/embed/kUMe1FH4CHE',
+    activity: 'Perform initial server setup, assign a static IP, and configure hostname.',
+    quiz: 'Why must a server always be configured with a static IP address rather than DHCP?',
+    classroomLink: ''
+  },
+  {
+    id: 5,
+    title: 'User and Group Management',
+    duration: '6 Hours',
+    objective: 'Create and manage user accounts, groups, password policies, and access control.',
+    content: 'User accounts, groups, password policies, user permissions, access control lists (ACLs).',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    activity: 'Create organizational units, user groups, and apply strict password complexity policies.',
+    quiz: 'What policy ensures users change passwords regularly and maintain strong security?',
+    classroomLink: ''
+  },
+  {
+    id: 6,
+    title: 'File and Folder Services',
+    duration: '8 Hours',
+    objective: 'Create shared folders and manage NTFS permissions vs share permissions.',
+    content: 'Creating shared folders, NTFS permissions, share permissions, network access, file-server management.',
+    videoUrl: 'https://www.youtube.com/embed/3Q9X7vFjXU4',
+    activity: 'Configure a shared folder with combined NTFS and share permission restrictions.',
+    quiz: 'When both NTFS and Share permissions are applied, which permission takes precedence when accessed over the network?',
+    classroomLink: ''
+  },
+  {
+    id: 7,
+    title: 'DHCP Server Installation & Scope',
+    duration: '8 Hours',
+    objective: 'Install and configure the Dynamic Host Configuration Protocol (DHCP) server role.',
+    content: 'DHCP concepts, DHCP installation, scope creation, IP address allocation, reservations, testing DHCP.',
+    videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA',
+    activity: 'Install DHCP role, configure an IP scope, and set up a static IP reservation for a printer.',
+    quiz: 'What is a DHCP reservation used for?',
+    classroomLink: ''
+  },
+  {
+    id: 8,
+    title: 'DNS Server Configuration',
+    duration: '8 Hours',
+    objective: 'Install and configure Domain Name System (DNS) forward and reverse lookup zones.',
+    content: 'DNS concepts, domain names, forward lookup zones, reverse lookup zones, DNS config, DNS troubleshooting.',
+    videoUrl: 'https://www.youtube.com/embed/W5kCg2dfnFk',
+    activity: 'Create forward and reverse lookup zones and register host records.',
+    quiz: 'What lookup zone translates IP addresses back into domain names?',
+    classroomLink: ''
+  },
+  {
+    id: 9,
+    title: 'Web & Network Services',
+    duration: '6 Hours',
+    objective: 'Install, configure, and monitor basic server network services.',
+    content: 'Basic server services, installing required features, service configuration, starting/stopping services, monitoring.',
+    videoUrl: 'https://www.youtube.com/embed/5mY7y_x4ZlQ',
+    activity: 'Install and verify web/file services through Server Manager dashboard.',
+    quiz: 'How do you restart a failed Windows background service?',
+    classroomLink: ''
+  },
+  {
+    id: 10,
+    title: 'Server Security & Hardening',
+    duration: '6 Hours',
+    objective: 'Implement server security hardening, firewall rules, updates, and malware protection.',
+    content: 'Administrator security, firewall configuration, user permissions, updates, malware protection, secure remote access.',
+    videoUrl: 'https://www.youtube.com/embed/kUMe1FH4CHE',
+    activity: 'Configure Windows Firewall inbound/outbound rules and secure remote desktop access.',
+    quiz: 'What protocol is recommended for secure encrypted remote administration?',
+    classroomLink: ''
+  },
+  {
+    id: 11,
+    title: 'Server Backup and Maintenance',
+    duration: '6 Hours',
+    objective: 'Execute server backup strategies, restore procedures, and routine system maintenance.',
+    content: 'Backup concepts, backup types (Full, Incremental, Differential), restore procedures, system maintenance.',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    activity: 'Perform a scheduled system backup and simulate a file restoration procedure.',
+    quiz: 'What backup type backs up only data changed since the last full backup?',
+    classroomLink: ''
+  },
+  {
+    id: 12,
+    title: 'Server Troubleshooting & Diagnostics',
+    duration: '8 Hours',
+    objective: 'Diagnose and resolve server connectivity, DNS, DHCP, permission, and service failures.',
+    content: 'Server connectivity problems, DNS/DHCP issues, permission problems, service failures, diagnostic commands.',
+    videoUrl: 'https://www.youtube.com/embed/3Q9X7vFjXU4',
+    activity: 'Troubleshoot and resolve a simulated server DNS failure scenario.',
+    quiz: 'What tool inspects active system events and error logs on Windows Server?',
+    classroomLink: ''
+  },
+  {
+    id: 13,
+    title: 'COC 3 Assessment & Documentation',
+    duration: '6 Hours',
+    objective: 'Complete server documentation, written examinations, and practical performance tests for COC 3.',
+    content: 'Server inventory, IP documentation, diagrams, written examination, practical performance test, competency checklist.',
+    videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA',
+    activity: 'Complete the final server configuration practical assessment and documentation report.',
+    quiz: 'Submit final COC 3 competency review task.',
+    classroomLink: ''
+  }
+];
+
+// =========================================================================
+// COC 4: MAINTAIN AND REPAIR COMPUTER SYSTEMS AND NETWORKS (11 Lessons)
+// =========================================================================
+const COC4_LESSONS = [
+  {
+    id: 1,
+    title: 'Computer Maintenance Fundamentals',
+    duration: '4 Hours',
+    objective: 'Understand preventive vs. corrective maintenance, schedules, OHS, and ESD precautions.',
+    content: 'Preventive vs. corrective maintenance, maintenance schedules, proper maintenance procedures, OHS and ESD precautions.',
+    videoUrl: 'https://www.youtube.com/embed/kUMe1FH4CHE',
+    activity: 'Draft a scheduled preventive maintenance calendar for a computer laboratory.',
+    quiz: 'What is the primary difference between preventive and corrective maintenance?',
+    classroomLink: ''
+  },
+  {
+    id: 2,
+    title: 'Computer Cleaning and Thermal Management',
+    duration: '6 Hours',
+    objective: 'Perform physical cleaning of internal components, peripherals, dust removal, and thermal paste re-application.',
+    content: 'Cleaning internal components, peripherals, dust removal using compressed air, thermal management, cable management.',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    activity: 'Clean CPU heatsink fins and replace old thermal paste on a test rig.',
+    quiz: 'Why is proper thermal paste application critical for CPU lifespan?',
+    classroomLink: ''
+  },
+  {
+    id: 3,
+    title: 'Hardware Troubleshooting & Diagnostics',
+    duration: '8 Hours',
+    objective: 'Diagnose POST errors, boot failures, power issues, RAM, storage, and motherboard faults.',
+    content: 'POST and boot problems, power supply faults, RAM errors, storage drive failures, motherboard and CPU cooling problems.',
+    videoUrl: 'https://www.youtube.com/embed/3Q9X7vFjXU4',
+    activity: 'Diagnose and isolate a faulty RAM stick using beep codes and diagnostic cards.',
+    quiz: 'What component typically causes a PC to shut down unexpectedly after a few minutes of heavy gaming?',
+    classroomLink: ''
+  },
+  {
+    id: 4,
+    title: 'Software Troubleshooting & OS Recovery',
+    duration: '8 Hours',
+    objective: 'Resolve operating system errors, driver conflicts, boot issues, malware infections, and performance bottlenecks.',
+    content: 'Operating system errors, driver conflicts, application errors, startup problems, malware issues, system performance tuning.',
+    videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA',
+    activity: 'Fix a corrupted boot sector using Windows Recovery Environment (WinRE) command prompt.',
+    quiz: 'What command repairs damaged system files using protected local store copies?',
+    classroomLink: ''
+  },
+  {
+    id: 5,
+    title: 'Hardware Replacement and Repair',
+    duration: '8 Hours',
+    objective: 'Safely replace defective RAM, storage drives, power supplies, and verify component compatibility.',
+    content: 'RAM replacement, storage replacement, PSU replacement, peripheral replacement, component compatibility, safe installation.',
+    videoUrl: 'https://www.youtube.com/embed/W5kCg2dfnFk',
+    activity: 'Perform a live power supply unit swap and verify voltage outputs.',
+    quiz: 'What must be verified before replacing a motherboard on an existing system case?',
+    classroomLink: ''
+  },
+  {
+    id: 6,
+    title: 'Operating System & Network Maintenance',
+    duration: '6 Hours',
+    objective: 'Perform OS updates, disk management, backup/restore, and inspect network equipment and cables.',
+    content: 'Updates, drivers, disk management, system utilities, backup/restore, network equipment inspection, cable testing.',
+    videoUrl: 'https://www.youtube.com/embed/5mY7y_x4ZlQ',
+    activity: 'Execute a full system image backup and test network switch link lights.',
+    quiz: 'What utility manages disk partitions and volume formats in Windows?',
+    classroomLink: ''
+  },
+  {
+    id: 7,
+    title: 'Troubleshooting Tools & Utilities',
+    duration: '6 Hours',
+    objective: 'Utilize multimeters, LAN testers, POST cards, and CLI diagnostic tools.',
+    content: 'Multimeter, LAN tester, POST diagnostic cards, Windows diagnostic utilities, command-line tools, diagnostic software.',
+    videoUrl: 'https://www.youtube.com/embed/kUMe1FH4CHE',
+    activity: 'Test PSU DC output voltages using a digital multimeter.',
+    quiz: 'What setting on a multimeter tests continuous electrical connections?',
+    classroomLink: ''
+  },
+  {
+    id: 8,
+    title: 'System Backup and Data Recovery',
+    duration: '6 Hours',
+    objective: 'Perform data backups, system imaging, file recovery, and disaster recovery procedures.',
+    content: 'Data backup, system image creation, file recovery, restore procedures, recovery media creation.',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    activity: 'Create a bootable system recovery USB drive.',
+    quiz: 'What is the difference between a file backup and a full system image?',
+    classroomLink: ''
+  },
+  {
+    id: 9,
+    title: 'Computer Security Maintenance',
+    duration: '6 Hours',
+    objective: 'Maintain antivirus definitions, firewall rules, security patches, and safe computing practices.',
+    content: 'Antivirus/anti-malware, firewall management, security updates, password protection, safe computing practices.',
+    videoUrl: 'https://www.youtube.com/embed/3Q9X7vFjXU4',
+    activity: 'Update malware definitions and run a complete system security scan.',
+    quiz: 'Why are operating system security patches critical for maintenance?',
+    classroomLink: ''
+  },
+  {
+    id: 10,
+    title: 'Repair Documentation & Reports',
+    duration: '4 Hours',
+    objective: 'Create professional maintenance reports, repair records, and parts replacement documentation.',
+    content: 'Maintenance reports, repair logs, troubleshooting records, parts replacement records, service documentation.',
+    videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA',
+    activity: 'Draft an itemized hardware repair and parts replacement invoice.',
+    quiz: 'What details must be recorded when replacing a defective hard drive under warranty?',
+    classroomLink: ''
+  },
+  {
+    id: 11,
+    title: 'COC 4 Practical Assessment & Final Repair Task',
+    duration: '8 Hours',
+    objective: 'Demonstrate complete mastery of COC 4 through practical repair, maintenance, and troubleshooting examinations.',
+    content: 'Written knowledge test, hardware troubleshooting, software/network diagnosis, practical repair examination.',
+    videoUrl: 'https://www.youtube.com/embed/W5kCg2dfnFk',
+    activity: 'Complete the comprehensive practical hardware/software repair and documentation task.',
+    quiz: 'Submit final COC 4 competency evaluation checklist.',
     classroomLink: ''
   }
 ];
@@ -201,8 +615,14 @@ export function App() {
   // Active Classroom / Workspace state
   const [isClassroomOpen, setIsClassroomOpen] = useState(false);
   const [selectedActiveTrack, setSelectedActiveTrack] = useState<Track | null>(null);
+  const [activeCoc, setActiveCoc] = useState<'coc1' | 'coc2' | 'coc3' | 'coc4'>('coc1');
   const [activeLessonIndex, setActiveLessonIndex] = useState(0);
-  const [lessonsData, setLessonsData] = useState(COC1_LESSONS);
+  
+  const [coc1Data, setCoc1Data] = useState(COC1_LESSONS);
+  const [coc2Data, setCoc2Data] = useState(COC2_LESSONS);
+  const [coc3Data, setCoc3Data] = useState(COC3_LESSONS);
+  const [coc4Data, setCoc4Data] = useState(COC4_LESSONS);
+  
   const [tempLinkInput, setTempLinkInput] = useState('');
   const [linkSavedMsg, setLinkSavedMsg] = useState(false);
 
@@ -252,6 +672,7 @@ export function App() {
 
     if (isFree) {
       setSelectedActiveTrack(track);
+      setActiveCoc('coc1');
       setActiveLessonIndex(0);
       setTempLinkInput(COC1_LESSONS[0].classroomLink);
       setIsClassroomOpen(true);
@@ -263,6 +684,7 @@ export function App() {
 
   const handleSuccessEnroll = (track: Track) => {
     setSelectedActiveTrack(track);
+    setActiveCoc('coc1');
     setActiveLessonIndex(0);
     setTempLinkInput(COC1_LESSONS[0].classroomLink);
     setIsClassroomOpen(true);
@@ -285,13 +707,28 @@ export function App() {
     }
   };
 
-  const currentLesson = lessonsData[activeLessonIndex] || lessonsData[0];
+  const currentLessonsList = activeCoc === 'coc1' ? coc1Data : activeCoc === 'coc2' ? coc2Data : activeCoc === 'coc3' ? coc3Data : coc4Data;
+  const currentLesson = currentLessonsList[activeLessonIndex] || currentLessonsList[0];
 
   const handleSaveClassroomLink = (e: React.FormEvent) => {
     e.preventDefault();
-    const updated = [...lessonsData];
-    updated[activeLessonIndex].classroomLink = tempLinkInput;
-    setLessonsData(updated);
+    if (activeCoc === 'coc1') {
+      const updated = [...coc1Data];
+      updated[activeLessonIndex].classroomLink = tempLinkInput;
+      setCoc1Data(updated);
+    } else if (activeCoc === 'coc2') {
+      const updated = [...coc2Data];
+      updated[activeLessonIndex].classroomLink = tempLinkInput;
+      setCoc2Data(updated);
+    } else if (activeCoc === 'coc3') {
+      const updated = [...coc3Data];
+      updated[activeLessonIndex].classroomLink = tempLinkInput;
+      setCoc3Data(updated);
+    } else {
+      const updated = [...coc4Data];
+      updated[activeLessonIndex].classroomLink = tempLinkInput;
+      setCoc4Data(updated);
+    }
     setLinkSavedMsg(true);
     setTimeout(() => setLinkSavedMsg(false), 2500);
   };
@@ -410,13 +847,13 @@ export function App() {
         onClose={() => setApplyTenantOpen(false)}
       />
 
-      {/* Fully Interactive COC 1 LMS Workspace View */}
+      {/* Fully Interactive COC 1 to COC 4 LMS Workspace View */}
       {isClassroomOpen && selectedActiveTrack && (
         <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col animate-in fade-in duration-200">
           <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between text-white shrink-0">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                COC 1 LMS Ready Course • 14 Comprehensive Lessons
+                {activeCoc === 'coc1' ? 'COC 1: Install & Configure Systems' : activeCoc === 'coc2' ? 'COC 2: Set-Up Networks' : activeCoc === 'coc3' ? 'COC 3: Set-Up Servers' : 'COC 4: Maintain & Repair Systems'}
               </span>
               <h2 className="text-base sm:text-lg font-black mt-0.5">{selectedActiveTrack.title}</h2>
             </div>
@@ -434,23 +871,107 @@ export function App() {
           <div className="flex-1 bg-slate-950 overflow-y-auto p-6 text-white flex flex-col items-center">
             <div className="max-w-6xl w-full space-y-6">
               
-              {/* Success Banner */}
-              <div className="bg-emerald-950/40 border border-emerald-500/30 p-4 rounded-2xl flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-emerald-500 text-slate-950 rounded-xl flex items-center justify-center font-black text-lg shrink-0">
-                    ✓
-                  </div>
-                  <div>
-                    <h4 className="font-black text-sm text-emerald-300">COC 1 LMS Course Active!</h4>
-                    <p className="text-xs text-slate-300">Piliin ang alinman sa 14 na aralin sa kanan para sa video lectures, hands-on activities, quizzes, at Google Classroom links.</p>
-                  </div>
+              {/* COC Navigation Switcher Bar */}
+              <div className="flex items-center justify-between bg-slate-900 border border-slate-800 p-3 rounded-2xl flex-wrap gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => {
+                      setActiveCoc('coc1');
+                      setActiveLessonIndex(0);
+                      setTempLinkInput(coc1Data[0].classroomLink);
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      activeCoc === 'coc1'
+                        ? 'bg-orange-600 text-white shadow-md'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    📂 COC 1 (14)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveCoc('coc2');
+                      setActiveLessonIndex(0);
+                      setTempLinkInput(coc2Data[0].classroomLink);
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      activeCoc === 'coc2'
+                        ? 'bg-orange-600 text-white shadow-md'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    🌐 COC 2 (12)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveCoc('coc3');
+                      setActiveLessonIndex(0);
+                      setTempLinkInput(coc3Data[0].classroomLink);
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      activeCoc === 'coc3'
+                        ? 'bg-orange-600 text-white shadow-md'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    🖥️ COC 3 (13)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveCoc('coc4');
+                      setActiveLessonIndex(0);
+                      setTempLinkInput(coc4Data[0].classroomLink);
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      activeCoc === 'coc4'
+                        ? 'bg-orange-600 text-white shadow-md'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    🛠️ COC 4: Repair (11)
+                  </button>
                 </div>
-                <div className="hidden sm:block text-right text-xs text-emerald-400 font-mono">
-                  Lesson {activeLessonIndex + 1} of 14
-                </div>
+                
+                {/* Progression Button */}
+                {activeCoc === 'coc1' && (
+                  <button
+                    onClick={() => {
+                      setActiveCoc('coc2');
+                      setActiveLessonIndex(0);
+                      setTempLinkInput(coc2Data[0].classroomLink);
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer ml-auto"
+                  >
+                    <span>Proceed to COC 2 →</span>
+                  </button>
+                )}
+                {activeCoc === 'coc2' && (
+                  <button
+                    onClick={() => {
+                      setActiveCoc('coc3');
+                      setActiveLessonIndex(0);
+                      setTempLinkInput(coc3Data[0].classroomLink);
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer ml-auto"
+                  >
+                    <span>Proceed to COC 3 →</span>
+                  </button>
+                )}
+                {activeCoc === 'coc3' && (
+                  <button
+                    onClick={() => {
+                      setActiveCoc('coc4');
+                      setActiveLessonIndex(0);
+                      setTempLinkInput(coc4Data[0].classroomLink);
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer ml-auto"
+                  >
+                    <span>Proceed to COC 4 (Repair) →</span>
+                  </button>
+                )}
               </div>
 
-              {/* Main Grid: Video/Content on Left, 14 Lessons on Right */}
+              {/* Main Grid: Video/Content on Left, Lesson Directory on Right */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* Left 2 Cols: Video, Objectives, Activities & Google Classroom Link Attacher */}
@@ -468,7 +989,7 @@ export function App() {
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <span className="px-3 py-1 bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded-lg text-xs font-black uppercase">
-                        Lesson {currentLesson.id} of 14 • {currentLesson.duration}
+                        {activeCoc.toUpperCase()} • Lesson {currentLesson.id} of {currentLessonsList.length} • {currentLesson.duration}
                       </span>
                     </div>
 
@@ -540,15 +1061,15 @@ export function App() {
                   </div>
                 </div>
 
-                {/* Right Col: 14 Clickable Lessons Directory */}
+                {/* Right Col: Lessons Directory */}
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 h-fit max-h-[75vh] overflow-y-auto">
                   <h4 className="font-black text-sm text-white uppercase tracking-wider border-b border-slate-800 pb-3 flex items-center justify-between sticky top-0 bg-slate-900 z-10">
-                    <span>COC 1 Syllabus</span>
-                    <span className="text-xs font-normal text-emerald-400">14 Lessons</span>
+                    <span>{activeCoc.toUpperCase()} Syllabus</span>
+                    <span className="text-xs font-normal text-emerald-400">{currentLessonsList.length} Lessons</span>
                   </h4>
                   
                   <div className="space-y-2">
-                    {lessonsData.map((les, idx) => {
+                    {currentLessonsList.map((les, idx) => {
                       const isActive = activeLessonIndex === idx;
                       return (
                         <button
