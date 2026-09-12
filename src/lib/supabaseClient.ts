@@ -30,16 +30,18 @@ export async function signUpUser(email: string, password: string, role: 'educato
   });
 
   if (!error && data.user) {
-    // Upsert into profiles table
     try {
-      await supabase.from('profiles').upsert([
-        {
-          id: data.user.id,
-          email: data.user.email,
-          full_name: email.split('@')[0],
-          role,
-        },
-      ]);
+      await supabase.from('profiles').upsert(
+        [
+          {
+            id: data.user.id,
+            email: data.user.email,
+            full_name: email.split('@')[0],
+            role,
+          },
+        ],
+        { onConflict: 'id' }
+      );
     } catch {
       // Quietly continue if profiles table isn't created yet
     }
@@ -50,7 +52,6 @@ export async function signUpUser(email: string, password: string, role: 'educato
 
 export async function registerTeacherAccount(input: RegisterTeacherInput): Promise<{ user: any; error: any }> {
   try {
-    // 1. Sign up user in Supabase Auth
     const { data, error } = await supabase.auth.signUp({
       email: input.email,
       password: input.password,
@@ -70,22 +71,24 @@ export async function registerTeacherAccount(input: RegisterTeacherInput): Promi
       return { user: null, error };
     }
 
-    // 2. Insert into public.profiles table
     if (data.user) {
       try {
-        await supabase.from('profiles').upsert([
-          {
-            id: data.user.id,
-            email: input.email,
-            full_name: input.fullName,
-            role: 'educator',
-            specialty: input.specialty,
-            credentials: input.credentials,
-            bio: input.bio,
-            avatar_url: input.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-            is_verified: true,
-          },
-        ]);
+        await supabase.from('profiles').upsert(
+          [
+            {
+              id: data.user.id,
+              email: input.email,
+              full_name: input.fullName,
+              role: 'educator',
+              specialty: input.specialty,
+              credentials: input.credentials,
+              bio: input.bio,
+              avatar_url: input.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+              is_verified: true,
+            },
+          ],
+          { onConflict: 'id' }
+        );
       } catch {
         // Continue if table not yet migrated
       }
@@ -233,50 +236,56 @@ export async function seedZeroToHeroCoursesToSupabase(): Promise<{ success: bool
   try {
     for (const course of ZERO_TO_HERO_COURSES) {
       const { track, detailedModules } = course;
-      await supabase.from('tracks').upsert([
-        {
-          id: track.id,
-          title: track.title,
-          category: track.category,
-          category_label: track.categoryLabel,
-          slug: track.slug,
-          badge: track.badge,
-          level: track.level,
-          level_index: track.levelIndex,
-          price: track.price,
-          original_price: track.originalPrice,
-          career_milestone: track.careerMilestone,
-          description: track.description,
-          duration: track.duration,
-          skills: track.skills,
-          color_theme: track.colorTheme,
-          instructor_name: track.instructor.name,
-          instructor_role: track.instructor.role,
-          instructor_avatar: track.instructor.avatar,
-          instructor_verified: true,
-          instructor_credentials: track.instructor.credentials,
-          rating: track.rating,
-          review_count: track.reviewCount,
-          active_learners: track.activeLearners,
-          lessons_count: track.lessonsCount,
-          popular: track.popular,
-          published: true,
-        },
-      ]);
+      await supabase.from('tracks').upsert(
+        [
+          {
+            id: track.id,
+            title: track.title,
+            category: track.category,
+            category_label: track.categoryLabel,
+            slug: track.slug,
+            badge: track.badge,
+            level: track.level,
+            level_index: track.levelIndex,
+            price: track.price,
+            original_price: track.originalPrice,
+            career_milestone: track.careerMilestone,
+            description: track.description,
+            duration: track.duration,
+            skills: track.skills,
+            color_theme: track.colorTheme,
+            instructor_name: track.instructor.name,
+            instructor_role: track.instructor.role,
+            instructor_avatar: track.instructor.avatar,
+            instructor_verified: true,
+            instructor_credentials: track.instructor.credentials,
+            rating: track.rating,
+            review_count: track.reviewCount,
+            active_learners: track.activeLearners,
+            lessons_count: track.lessonsCount,
+            popular: track.popular,
+            published: true,
+          },
+        ],
+        { onConflict: 'id' }
+      );
 
       for (let mIdx = 0; mIdx < detailedModules.length; mIdx++) {
         const mod = detailedModules[mIdx];
         const moduleId = `mod-${track.id}-${mIdx + 1}`;
 
-        await supabase.from('modules').upsert([
-          {
-            id: moduleId,
-            track_id: track.id,
-            title: mod.title,
-            duration: mod.duration,
-            order_index: mIdx + 1,
-          },
-        ]);
+        await supabase.from('modules').upsert(
+          [
+            {
+              id: moduleId,
+              track_id: track.id,
+              title: mod.title,
+              duration: mod.duration,
+              order_index: mIdx + 1,
+            },
+          ],
+          { onConflict: 'id' }
+        );
 
         const lessonsToInsert = mod.lessons.map((les, lIdx) => ({
           id: `les-${track.id}-${mIdx + 1}-${lIdx + 1}`,
@@ -288,7 +297,7 @@ export async function seedZeroToHeroCoursesToSupabase(): Promise<{ success: bool
           order_index: lIdx + 1,
         }));
 
-        await supabase.from('lessons').upsert(lessonsToInsert);
+        await supabase.from('lessons').upsert(lessonsToInsert, { onConflict: 'id' });
       }
     }
     return { success: true, error: null };
@@ -315,34 +324,37 @@ export async function createTrackInDB(input: CreateTrackInput): Promise<{ track:
 
     const user = await getCurrentUser();
 
-    // 1. Insert Track into public.tracks
+    // 1. Upsert Track into public.tracks
     const { data: trackRow, error: trackError } = await supabase
       .from('tracks')
-      .insert([
-        {
-          id: trackId,
-          user_id: user?.id || null,
-          title: input.title,
-          category: input.category,
-          category_label: categoryLabel,
-          slug,
-          level: input.level,
-          description: input.description,
-          duration: input.duration || '4 Weeks',
-          skills: input.skills,
-          color_theme: input.colorTheme || 'from-blue-600 to-indigo-700',
-          instructor_name: input.instructorName || (user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Instructor'),
-          instructor_role: input.instructorRole || 'Lead Instructor',
-          instructor_avatar: input.instructorAvatar || (user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'),
-          instructor_verified: true,
-          instructor_credentials: 'Epicademy Creator',
-          rating: 5.0,
-          review_count: 0,
-          active_learners: 1,
-          lessons_count: totalLessonsCount,
-          published: true,
-        },
-      ])
+      .upsert(
+        [
+          {
+            id: trackId,
+            user_id: user?.id || null,
+            title: input.title,
+            category: input.category,
+            category_label: categoryLabel,
+            slug,
+            level: input.level,
+            description: input.description,
+            duration: input.duration || '4 Weeks',
+            skills: input.skills,
+            color_theme: input.colorTheme || 'from-blue-600 to-indigo-700',
+            instructor_name: input.instructorName || (user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Instructor'),
+            instructor_role: input.instructorRole || 'Lead Instructor',
+            instructor_avatar: input.instructorAvatar || (user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'),
+            instructor_verified: true,
+            instructor_credentials: 'Epicademy Creator',
+            rating: 5.0,
+            review_count: 0,
+            active_learners: 1,
+            lessons_count: totalLessonsCount,
+            published: true,
+          },
+        ],
+        { onConflict: 'id' }
+      )
       .select()
       .single();
 
@@ -350,22 +362,25 @@ export async function createTrackInDB(input: CreateTrackInput): Promise<{ track:
       return { track: null, error: trackError };
     }
 
-    // 2. Insert Modules & Lessons
+    // 2. Upsert Modules & Lessons
     for (let mIdx = 0; mIdx < input.modules.length; mIdx++) {
       const mod = input.modules[mIdx];
       const moduleId = `mod-${Date.now()}-${mIdx}`;
 
       const { error: modError } = await supabase
         .from('modules')
-        .insert([
-          {
-            id: moduleId,
-            track_id: trackId,
-            title: mod.title,
-            duration: mod.duration || '1 Week',
-            order_index: mIdx + 1,
-          },
-        ]);
+        .upsert(
+          [
+            {
+              id: moduleId,
+              track_id: trackId,
+              title: mod.title,
+              duration: mod.duration || '1 Week',
+              order_index: mIdx + 1,
+            },
+          ],
+          { onConflict: 'id' }
+        );
 
       if (!modError && mod.lessons && mod.lessons.length > 0) {
         const lessonInserts = mod.lessons.map((les, lIdx) => ({
@@ -378,7 +393,7 @@ export async function createTrackInDB(input: CreateTrackInput): Promise<{ track:
           order_index: lIdx + 1,
         }));
 
-        await supabase.from('lessons').insert(lessonInserts);
+        await supabase.from('lessons').upsert(lessonInserts, { onConflict: 'id' });
       }
     }
 
@@ -512,12 +527,15 @@ export async function deleteTrackFromDB(trackId: string): Promise<{ error: any }
 export async function enrollUserInTrack(trackId: string, userEmail: string) {
   const { data, error } = await supabase
     .from('enrollments')
-    .insert([
-      {
-        track_id: trackId,
-        user_email: userEmail,
-      },
-    ])
+    .upsert(
+      [
+        {
+          track_id: trackId,
+          user_email: userEmail,
+        },
+      ],
+      { onConflict: 'track_id,user_email' }
+    )
     .select()
     .single();
 
@@ -626,6 +644,6 @@ function formatTimeAgo(date: Date): string {
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
+  const days = Math.floor(days / 24);
   return `${days}d ago`;
 }
