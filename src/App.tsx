@@ -22,7 +22,9 @@ import { ApplyTenantModal } from './components/modals/ApplyTenantModal';
 import { getCurrentUser, supabase } from './lib/supabaseClient';
 import type { Track, CommunityDeveloper } from './types';
 
-// TESDA CSS NC II Core Competencies with Embed-Safe Videos & Custom Classroom Links
+// =========================================================================
+// 4 SEPARATE COC MODULES WITH DISTINCT MANUAL YOUTUBE EMBED VIDEOS
+// =========================================================================
 const INITIAL_TESDA_MODULES = [
   {
     id: 1,
@@ -30,8 +32,8 @@ const INITIAL_TESDA_MODULES = [
     title: 'Installing and Configuring Computer Systems (ICCS)',
     duration: '2 Weeks • 70 Hours',
     description: 'Master computer hardware assembly, BIOS/UEFI configuration, device drivers, and OS deployment (Windows 10/11 & Linux).',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', // Placeholder embed-safe or use standard demo
-    videoTitle: 'TESDA CSS NC II: PC Hardware Assembly & OS Installation Lecture',
+    videoUrl: 'https://www.youtube.com/embed/kUMe1FH4CHE', // <- Change to your Module 1 (ICCS) video link
+    videoTitle: 'COC 1: Installing and Configuring Computer Systems (ICCS) Masterclass',
     sheetsTitle: 'ICCS Hardware Inventory & BIOS Checklist Rubric',
     classroomLink: ''
   },
@@ -41,8 +43,8 @@ const INITIAL_TESDA_MODULES = [
     title: 'Setting Up Computer Networks (SUCN)',
     duration: '2 Weeks • 70 Hours',
     description: 'Learn LAN cabling (Straight-through & Cross-over T568A/T568B), crimping, IP addressing, subnetting, and wireless router configuration.',
-    videoUrl: 'https://www.youtube.com/embed/3Q9X7vFjXU4',
-    videoTitle: 'TESDA CSS: LAN Cabling, UTP Crimping, and Switch Setup',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', // <- Change to your Module 2 (SUCN) video link
+    videoTitle: 'COC 2: Setting Up Computer Networks (SUCN) - LAN Cabling & Crimping',
     sheetsTitle: 'SUCN Network Subnetting & Crimping Testing Log',
     classroomLink: ''
   },
@@ -52,8 +54,8 @@ const INITIAL_TESDA_MODULES = [
     title: 'Setting Up Computer Servers (SUCS)',
     duration: '2 Weeks • 70 Hours',
     description: 'Configure Windows Server / Linux network services including DHCP, DNS, Active Directory Domain Services (ADDS), and File Sharing.',
-    videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA',
-    videoTitle: 'TESDA CSS: Setting Up Windows Server & Active Directory',
+    videoUrl: 'https://www.youtube.com/embed/3Q9X7vFjXU4', // <- Change to your Module 3 (SUCS) video link
+    videoTitle: 'COC 3: Setting Up Computer Servers (SUCS) - Windows Server & ADDS',
     sheetsTitle: 'SUCS Server Roles & Client Configuration Assessment',
     classroomLink: ''
   },
@@ -63,8 +65,8 @@ const INITIAL_TESDA_MODULES = [
     title: 'Maintaining and Repairing Computer Systems and Networks (MRCSN)',
     duration: '2 Weeks • 70 Hours',
     description: 'Diagnose hardware faults, perform system backups, recover crashed operating systems, and implement preventive maintenance procedures.',
-    videoUrl: 'https://www.youtube.com/embed/W5kCg2dfnFk',
-    videoTitle: 'TESDA CSS: Troubleshooting, Diagnostics & Preventive Maintenance',
+    videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA', // <- Change to your Module 4 (MRCSN) video link
+    videoTitle: 'COC 4: Maintaining and Repairing Computer Systems and Networks',
     sheetsTitle: 'MRCSN Hardware Fault Diagnostics & Repair Logbook',
     classroomLink: ''
   }
@@ -130,19 +132,25 @@ export function App() {
     setAuthModalOpen(true);
   };
 
-  const handleEnrollTrack = (track: Track) => {
-    const isFree = (track.price || 49) === 0 || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2;
-    
-    if (isFree) {
-      setSelectedActiveTrack(track);
-      setActiveModuleIndex(0);
-      setTempLinkInput(INITIAL_TESDA_MODULES[0].classroomLink);
-      setIsClassroomOpen(true);
-    } else {
-      setCheckoutTrack(track);
-      setCheckoutModalOpen(true);
-    }
-  };
+ const handleEnrollTrack = (track: Track) => {
+  const isFree = (track.price || 49) === 0 || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2;
+  
+  // Require login/signup if user is not authenticated
+  if (isFree && !currentUser) {
+    handleOpenAuth('signup', '', track.id);
+    return;
+  }
+
+  if (isFree) {
+    setSelectedActiveTrack(track);
+    setActiveModuleIndex(0);
+    setTempLinkInput(INITIAL_TESDA_MODULES[0].classroomLink);
+    setIsClassroomOpen(true);
+  } else {
+    setCheckoutTrack(track);
+    setCheckoutModalOpen(true);
+  }
+};
 
   const handleSuccessEnroll = (track: Track) => {
     setSelectedActiveTrack(track);
@@ -293,7 +301,7 @@ export function App() {
         onClose={() => setApplyTenantOpen(false)}
       />
 
-      {/* Fully Interactive Classroom Workspace View with Google Classroom Link Attacher */}
+      {/* Fully Interactive Classroom Workspace View with Separate COC Videos */}
       {isClassroomOpen && selectedActiveTrack && (
         <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col animate-in fade-in duration-200">
           <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between text-white shrink-0">
@@ -325,7 +333,7 @@ export function App() {
                   </div>
                   <div>
                     <h4 className="font-black text-sm text-emerald-300">Naka-enroll na sa TESDA CSS NC II Masterclass!</h4>
-                    <p className="text-xs text-slate-300">Piliin ang alinman sa 4 Core Competency Modules sa kanan para i-load ang tamang video, activity sheets, at Google Classroom link.</p>
+                    <p className="text-xs text-slate-300">Piliin ang bawat COC module sa kanan upang panoorin ang tukoy na video lesson nito.</p>
                   </div>
                 </div>
                 <div className="hidden sm:block text-right text-xs text-emerald-400 font-mono">
@@ -351,7 +359,7 @@ export function App() {
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <span className="px-3 py-1 bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded-lg text-xs font-black uppercase">
-                        {currentMod.code} • Module {currentMod.id} of 4
+                        {currentMod.code} • Certificate of Competency {currentMod.id} of 4
                       </span>
                       <span className="text-xs text-slate-400 font-mono">{currentMod.duration}</span>
                     </div>
@@ -390,7 +398,7 @@ export function App() {
                         )}
                       </div>
                       <p className="text-[11px] text-slate-400 leading-relaxed">
-                        Attach your official Google Classroom assignment link for this module so students can submit directly.
+                        Attach your official Google Classroom assignment link for this specific COC module so students can submit directly.
                       </p>
                       <form onSubmit={handleSaveClassroomLink} className="flex gap-2">
                         <input
@@ -427,8 +435,8 @@ export function App() {
                 {/* Right Col: Fully Clickable Modules List */}
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 h-fit">
                   <h4 className="font-black text-sm text-white uppercase tracking-wider border-b border-slate-800 pb-3 flex items-center justify-between">
-                    <span>TESDA Core Modules</span>
-                    <span className="text-xs font-normal text-emerald-400">4 Clickable</span>
+                    <span>TESDA Core Modules (COC)</span>
+                    <span className="text-xs font-normal text-emerald-400">4 Videos</span>
                   </h4>
                   
                   <div className="space-y-2.5">
