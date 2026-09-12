@@ -21,6 +21,7 @@ import { DeveloperProfileModal } from './components/modals/DeveloperProfileModal
 import { ApplyTenantModal } from './components/modals/ApplyTenantModal';
 import { getCurrentUser, supabase } from './lib/supabaseClient';
 import type { Track, CommunityDeveloper } from './types';
+import { CreateCommunityModal } from './components/modals/CreateCommunityModal';
 
 // =========================================================================
 // COC 1: INSTALLING AND CONFIGURING COMPUTER SYSTEMS (14 Lessons)
@@ -111,6 +112,7 @@ export function App() {
   const [developerProfileOpen, setDeveloperProfileOpen] = useState(false);
   const [applyTenantOpen, setApplyTenantOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [createCommunityOpen, setCreateCommunityOpen] = useState(false);
 
   // Active Classroom / Workspace state
   const [isClassroomOpen, setIsClassroomOpen] = useState(false);
@@ -385,6 +387,14 @@ export function App() {
         isOpen={applyTenantOpen}
         onClose={() => setApplyTenantOpen(false)}
       />
+     <CreateCommunityModal
+  isOpen={createCommunityOpen}
+  onClose={() => setCreateCommunityOpen(false)}
+  userEmail={currentUser?.email}
+  onCommunityCreated={() => {
+    alert('Community created successfully!');
+  }}
+/>
 
       {/* Fully Interactive LMS Workspace View with Progress Bars & Locking */}
       {isClassroomOpen && selectedActiveTrack && (
