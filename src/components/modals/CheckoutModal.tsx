@@ -36,13 +36,14 @@ export const CheckoutModal = ({
 }: CheckoutModalProps) => {
   if (!isOpen || !track) return null;
 
-  const isFree = (track.price || 49) === 0;
+  // Force TESDA or bundle 2 or 0-priced tracks to be free
+  const isFree = (track.price || 49) === 0 || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2;
 
-  const baseUsd = track.price || 49;
+  const baseUsd = isFree ? 0 : (track.price || 49);
   const originalUsd = track.originalPrice || baseUsd * 2;
-  const basePhp = getPhpPrice(baseUsd);
+  const basePhp = isFree ? 0 : getPhpPrice(baseUsd);
   const originalPhp = getPhpPrice(originalUsd);
-  const discountPercent = Math.round(((originalPhp - basePhp) / originalPhp) * 100);
+  const discountPercent = originalPhp > 0 ? Math.round(((originalPhp - basePhp) / originalPhp) * 100) : 100;
 
   const bumpPhp = 999; 
   const [hasOrderBump, setHasOrderBump] = useState(false);
