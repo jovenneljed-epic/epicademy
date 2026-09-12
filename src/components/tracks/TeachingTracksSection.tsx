@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import type { Track, CategoryType } from '../../types';
 import { TrackCard } from './TrackCard';
 import { 
@@ -33,6 +33,15 @@ interface TeachingTracksSectionProps {
   refreshTrigger?: number;
 }
 
+const CATEGORIES: { id: CategoryType; name: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: 'all', name: 'All Disciplines', icon: Layers },
+  { id: 'stem', name: 'STEM & AI', icon: Code2 },
+  { id: 'business', name: 'Business & SaaS', icon: Sparkles },
+  { id: 'creative', name: 'Design & Spatial Arts', icon: BookOpen },
+  { id: 'humanities', name: 'Languages & Humanities', icon: Users },
+  { id: 'wellness', name: 'Health & Neuroscience', icon: HeartPulse },
+];
+
 export const TeachingTracksSection = ({
   onSelectTrack,
   onEnroll,
@@ -48,48 +57,48 @@ export const TeachingTracksSection = ({
   const [viewMode, setViewMode] = useState<'roadmap' | 'grid'>('roadmap');
   const [activeBundleTab, setActiveBundleTab] = useState<1 | 2>(1);
 
-  const loadTracks = async () => {
+  const loadTracks = useCallback(async () => {
     setIsLoading(true);
-    const { tracks: dbTracks } = await fetchTracksFromDB();
-    if (dbTracks && dbTracks.length > 0) {
-      setTracks(dbTracks);
-    } else {
+    try {
+      const { tracks: dbTracks } = await fetchTracksFromDB();
+      setTracks(dbTracks && dbTracks.length > 0 ? dbTracks : []);
+    } catch {
       setTracks([]);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     loadTracks();
-  }, [refreshTrigger]);
-
-  const categories = [
-    { id: 'all' as CategoryType, name: 'All Disciplines', icon: Layers },
-    { id: 'stem' as CategoryType, name: 'STEM & AI', icon: Code2 },
-    { id: 'business' as CategoryType, name: 'Business & SaaS', icon: Sparkles },
-    { id: 'creative' as CategoryType, name: 'Design & Spatial Arts', icon: BookOpen },
-    { id: 'humanities' as CategoryType, name: 'Languages & Humanities', icon: Users },
-    { id: 'wellness' as CategoryType, name: 'Health & Neuroscience', icon: HeartPulse },
-  ];
+  }, [loadTracks, refreshTrigger]);
 
   const filteredTracks = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
     return tracks.filter((track) => {
       const matchesCategory = selectedCategory === 'all' || track.category === selectedCategory;
       const matchesQuery = 
-        track.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        track.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        track.skills.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        track.instructor.name.toLowerCase().includes(searchQuery.toLowerCase());
+        !query ||
+        track.title.toLowerCase().includes(query) ||
+        track.description.toLowerCase().includes(query) ||
+        (track.skills && track.skills.some(s => s.toLowerCase().includes(query))) ||
+        (track.instructor && track.instructor.name.toLowerCase().includes(query));
       const matchesLevel = selectedLevel === 'all' || track.level === selectedLevel;
       return matchesCategory && matchesQuery && matchesLevel;
     });
   }, [tracks, selectedCategory, searchQuery, selectedLevel]);
 
   const handleDeleteTrack = async (trackId: string) => {
-    if (confirm('Are you sure you want to delete this course from Supabase?')) {
+    if (window.confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
       await deleteTrackFromDB(trackId);
       loadTracks();
     }
+  };
+
+  const handleResetFilters = () => {
+    setSelectedCategory('all');
+    setSearchQuery('');
+    setSelectedLevel('all');
   };
 
   return (
@@ -100,7 +109,7 @@ export const TeachingTracksSection = ({
         <div className="text-center max-w-3xl mx-auto mb-10">
           <div className="flex items-center justify-center gap-2 mb-3">
             <span className="text-xs font-bold uppercase tracking-widest text-blue-600 bg-blue-100/60 px-3 py-1 rounded-full border border-blue-200">
-              Eskwela & Zero to Hero Roadmap
+              Academy & Zero-to-Hero Roadmap
             </span>
             <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
               <Database className="w-3 h-3 text-emerald-600" />
@@ -109,10 +118,10 @@ export const TeachingTracksSection = ({
           </div>
 
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-            Mga Kurso sa Eskwela & 9-Level Career Roadmap
+            Curriculum Pathways & 9-Level Career Roadmap
           </h2>
           <p className="text-base sm:text-lg text-slate-600 mt-3 leading-relaxed">
-            Hakbang-hakbang na pag-aaral mula sa unang linya ng HTML hanggang maging Hero Full-Stack AI Software Architect sa gabay ng ating mga tapat na mentors.
+            Step-by-step progression from your first line of HTML to becoming a Full-Stack AI Software Architect guided by experienced industry mentors.
           </p>
         </div>
 
@@ -122,12 +131,13 @@ export const TeachingTracksSection = ({
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             {/* Category Pills */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none w-full sm:w-auto">
-              {categories.map((cat) => {
+              {CATEGORIES.map((cat) => {
                 const Icon = cat.icon;
                 const isSelected = selectedCategory === cat.id;
                 return (
                   <button
                     key={cat.id}
+                    type="button"
                     onClick={() => setSelectedCategory(cat.id)}
                     className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
                       isSelected
@@ -142,17 +152,19 @@ export const TeachingTracksSection = ({
               })}
             </div>
 
-            {/* + Create Course Button */}
+            {/* Actions */}
             <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
               <button
+                type="button"
                 onClick={loadTracks}
-                className="p-2.5 rounded-xl border border-slate-200 text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors"
-                title="Refresh from Supabase"
+                className="p-2.5 rounded-xl border border-slate-200 text-slate-500 hover:text-blue-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                title="Refresh from Database"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
               </button>
 
               <button
+                type="button"
                 onClick={onOpenCourseBuilder}
                 className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-blue-600/20 transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
@@ -162,10 +174,10 @@ export const TeachingTracksSection = ({
             </div>
           </div>
 
-          {/* Search & Level Filters & View Mode */}
+          {/* Search, Level Filters & View Mode */}
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 pt-2 border-t border-slate-100">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
@@ -190,7 +202,7 @@ export const TeachingTracksSection = ({
                 </select>
               </div>
 
-              {/* View Mode Switcher */}
+              {/* View Switcher */}
               <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shrink-0">
                 <button
                   type="button"
@@ -225,9 +237,9 @@ export const TeachingTracksSection = ({
         {/* Tracks Display / Clean State */}
         {isLoading ? (
           <div className="py-20 text-center">
-            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-xs sm:text-sm font-semibold text-slate-500">
-              Loading courses from your Supabase database...
+              Loading courses from Supabase database...
             </p>
           </div>
         ) : filteredTracks.length > 0 ? (
@@ -268,7 +280,7 @@ export const TeachingTracksSection = ({
                 </div>
 
                 {activeBundleTab === 1 ? (
-                  /* BUNDLE #1 BANNER (Web Dev) */
+                  /* BUNDLE #1 BANNER (Full-Stack Web Dev) */
                   <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 rounded-3xl p-6 sm:p-8 text-white border border-indigo-800/50 shadow-xl relative overflow-hidden">
                     <div className="absolute -right-12 -top-12 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
                     <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
@@ -290,11 +302,11 @@ export const TeachingTracksSection = ({
                         <div className="flex items-center justify-center lg:justify-start gap-4 pt-1 text-xs text-slate-300">
                           <div className="flex items-center gap-1">
                             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                            <span>All 9 Paid Courses</span>
+                            <span>All 9 Comprehensive Tracks</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Award className="w-4 h-4 text-amber-400" />
-                            <span>Full Verified Certificate</span>
+                            <span>Verified Certificates Included</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <ShieldCheck className="w-4 h-4 text-blue-400" />
@@ -311,9 +323,10 @@ export const TeachingTracksSection = ({
                         </div>
                         <p className="text-[11px] text-emerald-400 font-bold mt-0.5">Save ₱46,510 Today (73% OFF)</p>
                         <div className="text-[10px] text-blue-200 mt-1">
-                          🇵🇭 GCash • GoTyme • Maya • QRPh
+                          GCash • GoTyme • Maya • QRPh
                         </div>
                         <button
+                          type="button"
                           onClick={() => {
                             const lastCourse = filteredTracks.find(t => !t.isBundle && t.levelIndex === 9) || filteredTracks[0];
                             if (lastCourse) onEnroll(lastCourse);
@@ -344,7 +357,7 @@ export const TeachingTracksSection = ({
                           Computer Systems Servicing (CSS) NC II Masterclass & Certification Suite
                         </h3>
                         <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-                          Ang opisyal na 2nd Course Bundle ng Epicademy na idinisenyo para sa TESDA National Certificate II. Sinasaklaw ang buong 4 Core Competencies (ICCS, SUCN, SUCS, MRCSN), 24 video lessons, job order inspection sheets, at mock institutional assessment rubrics sa gabay ni Engr. Joven Nel Jed Aviguetero, LPT, TM1.
+                          Official 2nd Course Bundle designed for TESDA National Certificate II. Covers all 4 Core Competencies (ICCS, SUCN, SUCS, MRCSN), 24 video lessons, job order inspection sheets, and mock institutional assessment rubrics guided by Engr. Joven Nel Jed Aviguetero, LPT, TM1.
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-xs">
                           <div className="bg-white/10 rounded-lg p-2 border border-white/10">
@@ -374,9 +387,10 @@ export const TeachingTracksSection = ({
                         </div>
                         <p className="text-[11px] text-emerald-400 font-bold mt-0.5">Save ₱4,001 Today (61% OFF)</p>
                         <div className="text-[10px] text-amber-200 mt-1">
-                          🇵🇭 GCash • GoTyme • Maya • QRPh
+                          GCash • GoTyme • Maya • QRPh
                         </div>
                         <button
+                          type="button"
                           onClick={() => {
                             const tesdaTrack = filteredTracks.find(t => t.id === 'track-tesda-css-nc2' || t.isBundle) || TESDA_CSS_TRACK;
                             onEnroll(tesdaTrack);
@@ -530,6 +544,7 @@ export const TeachingTracksSection = ({
 
                           <div className="flex items-center gap-2">
                             <button
+                              type="button"
                               onClick={() => onSelectTrack(track)}
                               className={`px-3 py-2 text-xs font-bold rounded-xl transition-colors cursor-pointer ${
                                 isBundle2
@@ -540,6 +555,7 @@ export const TeachingTracksSection = ({
                               {isBundle2 ? 'View TESDA Syllabus' : 'View Syllabus'}
                             </button>
                             <button
+                              type="button"
                               onClick={() => onEnroll(track)}
                               className={`px-4 py-2 text-xs font-black active:scale-95 rounded-xl shadow-md flex items-center gap-1.5 transition-all cursor-pointer ${
                                 isBundle2
@@ -574,7 +590,7 @@ export const TeachingTracksSection = ({
             </div>
           )
         ) : (
-          /* Clean State: Zero fake data, clean database prompt */
+          /* Clean State */
           <div className="bg-white rounded-3xl border-2 border-dashed border-slate-300 p-12 text-center max-w-xl mx-auto space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto shadow-sm">
               <BookOpen className="w-8 h-8" />
@@ -586,7 +602,7 @@ export const TeachingTracksSection = ({
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 mt-2 max-w-md mx-auto leading-relaxed">
                 {tracks.length === 0
-                  ? 'Your database is completely fresh with zero fake placeholder data. Click below to launch the Course Studio and build your very first course track!'
+                  ? 'Your database is completely fresh with zero placeholder data. Click below to launch the Course Studio and build your very first course track!'
                   : 'Try resetting your filter or search keywords.'}
               </p>
             </div>
@@ -594,6 +610,7 @@ export const TeachingTracksSection = ({
             {tracks.length === 0 ? (
               <div className="pt-2">
                 <button
+                  type="button"
                   onClick={onOpenCourseBuilder}
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md transition-all inline-flex items-center gap-2 cursor-pointer"
                 >
@@ -603,11 +620,8 @@ export const TeachingTracksSection = ({
               </div>
             ) : (
               <button
-                onClick={() => {
-                  setSelectedCategory('all');
-                  setSearchQuery('');
-                  setSelectedLevel('all');
-                }}
+                type="button"
+                onClick={handleResetFilters}
                 className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
               >
                 Reset all filters
@@ -630,6 +644,7 @@ export const TeachingTracksSection = ({
             </p>
           </div>
           <button
+            type="button"
             onClick={onOpenCourseBuilder}
             className="px-6 py-3 bg-blue-500 hover:bg-blue-400 text-white font-bold text-sm rounded-xl shadow-lg transition-all shrink-0 hover:scale-105 cursor-pointer flex items-center gap-2"
           >

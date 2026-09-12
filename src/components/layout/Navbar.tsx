@@ -222,7 +222,7 @@ export const Navbar = ({
               <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-blue-50/70 border border-blue-100 px-3 py-1.5 rounded-xl">
                   <User className="w-3.5 h-3.5 text-blue-600" />
-                  <span className="max-w-[140px] truncate">Kumusta, {currentUser.email?.split('@')[0]}!</span>
+                  <span className="max-w-[140px] truncate">Hello, {currentUser.email?.split('@')[0]}!</span>
                 </div>
                 <button
                   onClick={handleLogout}
