@@ -23,51 +23,161 @@ import { getCurrentUser, supabase } from './lib/supabaseClient';
 import type { Track, CommunityDeveloper } from './types';
 
 // =========================================================================
-// 4 SEPARATE COC MODULES WITH DISTINCT MANUAL YOUTUBE EMBED VIDEOS
+// COMPLETE 14-LESSON COC 1 CURRICULUM (INSTALLING AND CONFIGURING SYSTEMS)
 // =========================================================================
-const INITIAL_TESDA_MODULES = [
+const COC1_LESSONS = [
   {
     id: 1,
-    code: 'ICCS',
-    title: 'Installing and Configuring Computer Systems (ICCS)',
-    duration: '2 Weeks • 70 Hours',
-    description: 'Master computer hardware assembly, BIOS/UEFI configuration, device drivers, and OS deployment (Windows 10/11 & Linux).',
-    videoUrl: 'https://www.youtube.com/embed/kUMe1FH4CHE', // <- Change to your Module 1 (ICCS) video link
-    videoTitle: 'COC 1: Installing and Configuring Computer Systems (ICCS) Masterclass',
-    sheetsTitle: 'ICCS Hardware Inventory & BIOS Checklist Rubric',
+    title: 'Introduction to Computer Systems',
+    duration: '4 Hours',
+    objective: 'Understand the fundamental architecture of modern computer systems, data processing cycle, and basic computer classifications.',
+    content: 'Covers input, processing, output, and storage devices. Explores von Neumann architecture and system performance factors.',
+    videoUrl: 'https://www.youtube.com/embed/kUMe1FH4CHE',
+    activity: 'Create a system block diagram classifying peripherals into input, output, and storage.',
+    quiz: 'Identify the primary function of the Arithmetic Logic Unit (ALU).',
     classroomLink: ''
   },
   {
     id: 2,
-    code: 'SUCN',
-    title: 'Setting Up Computer Networks (SUCN)',
-    duration: '2 Weeks • 70 Hours',
-    description: 'Learn LAN cabling (Straight-through & Cross-over T568A/T568B), crimping, IP addressing, subnetting, and wireless router configuration.',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', // <- Change to your Module 2 (SUCN) video link
-    videoTitle: 'COC 2: Setting Up Computer Networks (SUCN) - LAN Cabling & Crimping',
-    sheetsTitle: 'SUCN Network Subnetting & Crimping Testing Log',
+    title: 'Computer Hardware Components',
+    duration: '6 Hours',
+    objective: 'Identify, inspect, and test internal and external computer hardware components including CPU, RAM, motherboards, and storage drives.',
+    content: 'Detailed study of CPU sockets, motherboard form factors (ATX, Micro-ATX), RAM types (DDR3/DDR4/DDR5), and NVMe vs SSD vs HDD storage.',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    activity: 'List motherboard specifications and compatibility check for a target CPU.',
+    quiz: 'What is the difference between volatile and non-volatile memory?',
     classroomLink: ''
   },
   {
     id: 3,
-    code: 'SUCS',
-    title: 'Setting Up Computer Servers (SUCS)',
-    duration: '2 Weeks • 70 Hours',
-    description: 'Configure Windows Server / Linux network services including DHCP, DNS, Active Directory Domain Services (ADDS), and File Sharing.',
-    videoUrl: 'https://www.youtube.com/embed/3Q9X7vFjXU4', // <- Change to your Module 3 (SUCS) video link
-    videoTitle: 'COC 3: Setting Up Computer Servers (SUCS) - Windows Server & ADDS',
-    sheetsTitle: 'SUCS Server Roles & Client Configuration Assessment',
+    title: 'Occupational Health and Safety (OHS)',
+    duration: '4 Hours',
+    objective: 'Apply OHS policies and procedures in computer laboratory environments, including ESD protection and ergonomic standards.',
+    content: 'Proper grounding techniques, anti-static wrist straps, mat usage, handling hazardous materials, and emergency response protocols.',
+    videoUrl: 'https://www.youtube.com/embed/3Q9X7vFjXU4',
+    activity: 'Draft an OHS safety checklist for an IT workstation setup.',
+    quiz: 'Why is an anti-static wrist strap critical when assembling a PC?',
     classroomLink: ''
   },
   {
     id: 4,
-    code: 'MRCSN',
-    title: 'Maintaining and Repairing Computer Systems and Networks (MRCSN)',
-    duration: '2 Weeks • 70 Hours',
-    description: 'Diagnose hardware faults, perform system backups, recover crashed operating systems, and implement preventive maintenance procedures.',
-    videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA', // <- Change to your Module 4 (MRCSN) video link
-    videoTitle: 'COC 4: Maintaining and Repairing Computer Systems and Networks',
-    sheetsTitle: 'MRCSN Hardware Fault Diagnostics & Repair Logbook',
+    title: 'Computer Assembly and Disassembly',
+    duration: '10 Hours',
+    objective: 'Safely assemble and disassemble a complete desktop computer system following manufacturer specifications and OHS standards.',
+    content: 'Step-by-step motherboard mounting, CPU installation, thermal paste application, heatsink fan mounting, PSU wiring, and front panel headers.',
+    videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA',
+    activity: 'Perform physical assembly and cable management on a training PC rig.',
+    quiz: 'What is the correct pin orientation for power switch front panel connectors?',
+    classroomLink: ''
+  },
+  {
+    id: 5,
+    title: 'BIOS/UEFI Configuration',
+    duration: '6 Hours',
+    objective: 'Navigate and configure BIOS/UEFI firmware settings, boot priorities, hardware monitoring, and security passwords.',
+    content: 'Accessing BIOS via hotkeys, configuring boot order for USB installation media, enabling virtualization (Intel VT-x / AMD-V), and setting supervisor passwords.',
+    videoUrl: 'https://www.youtube.com/embed/W5kCg2dfnFk',
+    activity: 'Configure boot sequence and secure boot options in the BIOS utility.',
+    quiz: 'How do you reset a forgotten BIOS password on a desktop motherboard?',
+    classroomLink: ''
+  },
+  {
+    id: 6,
+    title: 'Operating System Installation',
+    duration: '10 Hours',
+    objective: 'Install modern operating systems (Windows 10/11 or Linux Ubuntu) from bootable USB installation media.',
+    content: 'Creating bootable media using Rufus, partition formatting (GPT vs MBR), disk partitioning strategies, and clean OS installation steps.',
+    videoUrl: 'https://www.youtube.com/embed/5mY7y_x4ZlQ',
+    activity: 'Execute a clean installation of Windows 11 on a formatted partition.',
+    quiz: 'What partition style is required for UEFI boot mode with drives over 2TB?',
+    classroomLink: ''
+  },
+  {
+    id: 7,
+    title: 'Device Drivers Installation',
+    duration: '6 Hours',
+    objective: 'Install, update, and troubleshoot hardware device drivers to ensure full system functionality and optimal performance.',
+    content: 'Using Device Manager to identify missing drivers (Unknown Devices), installing chipset, graphics, audio, and network interface card (NIC) drivers.',
+    videoUrl: 'https://www.youtube.com/embed/kUMe1FH4CHE',
+    activity: 'Verify all hardware drivers are installed without yellow warning triangles in Device Manager.',
+    quiz: 'Where can you check if a hardware driver failed to load correctly?',
+    classroomLink: ''
+  },
+  {
+    id: 8,
+    title: 'Application Software Installation',
+    duration: '6 Hours',
+    objective: 'Install and configure productivity suites, antivirus software, web browsers, and utility applications according to user requirements.',
+    content: 'Installing Microsoft Office / LibreOffice, antivirus packages, PDF readers, archiving tools, and managing user startup programs.',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    activity: 'Install standard productivity tools and verify license activation status.',
+    quiz: 'What is the purpose of installing a reputable anti-malware software?',
+    classroomLink: ''
+  },
+  {
+    id: 9,
+    title: 'Computer Configuration',
+    duration: '6 Hours',
+    objective: 'Configure operating system settings, user accounts, power options, network sharing, and system updates.',
+    content: 'Setting up local user accounts (Administrator vs Standard), configuring Windows Update, screen resolution, and regional time zones.',
+    videoUrl: 'https://www.youtube.com/embed/3Q9X7vFjXU4',
+    activity: 'Create custom user accounts and adjust system power performance profiles.',
+    quiz: 'What privilege level is required to install new system software?',
+    classroomLink: ''
+  },
+  {
+    id: 10,
+    title: 'Network Configuration Basics',
+    duration: '6 Hours',
+    objective: 'Configure TCP/IPv4 network settings, static and dynamic IP addressing, DNS servers, and basic local connectivity.',
+    content: 'Understanding IP addresses, subnet masks, default gateways, ping command testing, and verifying local network card connection status.',
+    videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA',
+    activity: 'Assign a static IP address and test connectivity using the ping command.',
+    quiz: 'What command-line tool tests network reachability to another IP address?',
+    classroomLink: ''
+  },
+  {
+    id: 11,
+    title: 'Testing and Troubleshooting',
+    duration: '8 Hours',
+    objective: 'Diagnose and resolve common hardware and software faults encountered during computer setup and configuration.',
+    content: 'POST beep code analysis, blue screen (BSOD) troubleshooting, RAM testing with MemTest, and peripheral connectivity checks.',
+    videoUrl: 'https://www.youtube.com/embed/W5kCg2dfnFk',
+    activity: 'Simulate and resolve a RAM seating error and boot failure scenario.',
+    quiz: 'What do continuous short beeps during POST typically indicate?',
+    classroomLink: ''
+  },
+  {
+    id: 12,
+    title: 'Preventive Maintenance',
+    duration: '4 Hours',
+    objective: 'Perform scheduled preventive maintenance tasks to extend hardware lifespan and maintain system stability.',
+    content: 'Dust cleaning using compressed air, checking cooling fan health, disk cleanup, defragmentation, and updating system definitions.',
+    videoUrl: 'https://www.youtube.com/embed/5mY7y_x4ZlQ',
+    activity: 'Execute a digital disk cleanup and defragmentation task routine.',
+    quiz: 'How often should physical dust cleaning be performed on office workstations?',
+    classroomLink: ''
+  },
+  {
+    id: 13,
+    title: 'Documentation and Work Completion',
+    duration: '4 Hours',
+    objective: 'Complete service reports, inventory logs, and customer turnover documentation adhering to professional standards.',
+    content: 'Recording serial numbers, software licenses, maintenance logs, and securing customer sign-off upon job completion.',
+    videoUrl: 'https://www.youtube.com/embed/kUMe1FH4CHE',
+    activity: 'Fill out a standard IT Technical Service Report Form.',
+    quiz: 'Why is maintaining an accurate hardware inventory log important?',
+    classroomLink: ''
+  },
+  {
+    id: 14,
+    title: 'COC 1 Practical Assessment & Performance Tasks',
+    duration: '10 Hours',
+    objective: 'Demonstrate complete mastery of COC 1 competencies through timed practical assembly, OS installation, and troubleshooting tasks.',
+    content: 'Comprehensive performance evaluation covering hardware assembly, BIOS setup, OS installation, driver configuration, and customer turnover.',
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    activity: 'Complete the timed practical demonstration rubric for TESDA CSS NC II certification.',
+    quiz: 'Submit final performance checklist and practical competency log.',
     classroomLink: ''
   }
 ];
@@ -91,8 +201,8 @@ export function App() {
   // Active Classroom / Workspace state
   const [isClassroomOpen, setIsClassroomOpen] = useState(false);
   const [selectedActiveTrack, setSelectedActiveTrack] = useState<Track | null>(null);
-  const [activeModuleIndex, setActiveModuleIndex] = useState(0);
-  const [modulesData, setModulesData] = useState(INITIAL_TESDA_MODULES);
+  const [activeLessonIndex, setActiveLessonIndex] = useState(0);
+  const [lessonsData, setLessonsData] = useState(COC1_LESSONS);
   const [tempLinkInput, setTempLinkInput] = useState('');
   const [linkSavedMsg, setLinkSavedMsg] = useState(false);
 
@@ -132,30 +242,29 @@ export function App() {
     setAuthModalOpen(true);
   };
 
- const handleEnrollTrack = (track: Track) => {
-  const isFree = (track.price || 49) === 0 || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2;
-  
-  // Require login/signup if user is not authenticated
-  if (isFree && !currentUser) {
-    handleOpenAuth('signup', '', track.id);
-    return;
-  }
+  const handleEnrollTrack = (track: Track) => {
+    const isFree = (track.price || 49) === 0 || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2;
+    
+    if (isFree && !currentUser) {
+      handleOpenAuth('signup', '', track.id);
+      return;
+    }
 
-  if (isFree) {
-    setSelectedActiveTrack(track);
-    setActiveModuleIndex(0);
-    setTempLinkInput(INITIAL_TESDA_MODULES[0].classroomLink);
-    setIsClassroomOpen(true);
-  } else {
-    setCheckoutTrack(track);
-    setCheckoutModalOpen(true);
-  }
-};
+    if (isFree) {
+      setSelectedActiveTrack(track);
+      setActiveLessonIndex(0);
+      setTempLinkInput(COC1_LESSONS[0].classroomLink);
+      setIsClassroomOpen(true);
+    } else {
+      setCheckoutTrack(track);
+      setCheckoutModalOpen(true);
+    }
+  };
 
   const handleSuccessEnroll = (track: Track) => {
     setSelectedActiveTrack(track);
-    setActiveModuleIndex(0);
-    setTempLinkInput(INITIAL_TESDA_MODULES[0].classroomLink);
+    setActiveLessonIndex(0);
+    setTempLinkInput(COC1_LESSONS[0].classroomLink);
     setIsClassroomOpen(true);
   };
 
@@ -176,13 +285,13 @@ export function App() {
     }
   };
 
-  const currentMod = modulesData[activeModuleIndex] || modulesData[0];
+  const currentLesson = lessonsData[activeLessonIndex] || lessonsData[0];
 
   const handleSaveClassroomLink = (e: React.FormEvent) => {
     e.preventDefault();
-    const updated = [...modulesData];
-    updated[activeModuleIndex].classroomLink = tempLinkInput;
-    setModulesData(updated);
+    const updated = [...lessonsData];
+    updated[activeLessonIndex].classroomLink = tempLinkInput;
+    setLessonsData(updated);
     setLinkSavedMsg(true);
     setTimeout(() => setLinkSavedMsg(false), 2500);
   };
@@ -301,13 +410,13 @@ export function App() {
         onClose={() => setApplyTenantOpen(false)}
       />
 
-      {/* Fully Interactive Classroom Workspace View with Separate COC Videos */}
+      {/* Fully Interactive COC 1 LMS Workspace View */}
       {isClassroomOpen && selectedActiveTrack && (
         <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col animate-in fade-in duration-200">
           <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between text-white shrink-0">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                Active TESDA CSS NC II Workspace • Official Training Regulations
+                COC 1 LMS Ready Course • 14 Comprehensive Lessons
               </span>
               <h2 className="text-base sm:text-lg font-black mt-0.5">{selectedActiveTrack.title}</h2>
             </div>
@@ -332,24 +441,24 @@ export function App() {
                     ✓
                   </div>
                   <div>
-                    <h4 className="font-black text-sm text-emerald-300">Naka-enroll na sa TESDA CSS NC II Masterclass!</h4>
-                    <p className="text-xs text-slate-300">Piliin ang bawat COC module sa kanan upang panoorin ang tukoy na video lesson nito.</p>
+                    <h4 className="font-black text-sm text-emerald-300">COC 1 LMS Course Active!</h4>
+                    <p className="text-xs text-slate-300">Piliin ang alinman sa 14 na aralin sa kanan para sa video lectures, hands-on activities, quizzes, at Google Classroom links.</p>
                   </div>
                 </div>
                 <div className="hidden sm:block text-right text-xs text-emerald-400 font-mono">
-                  Status: 100% Free Lifetime Access
+                  Lesson {activeLessonIndex + 1} of 14
                 </div>
               </div>
 
-              {/* Main Grid: Video/Content on Left, Clickable Modules on Right */}
+              {/* Main Grid: Video/Content on Left, 14 Lessons on Right */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* Left 2 Cols: Active Video, Activity Sheets & Google Classroom Link Attacher */}
+                {/* Left 2 Cols: Video, Objectives, Activities & Google Classroom Link Attacher */}
                 <div className="lg:col-span-2 space-y-4">
                   <div className="aspect-video w-full rounded-2xl overflow-hidden border border-slate-800 bg-black shadow-2xl">
                     <iframe
-                      src={currentMod.videoUrl}
-                      title={currentMod.videoTitle}
+                      src={currentLesson.videoUrl}
+                      title={currentLesson.title}
                       className="w-full h-full border-0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
@@ -359,47 +468,46 @@ export function App() {
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <span className="px-3 py-1 bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded-lg text-xs font-black uppercase">
-                        {currentMod.code} • Certificate of Competency {currentMod.id} of 4
+                        Lesson {currentLesson.id} of 14 • {currentLesson.duration}
                       </span>
-                      <span className="text-xs text-slate-400 font-mono">{currentMod.duration}</span>
                     </div>
 
-                    <h3 className="text-xl font-black text-white">{currentMod.title}</h3>
-                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                      {currentMod.description}
-                    </p>
+                    <h3 className="text-xl font-black text-white">{currentLesson.title}</h3>
+                    
+                    <div className="space-y-2 text-xs">
+                      <p className="text-emerald-300 font-bold">🎯 Learning Objective:</p>
+                      <p className="text-slate-300 leading-relaxed">{currentLesson.objective}</p>
+                    </div>
 
-                    {/* Activity Sheets Box */}
-                    <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/80 flex items-center justify-between gap-4 flex-wrap">
-                      <div>
-                        <span className="text-[11px] text-amber-400 block font-bold uppercase tracking-wider">📄 Aligned Activity Sheets & Rubric:</span>
-                        <span className="text-xs font-bold text-white">{currentMod.sheetsTitle}</span>
+                    <div className="space-y-2 text-xs">
+                      <p className="text-blue-300 font-bold">📖 Lesson Content Overview:</p>
+                      <p className="text-slate-300 leading-relaxed">{currentLesson.content}</p>
+                    </div>
+
+                    {/* Hands-on Activity & Quiz */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                      <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 space-y-1">
+                        <span className="text-[11px] font-bold text-amber-400">🛠️ Hands-on Activity:</span>
+                        <p className="text-xs text-slate-200">{currentLesson.activity}</p>
                       </div>
-                      <a
-                        href="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/copy"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-colors shadow-md cursor-pointer"
-                      >
-                        <span>📥 Download / Open Activity Worksheet</span>
-                      </a>
+                      <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 space-y-1">
+                        <span className="text-[11px] font-bold text-purple-400">📝 Lesson Quiz / Task:</span>
+                        <p className="text-xs text-slate-200">{currentLesson.quiz}</p>
+                      </div>
                     </div>
 
-                    {/* Google Classroom Link Attacher Feature */}
-                    <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-500/30 space-y-3">
+                    {/* Google Classroom Link Attacher */}
+                    <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-500/30 space-y-3 mt-4">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-blue-300 flex items-center gap-1.5">
                           <span>🔗 Google Classroom Lesson Link Attacher</span>
                         </span>
                         {linkSavedMsg && (
                           <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
-                            ✓ Link Saved Successfully!
+                            ✓ Link Saved!
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-400 leading-relaxed">
-                        Attach your official Google Classroom assignment link for this specific COC module so students can submit directly.
-                      </p>
                       <form onSubmit={handleSaveClassroomLink} className="flex gap-2">
                         <input
                           type="url"
@@ -415,15 +523,15 @@ export function App() {
                           Save Link
                         </button>
                       </form>
-                      {currentMod.classroomLink && (
+                      {currentLesson.classroomLink && (
                         <div className="pt-1">
                           <a
-                            href={currentMod.classroomLink}
+                            href={currentLesson.classroomLink}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs font-bold text-cyan-400 hover:underline inline-flex items-center gap-1"
                           >
-                            🚀 Open Attached Google Classroom Lesson ↗
+                            🚀 Open Attached Google Classroom Assignment ↗
                           </a>
                         </div>
                       )}
@@ -432,24 +540,24 @@ export function App() {
                   </div>
                 </div>
 
-                {/* Right Col: Fully Clickable Modules List */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 h-fit">
-                  <h4 className="font-black text-sm text-white uppercase tracking-wider border-b border-slate-800 pb-3 flex items-center justify-between">
-                    <span>TESDA Core Modules (COC)</span>
-                    <span className="text-xs font-normal text-emerald-400">4 Videos</span>
+                {/* Right Col: 14 Clickable Lessons Directory */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 h-fit max-h-[75vh] overflow-y-auto">
+                  <h4 className="font-black text-sm text-white uppercase tracking-wider border-b border-slate-800 pb-3 flex items-center justify-between sticky top-0 bg-slate-900 z-10">
+                    <span>COC 1 Syllabus</span>
+                    <span className="text-xs font-normal text-emerald-400">14 Lessons</span>
                   </h4>
                   
-                  <div className="space-y-2.5">
-                    {modulesData.map((mod, idx) => {
-                      const isActive = activeModuleIndex === idx;
+                  <div className="space-y-2">
+                    {lessonsData.map((les, idx) => {
+                      const isActive = activeLessonIndex === idx;
                       return (
                         <button
-                          key={mod.id}
+                          key={les.id}
                           onClick={() => {
-                            setActiveModuleIndex(idx);
-                            setTempLinkInput(mod.classroomLink);
+                            setActiveLessonIndex(idx);
+                            setTempLinkInput(les.classroomLink);
                           }}
-                          className={`w-full text-left p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-1 ${
+                          className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer flex flex-col gap-1 ${
                             isActive
                               ? 'bg-orange-600/20 border-orange-500 text-white shadow-md'
                               : 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-800 text-slate-300'
@@ -459,15 +567,12 @@ export function App() {
                             <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
                               isActive ? 'bg-orange-500 text-white' : 'bg-slate-700 text-slate-300'
                             }`}>
-                              {mod.code}
+                              Lesson {les.id}
                             </span>
-                            <span className="text-[10px] font-mono text-slate-400">{mod.duration.split('•')[0]}</span>
+                            <span className="text-[10px] font-mono text-slate-400">{les.duration}</span>
                           </div>
-                          <p className="font-bold text-xs mt-1 leading-snug">{mod.title}</p>
-                          <div className="flex items-center justify-between text-[10px] mt-0.5">
-                            <span className="text-emerald-400">✓ Activity Sheets</span>
-                            {mod.classroomLink && <span className="text-cyan-300 font-bold">🔗 Linked</span>}
-                          </div>
+                          <p className="font-bold text-xs mt-0.5 leading-snug">{les.title}</p>
+                          {les.classroomLink && <span className="text-[10px] text-cyan-300 font-bold">🔗 Linked</span>}
                         </button>
                       );
                     })}
