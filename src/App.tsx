@@ -46,7 +46,6 @@ export function App() {
   const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string } | null>(null);
 
   useEffect(() => {
-    // Check initial user
     getCurrentUser().then((user) => {
       if (user) {
         setCurrentUser({
@@ -56,7 +55,6 @@ export function App() {
       }
     });
 
-    // Listen to Supabase auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setCurrentUser({
@@ -84,7 +82,6 @@ export function App() {
     const isFree = (track.price || 49) === 0 || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2;
     
     if (isFree) {
-      // Directly launch classroom workspace
       setSelectedActiveTrack(track);
       setIsClassroomOpen(true);
     } else {
@@ -120,7 +117,7 @@ export function App() {
       {/* Top Banner */}
       <TopAnnouncement onOpenAuth={handleOpenAuth} />
 
-      {/* Sticky Header with perspective switcher and Course Studio trigger */}
+      {/* Sticky Header */}
       <Navbar
         currentPerspective={perspective}
         onTogglePerspective={setPerspective}
@@ -134,18 +131,13 @@ export function App() {
 
       {/* Main Content Sections */}
       <main className="flex-1">
-        {/* 1. Hero with high-converting capture & tabbed preview */}
         <HeroSection
           perspective={perspective}
           onOpenAuth={handleOpenAuth}
         />
-
-        {/* 2. All-in-One 6-Tool Replacement Matrix */}
         <AllInOneGrid
           onOpenAuth={handleOpenAuth}
         />
-
-        {/* 3. Multi-Disciplinary Teaching Tracks Directory (Live Supabase) */}
         <TeachingTracksSection
           onSelectTrack={(track) => setSelectedTrack(track)}
           onEnroll={handleEnrollTrack}
@@ -153,45 +145,31 @@ export function App() {
           onOpenCourseBuilder={() => setCourseBuilderOpen(true)}
           refreshTrigger={refreshTrigger}
         />
-
-        {/* 4. Verified Community Developer Tenants & Creator Storefronts */}
         <CommunityDevelopersSection
           onSelectDeveloper={handleSelectDeveloper}
           onEnrollTrack={handleEnrollTrack}
           onViewSyllabus={handleViewSyllabus}
           onOpenApplyTenant={() => setApplyTenantOpen(true)}
         />
-
-        {/* 5. Interactive Community Hub Simulation (Live Supabase) */}
         <CommunityHubSection
           onOpenAuth={handleOpenAuth}
         />
-
-        {/* 5. Feature Deep Dives (Course Studio, Live Webinars, Credentials) */}
         <FeatureDeepDives
           onOpenAuth={handleOpenAuth}
         />
-
-        {/* 6. Transparent 4-Tier Pricing Grid */}
         <PricingSection
           onOpenAuth={handleOpenAuth}
         />
-
-        {/* 7. Success Stories & Proof Metrics */}
         <TestimonialsSection />
-
-        {/* 8. Frequently Asked Questions */}
         <FAQSection
           onOpenAuth={handleOpenAuth}
         />
-
-        {/* 9. Final High-Converting Bottom Banner */}
         <FinalCTA
           onOpenAuth={handleOpenAuth}
         />
       </main>
 
-      {/* Comprehensive Multi-Column Footer */}
+      {/* Footer */}
       <Footer
         onOpenAuth={handleOpenAuth}
       />
@@ -212,7 +190,6 @@ export function App() {
         onEnroll={handleEnrollTrack}
       />
 
-      {/* Paid Checkout Modal */}
       <CheckoutModal
         track={checkoutTrack}
         isOpen={checkoutModalOpen}
@@ -221,7 +198,6 @@ export function App() {
         userEmail={currentUser?.email}
       />
 
-      {/* Course Creator Studio Modal */}
       <CourseBuilderModal
         isOpen={courseBuilderOpen}
         onClose={() => setCourseBuilderOpen(false)}
@@ -229,7 +205,6 @@ export function App() {
         userEmail={currentUser?.email}
       />
 
-      {/* Teacher Account Setup Modal */}
       <TeacherSetupModal
         isOpen={teacherSetupOpen}
         onClose={() => setTeacherSetupOpen(false)}
@@ -238,7 +213,6 @@ export function App() {
         }}
       />
 
-      {/* Developer Tenant Profile / Storefront Modal */}
       <DeveloperProfileModal
         developer={selectedDeveloper}
         isOpen={developerProfileOpen}
@@ -247,13 +221,12 @@ export function App() {
         onViewSyllabus={handleViewSyllabus}
       />
 
-      {/* Apply as Creator Tenant Onboarding Modal */}
       <ApplyTenantModal
         isOpen={applyTenantOpen}
         onClose={() => setApplyTenantOpen(false)}
       />
 
-  {/* Classroom Workspace View */}
+      {/* Classroom Workspace View */}
       {isClassroomOpen && selectedActiveTrack && (
         <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col animate-in fade-in duration-200">
           <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between text-white shrink-0">
@@ -356,4 +329,9 @@ export function App() {
           </div>
         </div>
       )}
+
+    </div>
+  );
+}
+
 export default App;
