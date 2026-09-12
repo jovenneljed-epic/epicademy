@@ -253,7 +253,7 @@ export function App() {
         onClose={() => setApplyTenantOpen(false)}
       />
 
-      {/* Classroom Workspace View */}
+  {/* Classroom Workspace View */}
       {isClassroomOpen && selectedActiveTrack && (
         <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col animate-in fade-in duration-200">
           <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between text-white shrink-0">
@@ -275,7 +275,7 @@ export function App() {
           </div>
 
           <div className="flex-1 bg-slate-950 overflow-y-auto p-6 text-white flex flex-col items-center">
-            <div className="max-w-4xl w-full space-y-6">
+            <div className="max-w-5xl w-full space-y-6">
               
               {/* Success Banner */}
               <div className="bg-emerald-950/40 border border-emerald-500/30 p-4 rounded-2xl flex items-center gap-4">
@@ -284,43 +284,76 @@ export function App() {
                 </div>
                 <div>
                   <h4 className="font-black text-sm text-emerald-300">Tagumpay ang iyong pag-enroll!</h4>
-                  <p className="text-xs text-slate-300">Maligayang pagdating sa iyong opisyal na workspace. Piliin ang aralin sa ibaba upang simulan ang panonood.</p>
+                  <p className="text-xs text-slate-300">Buong access sa lahat ng modyul, video masterclasses, at Google Sheets rubrics ay handa na.</p>
                 </div>
               </div>
 
-              {/* Video Player Box */}
-              <div className="aspect-video w-full rounded-2xl overflow-hidden border border-slate-800 bg-black shadow-2xl">
-                <iframe
-                  src="https://www.youtube.com/embed/IHXzkOO_n-I"
-                  title="TESDA CSS NC II Masterclass"
-                  className="w-full h-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
+              {/* Main Grid: Video/Content on Left, Curriculum Modules on Right */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* Left 2 Cols: Active Video & Lesson Content */}
+                <div className="lg:col-span-2 space-y-4">
+                  <div className="aspect-video w-full rounded-2xl overflow-hidden border border-slate-800 bg-black shadow-2xl">
+                    <iframe
+                      src="https://www.youtube.com/embed/kUMe1FH4CHE"
+                      title="TESDA CSS NC II Masterclass Lecture"
+                      className="w-full h-full border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
 
-              {/* Lesson Overview Card */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-                <h3 className="text-lg font-black text-white">Lesson 1.1: OHS Policies, 5S Principles & PPE</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Maunawaan at maipatupad ang OHS standards, 5S of Good Housekeeping, tamang paggamit ng Anti-Static Wrist Strap, at paghahanda ng computer toolkit bago magbukas ng computer case.
-                </p>
-                <div className="flex items-center gap-3 pt-2">
-                  <span className="px-3 py-1.5 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-bold">
-                    📄 Google Sheets Rubric Included
-                  </span>
-                  <span className="px-3 py-1.5 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold">
-                    ⭐ Certified Training Module
-                  </span>
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3">
+                    <div className="flex items-center gap-2 text-xs font-bold text-orange-400">
+                      <span>Module 1: Computer Hardware & OHS Standards</span>
+                      <span>•</span>
+                      <span>45 mins</span>
+                    </div>
+                    <h3 className="text-xl font-black text-white">Lesson 1.1: OHS Policies, 5S Principles, PPE & ESD Protection</h3>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      Maunawaan at maipatupad ang OHS standards, 5S of Good Housekeeping, tamang paggamit ng Anti-Static Wrist Strap, at paghahanda ng computer toolkit bago magbukas ng computer case.
+                    </p>
+                    <div className="pt-3 flex flex-wrap items-center gap-3">
+                      <a
+                        href="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/copy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer"
+                      >
+                        <span>📊 Open Google Sheets Assignment</span>
+                      </a>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Right Col: Course Modules List */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
+                  <h4 className="font-black text-sm text-white uppercase tracking-wider border-b border-slate-800 pb-3">
+                    Curriculum Modules (8 Lessons)
+                  </h4>
+                  <div className="space-y-3 text-xs">
+                    <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700 space-y-1">
+                      <span className="text-[10px] font-bold text-orange-400 uppercase">Module 1</span>
+                      <p className="font-bold text-white">Computer Systems Hardware Assembly</p>
+                      <span className="text-[10px] text-slate-400">4 Lessons • 35 Mins</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1 hover:bg-slate-800/80 transition-colors cursor-pointer">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">Module 2</span>
+                      <p className="font-bold text-slate-200">Network Cabling & Switch Configuration</p>
+                      <span className="text-[10px] text-slate-400">4 Lessons • 45 Mins</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800 space-y-1 hover:bg-slate-800/80 transition-colors cursor-pointer">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">Module 3</span>
+                      <p className="font-bold text-slate-200">OS Installation & Driver Troubleshooting</p>
+                      <span className="text-[10px] text-slate-400">4 Lessons • 50 Mins</span>
+                    </div>
+                  </div>
+                </div>
+
               </div>
 
             </div>
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
 export default App;
