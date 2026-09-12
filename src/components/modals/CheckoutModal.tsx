@@ -13,7 +13,6 @@ import {
   Check,
   Smartphone,
   Building2,
-  QrCode,
   Copy,
   Wallet
 } from 'lucide-react';
@@ -45,13 +44,12 @@ export const CheckoutModal = ({
   const originalPhp = getPhpPrice(originalUsd);
   const discountPercent = Math.round(((originalPhp - basePhp) / originalPhp) * 100);
 
-  const bumpPhp = 999; // ₱999 PHP for 1-on-1 mentor review
+  const bumpPhp = 999; 
   const [hasOrderBump, setHasOrderBump] = useState(false);
   const [email, setEmail] = useState(userEmail || '');
   const [fullName, setFullName] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PhilippinePaymentMethod>('gcash');
   const [gcashMobile, setGcashMobile] = useState('');
-  const [gotymeRef, setGotymeRef] = useState('');
   const [mayaMobile, setMayaMobile] = useState('');
   const [copiedAccount, setCopiedAccount] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
