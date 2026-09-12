@@ -22,18 +22,18 @@ import { ApplyTenantModal } from './components/modals/ApplyTenantModal';
 import { getCurrentUser, supabase } from './lib/supabaseClient';
 import type { Track, CommunityDeveloper } from './types';
 
-// TESDA CSS NC II Curriculum Data with Working Videos & Google Sheets Rubrics
-const TESDA_CSS_MODULES = [
+// TESDA CSS NC II Core Competencies with Embed-Safe Videos & Custom Classroom Links
+const INITIAL_TESDA_MODULES = [
   {
     id: 1,
     code: 'ICCS',
     title: 'Installing and Configuring Computer Systems (ICCS)',
     duration: '2 Weeks • 70 Hours',
     description: 'Master computer hardware assembly, BIOS/UEFI configuration, device drivers, and OS deployment (Windows 10/11 & Linux).',
-    videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA',
-    videoTitle: 'TESDA CSS NC II: Complete PC Assembly & OS Installation Masterclass',
-    sheetsUrl: 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/copy',
-    sheetsTitle: 'ICCS Hardware Inventory & BIOS Checklist Rubric'
+    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', // Placeholder embed-safe or use standard demo
+    videoTitle: 'TESDA CSS NC II: PC Hardware Assembly & OS Installation Lecture',
+    sheetsTitle: 'ICCS Hardware Inventory & BIOS Checklist Rubric',
+    classroomLink: ''
   },
   {
     id: 2,
@@ -41,10 +41,10 @@ const TESDA_CSS_MODULES = [
     title: 'Setting Up Computer Networks (SUCN)',
     duration: '2 Weeks • 70 Hours',
     description: 'Learn LAN cabling (Straight-through & Cross-over T568A/T568B), crimping, IP addressing, subnetting, and wireless router configuration.',
-    videoUrl: 'https://www.youtube.com/embed/qi_o5YL7Q78',
+    videoUrl: 'https://www.youtube.com/embed/3Q9X7vFjXU4',
     videoTitle: 'TESDA CSS: LAN Cabling, UTP Crimping, and Switch Setup',
-    sheetsUrl: 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/copy',
-    sheetsTitle: 'SUCN Network Subnetting & Crimping Testing Log'
+    sheetsTitle: 'SUCN Network Subnetting & Crimping Testing Log',
+    classroomLink: ''
   },
   {
     id: 3,
@@ -52,10 +52,10 @@ const TESDA_CSS_MODULES = [
     title: 'Setting Up Computer Servers (SUCS)',
     duration: '2 Weeks • 70 Hours',
     description: 'Configure Windows Server / Linux network services including DHCP, DNS, Active Directory Domain Services (ADDS), and File Sharing.',
-    videoUrl: 'https://www.youtube.com/embed/W5kCg2dfnFk',
+    videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA',
     videoTitle: 'TESDA CSS: Setting Up Windows Server & Active Directory',
-    sheetsUrl: 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/copy',
-    sheetsTitle: 'SUCS Server Roles & Client Configuration Assessment'
+    sheetsTitle: 'SUCS Server Roles & Client Configuration Assessment',
+    classroomLink: ''
   },
   {
     id: 4,
@@ -63,10 +63,10 @@ const TESDA_CSS_MODULES = [
     title: 'Maintaining and Repairing Computer Systems and Networks (MRCSN)',
     duration: '2 Weeks • 70 Hours',
     description: 'Diagnose hardware faults, perform system backups, recover crashed operating systems, and implement preventive maintenance procedures.',
-    videoUrl: 'https://www.youtube.com/embed/5mY7y_x4ZlQ',
+    videoUrl: 'https://www.youtube.com/embed/W5kCg2dfnFk',
     videoTitle: 'TESDA CSS: Troubleshooting, Diagnostics & Preventive Maintenance',
-    sheetsUrl: 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/copy',
-    sheetsTitle: 'MRCSN Hardware Fault Diagnostics & Repair Logbook'
+    sheetsTitle: 'MRCSN Hardware Fault Diagnostics & Repair Logbook',
+    classroomLink: ''
   }
 ];
 
@@ -90,6 +90,9 @@ export function App() {
   const [isClassroomOpen, setIsClassroomOpen] = useState(false);
   const [selectedActiveTrack, setSelectedActiveTrack] = useState<Track | null>(null);
   const [activeModuleIndex, setActiveModuleIndex] = useState(0);
+  const [modulesData, setModulesData] = useState(INITIAL_TESDA_MODULES);
+  const [tempLinkInput, setTempLinkInput] = useState('');
+  const [linkSavedMsg, setLinkSavedMsg] = useState(false);
 
   // Active Supabase user state
   const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string } | null>(null);
@@ -133,6 +136,7 @@ export function App() {
     if (isFree) {
       setSelectedActiveTrack(track);
       setActiveModuleIndex(0);
+      setTempLinkInput(INITIAL_TESDA_MODULES[0].classroomLink);
       setIsClassroomOpen(true);
     } else {
       setCheckoutTrack(track);
@@ -143,6 +147,7 @@ export function App() {
   const handleSuccessEnroll = (track: Track) => {
     setSelectedActiveTrack(track);
     setActiveModuleIndex(0);
+    setTempLinkInput(INITIAL_TESDA_MODULES[0].classroomLink);
     setIsClassroomOpen(true);
   };
 
@@ -163,7 +168,16 @@ export function App() {
     }
   };
 
-  const currentMod = TESDA_CSS_MODULES[activeModuleIndex] || TESDA_CSS_MODULES[0];
+  const currentMod = modulesData[activeModuleIndex] || modulesData[0];
+
+  const handleSaveClassroomLink = (e: React.FormEvent) => {
+    e.preventDefault();
+    const updated = [...modulesData];
+    updated[activeModuleIndex].classroomLink = tempLinkInput;
+    setModulesData(updated);
+    setLinkSavedMsg(true);
+    setTimeout(() => setLinkSavedMsg(false), 2500);
+  };
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white">
@@ -279,7 +293,7 @@ export function App() {
         onClose={() => setApplyTenantOpen(false)}
       />
 
-      {/* Fully Interactive Classroom Workspace View */}
+      {/* Fully Interactive Classroom Workspace View with Google Classroom Link Attacher */}
       {isClassroomOpen && selectedActiveTrack && (
         <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col animate-in fade-in duration-200">
           <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between text-white shrink-0">
@@ -311,7 +325,7 @@ export function App() {
                   </div>
                   <div>
                     <h4 className="font-black text-sm text-emerald-300">Naka-enroll na sa TESDA CSS NC II Masterclass!</h4>
-                    <p className="text-xs text-slate-300">Piliin ang alinman sa 4 Core Competency Modules sa kanan para i-load ang tamang video at Google Sheets rubric.</p>
+                    <p className="text-xs text-slate-300">Piliin ang alinman sa 4 Core Competency Modules sa kanan para i-load ang tamang video, activity sheets, at Google Classroom link.</p>
                   </div>
                 </div>
                 <div className="hidden sm:block text-right text-xs text-emerald-400 font-mono">
@@ -322,7 +336,7 @@ export function App() {
               {/* Main Grid: Video/Content on Left, Clickable Modules on Right */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* Left 2 Cols: Active Video & Aligned Google Sheets Assignment */}
+                {/* Left 2 Cols: Active Video, Activity Sheets & Google Classroom Link Attacher */}
                 <div className="lg:col-span-2 space-y-4">
                   <div className="aspect-video w-full rounded-2xl overflow-hidden border border-slate-800 bg-black shadow-2xl">
                     <iframe
@@ -347,20 +361,66 @@ export function App() {
                       {currentMod.description}
                     </p>
 
-                    <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4">
+                    {/* Activity Sheets Box */}
+                    <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/80 flex items-center justify-between gap-4 flex-wrap">
                       <div>
-                        <span className="text-[11px] text-slate-400 block font-semibold">Aligned Module Assessment:</span>
-                        <span className="text-xs font-bold text-emerald-400">{currentMod.sheetsTitle}</span>
+                        <span className="text-[11px] text-amber-400 block font-bold uppercase tracking-wider">📄 Aligned Activity Sheets & Rubric:</span>
+                        <span className="text-xs font-bold text-white">{currentMod.sheetsTitle}</span>
                       </div>
                       <a
-                        href={currentMod.sheetsUrl}
+                        href="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/copy"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-colors shadow-lg shadow-emerald-600/20 cursor-pointer"
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-colors shadow-md cursor-pointer"
                       >
-                        <span>📊 Open Aligned Google Sheets Worksheet</span>
+                        <span>📥 Download / Open Activity Worksheet</span>
                       </a>
                     </div>
+
+                    {/* Google Classroom Link Attacher Feature */}
+                    <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-500/30 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-blue-300 flex items-center gap-1.5">
+                          <span>🔗 Google Classroom Lesson Link Attacher</span>
+                        </span>
+                        {linkSavedMsg && (
+                          <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
+                            ✓ Link Saved Successfully!
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Attach your official Google Classroom assignment link for this module so students can submit directly.
+                      </p>
+                      <form onSubmit={handleSaveClassroomLink} className="flex gap-2">
+                        <input
+                          type="url"
+                          placeholder="https://classroom.google.com/c/..."
+                          value={tempLinkInput}
+                          onChange={(e) => setTempLinkInput(e.target.value)}
+                          className="flex-1 px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button
+                          type="submit"
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition-colors cursor-pointer shrink-0"
+                        >
+                          Save Link
+                        </button>
+                      </form>
+                      {currentMod.classroomLink && (
+                        <div className="pt-1">
+                          <a
+                            href={currentMod.classroomLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-bold text-cyan-400 hover:underline inline-flex items-center gap-1"
+                          >
+                            🚀 Open Attached Google Classroom Lesson ↗
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
                   </div>
                 </div>
 
@@ -372,12 +432,15 @@ export function App() {
                   </h4>
                   
                   <div className="space-y-2.5">
-                    {TESDA_CSS_MODULES.map((mod, idx) => {
+                    {modulesData.map((mod, idx) => {
                       const isActive = activeModuleIndex === idx;
                       return (
                         <button
                           key={mod.id}
-                          onClick={() => setActiveModuleIndex(idx)}
+                          onClick={() => {
+                            setActiveModuleIndex(idx);
+                            setTempLinkInput(mod.classroomLink);
+                          }}
                           className={`w-full text-left p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-1 ${
                             isActive
                               ? 'bg-orange-600/20 border-orange-500 text-white shadow-md'
@@ -393,9 +456,10 @@ export function App() {
                             <span className="text-[10px] font-mono text-slate-400">{mod.duration.split('•')[0]}</span>
                           </div>
                           <p className="font-bold text-xs mt-1 leading-snug">{mod.title}</p>
-                          <span className="text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                            ✓ Aligned Google Sheets Lab
-                          </span>
+                          <div className="flex items-center justify-between text-[10px] mt-0.5">
+                            <span className="text-emerald-400">✓ Activity Sheets</span>
+                            {mod.classroomLink && <span className="text-cyan-300 font-bold">🔗 Linked</span>}
+                          </div>
                         </button>
                       );
                     })}
