@@ -66,4 +66,5 @@ const COC2_LESSONS = [
 // COC 3: SET UP COMPUTER SERVERS (13 Lessons)
 // =========================================================================
 const COC3_LESSONS = [
-  { id: 1, title: 'Introduction to Computer Servers', duration: '4 Hours', objective: 'Understand server fundamentals, server vs workstation, and client-server architecture.', content: 'What is a server? Server vs workstation, types of servers, server roles and functions, client-server architecture.', videoUrl: '
+  { id: 1, title: 'Introduction to Computer Servers', duration: '4 Hours', objective: 'Understand server fundamentals, server vs workstation, and client-server architecture.', content: 'What is a server? Server vs workstation, types of servers, server roles and functions, client-server architecture.', videoUrl: 'https://www.youtube.com/embed/hQic7h6XqKA', activity: 'Compare server hardware specifications against standard desktop PCs.', quiz: 'What is the primary architectural difference between a server and a desktop workstation?', classroomLink: '', progress: 0 },
+  { id: 2, title: 'Server Hardware & RAID Basics', duration: '6 Hours', objective: 'Explore server motherboards, enterprise RAM, server racks, power supplies, and RAID levels.', content: 'Server motherboard, CPU, RAM, storage, RAID basics (RAID 0, 1, 5, 10
