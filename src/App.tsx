@@ -358,14 +358,16 @@ export function App() {
       />
 
       {/* Interactive Modals */}
-      <AuthModal
-        isOpen={authModalOpen}
-        initialMode={authMode}
-        initialEmail={initialEmail}
-        selectedPlanId={selectedPlanId}
-        onClose={() => setAuthModalOpen(false)}
-        onAuthSuccess={(email, role) => setCurrentUser({ email, role })}
-      />
+   <AuthModal
+  isOpen={authModalOpen}
+  initialMode={authMode}
+  initialEmail={initialEmail}
+  selectedPlanId={selectedPlanId}
+  onClose={() => setAuthModalOpen(false)}
+  // --- FIX STARTS HERE ---
+  onAuthSuccess={(email, role) => setCurrentUser({ email, role })}
+  // --- FIX ENDS HERE ---
+/>
 
       <TrackDetailModal
         track={selectedTrack}
