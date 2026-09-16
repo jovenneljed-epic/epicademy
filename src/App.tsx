@@ -315,6 +315,7 @@ export function App() {
         />
         <CommunityHubSection
           onOpenAuth={handleOpenAuth}
+          currentUser={currentUser}
         />
         <FeatureDeepDives
           onOpenAuth={handleOpenAuth}

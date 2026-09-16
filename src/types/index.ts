@@ -110,6 +110,22 @@ export interface CreateTrackInput {
   modules: CreateModuleInput[];
 }
 
+export interface CommunityReply {
+  id: string;
+  postId: string;
+  author: {
+    name: string;
+    role: string;
+    avatar: string;
+    isEducator?: boolean;
+    tierBadge?: string;
+  };
+  content: string;
+  timestamp: string;
+  likes: number;
+  isLiked?: boolean;
+}
+
 export interface CommunityPost {
   id: string;
   author: {
@@ -128,6 +144,9 @@ export interface CommunityPost {
   repliesCount: number;
   isLiked?: boolean;
   tags: string[];
+  replies?: CommunityReply[];
+  isIdea?: boolean;
+  ideaCategory?: string;
 }
 
 export interface PricingTier {
