@@ -491,7 +491,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
               <div className="p-3 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-1 text-xs">
                 <span className="text-[10px] font-bold text-blue-700 uppercase">Saturday • 2:00 PM PHT</span>
                 <p className="font-black text-slate-900">TESDA CSS NC II Practical Lab Q&amp;A</p>
-                <p className="text-slate-600 text-[11px]">Host: Engr. Joven Nel Jed Aviguetero</p>
+                <p className="text-slate-600 text-[11px]">Host: Ronnel M. Aviguetero, CEO and FOUNDER of KEZJED SOLUTIONS</p>
               </div>
               <div className="p-3 bg-emerald-50/50 rounded-2xl border border-emerald-100 space-y-1 text-xs">
                 <span className="text-[10px] font-bold text-emerald-700 uppercase">Sunday • 7:00 PM PHT</span>

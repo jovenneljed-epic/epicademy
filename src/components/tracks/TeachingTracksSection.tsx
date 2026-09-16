@@ -357,7 +357,7 @@ export const TeachingTracksSection = ({
                           Computer Systems Servicing (CSS) NC II Masterclass & Certification Suite
                         </h3>
                         <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-                          Official 2nd Course Bundle designed for TESDA National Certificate II. Covers all 4 Core Competencies (ICCS, SUCN, SUCS, MRCSN), 24 video lessons, job order inspection sheets, and mock institutional assessment rubrics guided by Engr. Joven Nel Jed Aviguetero, LPT, TM1.
+                          Official 2nd Course Bundle designed for TESDA National Certificate II. Covers all 4 Core Competencies (ICCS, SUCN, SUCS, MRCSN), 24 video lessons, job order inspection sheets, and mock institutional assessment rubrics guided by Ronnel M. Aviguetero, CEO and FOUNDER of KEZJED SOLUTIONS.
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-xs">
                           <div className="bg-white/10 rounded-lg p-2 border border-white/10">

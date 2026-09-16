@@ -46,7 +46,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenAuth, perspectiv
             <span className="text-lg">💡</span>
             <div>
               <span className="font-extrabold uppercase tracking-wider block text-[10px] text-amber-900 mb-0.5">
-                A Message of Hope from Mentor Joven Nel Jed:
+                A Message of Hope from Ronnel M. Aviguetero, CEO and FOUNDER of KEZJED SOLUTIONS:
               </span>
               <p className="italic text-amber-900 leading-relaxed">
                 "There is hope for your future. Every line of code you write—no matter how challenging—is preparation for the opportunities ahead."

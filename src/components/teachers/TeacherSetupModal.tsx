@@ -254,7 +254,7 @@ export const TeacherSetupModal = ({
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="e.g. Dr. Marcus Vance"
+                    placeholder="e.g. Ronnel M. Aviguetero"
                     className="w-full px-3.5 py-2 text-xs sm:text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
@@ -314,7 +314,7 @@ export const TeacherSetupModal = ({
                     type="text"
                     value={credentials}
                     onChange={(e) => setCredentials(e.target.value)}
-                    placeholder="e.g. Ph.D. Computer Science (Stanford) • Ex-DeepMind Lead"
+                    placeholder="e.g. CEO and FOUNDER of KEZJED SOLUTIONS • Senior Enterprise Architect"
                     className="w-full px-3.5 py-2 text-xs sm:text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>

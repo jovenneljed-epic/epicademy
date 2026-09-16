@@ -146,7 +146,7 @@ export const FeatureDeepDives: React.FC<FeatureDeepDivesProps> = ({ onOpenAuth }
                 <div className="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center mx-auto mb-2 shadow-lg">
                   <Users className="w-7 h-7" />
                 </div>
-                <p className="text-xs font-bold text-white">Prof. Amara Diallo is presenting</p>
+                <p className="text-xs font-bold text-white">Ronnel M. Aviguetero is presenting</p>
                 <p className="text-[10px] text-slate-400 mt-0.5">86 Students listening • 4 in Breakout Pods</p>
               </div>
 

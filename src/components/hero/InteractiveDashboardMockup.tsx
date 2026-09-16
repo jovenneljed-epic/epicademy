@@ -140,7 +140,7 @@ export const InteractiveDashboardMockup = ({ perspective: _perspective }: Mockup
               <div className="p-3 sm:p-4 flex items-center justify-between border-t border-slate-800">
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-slate-400">
-                    Instructor: <strong className="text-white">Dr. Marcus Vance</strong>
+                    Instructor: <strong className="text-white">Ronnel M. Aviguetero (KEZJED SOLUTIONS)</strong>
                   </span>
                   <span className="hidden sm:inline-block text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded">
                     Track: STEM & AI
@@ -311,7 +311,7 @@ export const InteractiveDashboardMockup = ({ perspective: _perspective }: Mockup
                 <h4 className="font-bold text-white text-sm sm:text-base">
                   Weekly Architecture AMA & Live Code Lab
                 </h4>
-                <p className="text-xs text-slate-400 mt-1">Host: Dr. Marcus Vance • 142 Students Attending</p>
+                <p className="text-xs text-slate-400 mt-1">Host: Ronnel M. Aviguetero (CEO & FOUNDER) • 142 Students Attending</p>
 
                 <div className="absolute bottom-3 flex items-center gap-2">
                   <button 
