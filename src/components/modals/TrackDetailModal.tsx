@@ -22,6 +22,7 @@ import {
 import { fetchTrackModulesAndLessons } from '../../lib/supabaseClient';
 import { HTML_COURSE_DETAILED_MODULES } from '../../data/htmlCourseData';
 import { getZeroToHeroCourse, type DetailedLesson } from '../../data/zeroToHeroCoursesData';
+import { getTenantCourseDetailedModules } from '../../data/tenantCoursesDetailedData';
 import { getPhpPrice } from '../../lib/philippinePayment';
 
 interface TrackDetailModalProps {
@@ -73,6 +74,32 @@ export const TrackDetailModal = ({
       return;
     }
 
+    const tenantDetailed = getTenantCourseDetailedModules(track.id);
+    if (tenantDetailed && tenantDetailed.length > 0) {
+      const mapped = tenantDetailed.map((m, mIdx) => ({
+        id: `mod-${track.id}-${mIdx + 1}`,
+        track_id: track.id,
+        title: m.title,
+        duration: m.duration,
+        lessons: m.lessons.length,
+        topics: m.lessons.map(l => l.title),
+        lessonItems: m.lessons.map((l, lIdx) => ({
+          id: `les-${track.id}-${mIdx + 1}-${lIdx + 1}`,
+          module_id: `mod-${track.id}-${mIdx + 1}`,
+          title: l.title,
+          duration: l.duration,
+          video_url: l.videoUrl,
+          content: l.theoryContent,
+          order_index: lIdx + 1,
+        })),
+      }));
+      setModules(mapped);
+      if (tenantDetailed[0]?.lessons[0]) {
+        setActiveLessonPlan(tenantDetailed[0].lessons[0]);
+      }
+      return;
+    }
+
     if (track.modules && track.modules.length > 0) {
       setModules(track.modules);
       return;
@@ -94,6 +121,18 @@ export const TrackDetailModal = ({
     const zeroCourse = getZeroToHeroCourse(track.id);
     if (zeroCourse) {
       for (const mod of zeroCourse.detailedModules) {
+        for (const les of mod.lessons) {
+          if (les.title.toLowerCase() === lessonTitle.toLowerCase() || les.title.includes(lessonTitle) || lessonTitle.includes(les.title)) {
+            setActiveLessonPlan(les);
+            return;
+          }
+        }
+      }
+    }
+
+    const tenantDetailed = getTenantCourseDetailedModules(track.id);
+    if (tenantDetailed) {
+      for (const mod of tenantDetailed) {
         for (const les of mod.lessons) {
           if (les.title.toLowerCase() === lessonTitle.toLowerCase() || les.title.includes(lessonTitle) || lessonTitle.includes(les.title)) {
             setActiveLessonPlan(les);
@@ -304,19 +343,68 @@ export const TrackDetailModal = ({
                 </pre>
               </div>
 
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50/50 rounded-2xl p-5 border border-amber-200 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Award className="w-5 h-5 text-amber-600" />
-                  <h4 className="font-bold text-sm text-amber-950">
-                    {activeLessonPlan.handsOnActivity.title}
-                  </h4>
+              {activeLessonPlan.handsOnActivity && (
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50/50 rounded-2xl p-5 border border-amber-200 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Award className="w-5 h-5 text-amber-600" />
+                    <h4 className="font-bold text-sm text-amber-950">
+                      {activeLessonPlan.handsOnActivity.title}
+                    </h4>
+                  </div>
+                  {activeLessonPlan.handsOnActivity.instructions && (
+                    <ol className="list-decimal pl-5 text-xs text-amber-900/90 space-y-1">
+                      {activeLessonPlan.handsOnActivity.instructions.map((ins, iIdx) => (
+                        <li key={iIdx}>{ins}</li>
+                      ))}
+                    </ol>
+                  )}
                 </div>
-                <ol className="list-decimal pl-5 text-xs text-amber-900/90 space-y-1">
-                  {activeLessonPlan.handsOnActivity.instructions.map((ins, iIdx) => (
-                    <li key={iIdx}>{ins}</li>
-                  ))}
-                </ol>
-              </div>
+              )}
+
+              {activeLessonPlan.googleSheetsAssignment && (
+                <div className="bg-emerald-50 rounded-2xl p-5 border border-emerald-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+                      <h4 className="font-bold text-sm text-emerald-950">
+                        {activeLessonPlan.googleSheetsAssignment.title}
+                      </h4>
+                    </div>
+                    {activeLessonPlan.googleSheetsAssignment.templateUrl && (
+                      <a
+                        href={activeLessonPlan.googleSheetsAssignment.templateUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition"
+                      >
+                        Open Template
+                      </a>
+                    )}
+                  </div>
+                  <p className="text-xs text-emerald-900">
+                    {activeLessonPlan.googleSheetsAssignment.description}
+                  </p>
+                </div>
+              )}
+
+              {activeLessonPlan.exam && (
+                <div className="bg-blue-50 rounded-2xl p-5 border border-blue-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-blue-600" />
+                      <h4 className="font-bold text-sm text-blue-950">
+                        {activeLessonPlan.exam.title}
+                      </h4>
+                    </div>
+                    <span className="text-xs font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                      {activeLessonPlan.exam.questions.length} Questions • Pass {activeLessonPlan.exam.passingScore || 70}%
+                    </span>
+                  </div>
+                  <p className="text-xs text-blue-900">
+                    Interactive knowledge evaluation covering core principles, diagnostic problem solving, and architecture design patterns.
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <>

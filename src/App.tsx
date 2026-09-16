@@ -850,10 +850,10 @@ export function App() {
 
             <div className="text-center space-y-2">
               <span className="text-xs font-black uppercase tracking-widest bg-amber-100 text-amber-800 px-3 py-1 rounded-full border border-amber-300">
-                {selectedActiveTrack?.isTeacherCreated ? 'Certified Faculty Masterclass Credential' : 'Official Course Completion Credential'}
+                Official Certification of Achievement
               </span>
               <h2 className="text-3xl font-black font-serif text-slate-900">Certificate of Completion</h2>
-              <p className="text-xs text-slate-500">EPIC Learning / EPICADEMY Masterclass & Certification Program</p>
+              <p className="text-xs text-slate-500 font-medium">KEZJED SOLUTIONS • EPICADEMY Professional Masterclass & Certification Program</p>
             </div>
 
             <div className="text-center py-6 border-y border-slate-200 space-y-3">
@@ -869,11 +869,11 @@ export function App() {
 
             <div className="flex items-center justify-between pt-4 text-xs">
               <div>
-                <p className="font-bold text-slate-900">{selectedActiveTrack?.instructor?.name || 'Lead Instructor'}</p>
-                <p className="text-[10px] text-slate-500">{selectedActiveTrack?.instructor?.role || 'Course Creator & Faculty'}</p>
+                <p className="font-bold text-slate-900">Ronnel M. Aviguetero</p>
+                <p className="text-[10px] text-slate-600 font-semibold">CEO and FOUNDER of KEZJED SOLUTIONS</p>
               </div>
               <div className="text-right">
-                <p className="font-mono font-bold text-emerald-600">Verified ID: EPIC-{(selectedActiveTrack?.id || 'CERT').slice(0, 10).toUpperCase()}-2026</p>
+                <p className="font-mono font-bold text-emerald-600">Verified ID: KEZJED-{(selectedActiveTrack?.id || 'CERT').slice(0, 10).toUpperCase()}-2026</p>
                 <p className="text-[10px] text-slate-500">Issued Date: {new Date().toLocaleDateString()}</p>
               </div>
             </div>

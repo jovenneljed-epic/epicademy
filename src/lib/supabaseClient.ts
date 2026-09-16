@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { CommunityPost, Track, ModuleItem, CreateTrackInput, TeacherProfile, RegisterTeacherInput } from '../types';
 import { ZERO_TO_HERO_COURSES, ZERO_TO_HERO_TRACKS, getZeroToHeroCourse } from '../data/zeroToHeroCoursesData';
 import { TESDA_CSS_TRACK } from '../data/tesdaCssNc2CourseData';
+import { getTenantCourseDetailedModules } from '../data/tenantCoursesDetailedData';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ukhmrgbkrfawgszltzsr.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_uB7grQdiSm_z6PzMvXITdA_Kdih_GuP';
@@ -519,14 +520,55 @@ export async function fetchTrackModulesAndLessons(trackId: string): Promise<Modu
     return TESDA_CSS_TRACK.modules || [];
   }
 
-  // 2. Check Local Teacher Tracks
+  // 2. Check Community Developer / Tenant Tracks (Authored by Ronnel M. Aviguetero)
+  const tenantDetailed = getTenantCourseDetailedModules(trackId);
+  if (tenantDetailed && tenantDetailed.length > 0) {
+    return tenantDetailed.map((m, mIdx) => ({
+      id: `mod-${trackId}-${mIdx + 1}`,
+      track_id: trackId,
+      title: m.title,
+      duration: m.duration,
+      overview: m.overview,
+      lessons: m.lessons.length,
+      topics: m.lessons.map(l => l.title),
+      lessonItems: m.lessons.map((l, lIdx) => ({
+        id: `les-${trackId}-${mIdx + 1}-${lIdx + 1}`,
+        module_id: `mod-${trackId}-${mIdx + 1}`,
+        title: l.title,
+        duration: l.duration,
+        video_url: l.videoUrl,
+        content: l.theoryContent || '',
+        objective: l.objective || '',
+        code_snippet: l.codeSnippet || '',
+        activity: l.handsOnActivity ? {
+          title: l.handsOnActivity.title,
+          instructions: l.handsOnActivity.instructions,
+          starterCode: l.handsOnActivity.starterCode,
+          expectedOutcome: l.handsOnActivity.expectedOutcome,
+        } : undefined,
+        exam: l.exam,
+        worksheet: l.googleSheetsAssignment ? {
+          title: l.googleSheetsAssignment.title,
+          sheetName: l.googleSheetsAssignment.sheetName,
+          description: l.googleSheetsAssignment.description,
+          templateUrl: l.googleSheetsAssignment.templateUrl,
+          deliverables: l.googleSheetsAssignment.deliverables,
+          rubric: l.googleSheetsAssignment.rubric,
+        } : undefined,
+        order_index: lIdx + 1,
+        progress: 0,
+      })),
+    }));
+  }
+
+  // 3. Check Local Teacher Tracks
   const localTeacherTracks = getLocalTeacherTracks();
   const localTrack = localTeacherTracks.find(t => t.id === trackId);
   if (localTrack && localTrack.modules && localTrack.modules.length > 0) {
     return localTrack.modules;
   }
 
-  // 3. Check Supabase
+  // 4. Check Supabase
   try {
     const { data: modulesData, error: modError } = await supabase
       .from('modules')

@@ -1,4 +1,4 @@
-import type { Track } from '../types';
+import type { Track, ExamItem } from '../types';
 import { TESDA_CSS_NC2_COURSE } from './tesdaCssNc2CourseData';
 
 export interface DetailedLesson {
@@ -9,13 +9,14 @@ export interface DetailedLesson {
   objective: string;
   theoryContent: string;
   codeSnippet: string;
-  handsOnActivity: {
+  handsOnActivity?: {
     title: string;
     instructions: string[];
     starterCode: string;
     expectedOutcome: string;
   };
-  googleSheetsAssignment: {
+  exam?: ExamItem;
+  googleSheetsAssignment?: {
     title: string;
     sheetName: string;
     description: string;
@@ -834,11 +835,11 @@ export const ZERO_TO_HERO_COURSES: ZeroToHeroCourse[] = [
       careerMilestone: 'Web Foundations Certified',
       isPaid: true,
       instructor: {
-        name: 'Joven Nel Jed',
-        role: 'Founder & Lead Engineering Faculty',
+        name: 'Ronnel M. Aviguetero',
+        role: 'CEO and FOUNDER of KEZJED SOLUTIONS',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         verified: true,
-        credentials: 'Epicademy Lead Architect',
+        credentials: 'CEO and FOUNDER of KEZJED SOLUTIONS • Senior Enterprise Technology Architect & Executive Faculty',
       },
       rating: 4.98,
       reviewCount: 52,
@@ -869,11 +870,11 @@ export const ZERO_TO_HERO_COURSES: ZeroToHeroCourse[] = [
       careerMilestone: 'Responsive UI & Layout Specialist',
       isPaid: true,
       instructor: {
-        name: 'Joven Nel Jed',
-        role: 'Founder & Lead Engineering Faculty',
+        name: 'Ronnel M. Aviguetero',
+        role: 'CEO and FOUNDER of KEZJED SOLUTIONS',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         verified: true,
-        credentials: 'Epicademy Lead Architect',
+        credentials: 'CEO and FOUNDER of KEZJED SOLUTIONS • Senior Enterprise Technology Architect & Executive Faculty',
       },
       rating: 4.96,
       reviewCount: 44,
@@ -904,11 +905,11 @@ export const ZERO_TO_HERO_COURSES: ZeroToHeroCourse[] = [
       careerMilestone: 'Junior Interactive Web Developer',
       isPaid: true,
       instructor: {
-        name: 'Joven Nel Jed',
-        role: 'Founder & Lead Engineering Faculty',
+        name: 'Ronnel M. Aviguetero',
+        role: 'CEO and FOUNDER of KEZJED SOLUTIONS',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         verified: true,
-        credentials: 'Epicademy Lead Architect',
+        credentials: 'CEO and FOUNDER of KEZJED SOLUTIONS • Senior Enterprise Technology Architect & Executive Faculty',
       },
       rating: 4.97,
       reviewCount: 68,
@@ -939,11 +940,11 @@ export const ZERO_TO_HERO_COURSES: ZeroToHeroCourse[] = [
       careerMilestone: 'Modern JavaScript Engineer',
       isPaid: true,
       instructor: {
-        name: 'Joven Nel Jed',
-        role: 'Founder & Lead Engineering Faculty',
+        name: 'Ronnel M. Aviguetero',
+        role: 'CEO and FOUNDER of KEZJED SOLUTIONS',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         verified: true,
-        credentials: 'Epicademy Lead Architect',
+        credentials: 'CEO and FOUNDER of KEZJED SOLUTIONS • Senior Enterprise Technology Architect & Executive Faculty',
       },
       rating: 4.95,
       reviewCount: 39,
@@ -974,11 +975,11 @@ export const ZERO_TO_HERO_COURSES: ZeroToHeroCourse[] = [
       careerMilestone: 'React 19 & TypeScript Frontend Engineer',
       isPaid: true,
       instructor: {
-        name: 'Joven Nel Jed',
-        role: 'Founder & Lead Engineering Faculty',
+        name: 'Ronnel M. Aviguetero',
+        role: 'CEO and FOUNDER of KEZJED SOLUTIONS',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         verified: true,
-        credentials: 'Epicademy Lead Architect',
+        credentials: 'CEO and FOUNDER of KEZJED SOLUTIONS • Senior Enterprise Technology Architect & Executive Faculty',
       },
       rating: 4.99,
       reviewCount: 82,
@@ -1009,11 +1010,11 @@ export const ZERO_TO_HERO_COURSES: ZeroToHeroCourse[] = [
       careerMilestone: 'Full-Stack API & Backend Architect',
       isPaid: true,
       instructor: {
-        name: 'Joven Nel Jed',
-        role: 'Founder & Lead Engineering Faculty',
+        name: 'Ronnel M. Aviguetero',
+        role: 'CEO and FOUNDER of KEZJED SOLUTIONS',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         verified: true,
-        credentials: 'Epicademy Lead Architect',
+        credentials: 'CEO and FOUNDER of KEZJED SOLUTIONS • Senior Enterprise Technology Architect & Executive Faculty',
       },
       rating: 4.94,
       reviewCount: 31,
@@ -1044,11 +1045,11 @@ export const ZERO_TO_HERO_COURSES: ZeroToHeroCourse[] = [
       careerMilestone: 'Cloud Database & PostgreSQL Architect',
       isPaid: true,
       instructor: {
-        name: 'Joven Nel Jed',
-        role: 'Founder & Lead Engineering Faculty',
+        name: 'Ronnel M. Aviguetero',
+        role: 'CEO and FOUNDER of KEZJED SOLUTIONS',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         verified: true,
-        credentials: 'Epicademy Lead Architect',
+        credentials: 'CEO and FOUNDER of KEZJED SOLUTIONS • Senior Enterprise Technology Architect & Executive Faculty',
       },
       rating: 4.97,
       reviewCount: 46,
@@ -1079,11 +1080,11 @@ export const ZERO_TO_HERO_COURSES: ZeroToHeroCourse[] = [
       careerMilestone: 'Production Security & DevOps Engineer',
       isPaid: true,
       instructor: {
-        name: 'Joven Nel Jed',
-        role: 'Founder & Lead Engineering Faculty',
+        name: 'Ronnel M. Aviguetero',
+        role: 'CEO and FOUNDER of KEZJED SOLUTIONS',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         verified: true,
-        credentials: 'Epicademy Lead Architect',
+        credentials: 'CEO and FOUNDER of KEZJED SOLUTIONS • Senior Enterprise Technology Architect & Executive Faculty',
       },
       rating: 4.96,
       reviewCount: 35,
@@ -1114,11 +1115,11 @@ export const ZERO_TO_HERO_COURSES: ZeroToHeroCourse[] = [
       careerMilestone: '🏆 Full-Stack AI Software Hero',
       isPaid: true,
       instructor: {
-        name: 'Joven Nel Jed',
-        role: 'Founder & Lead Engineering Faculty',
+        name: 'Ronnel M. Aviguetero',
+        role: 'CEO and FOUNDER of KEZJED SOLUTIONS',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         verified: true,
-        credentials: 'Epicademy Lead Architect',
+        credentials: 'CEO and FOUNDER of KEZJED SOLUTIONS • Senior Enterprise Technology Architect & Executive Faculty',
       },
       rating: 5.0,
       reviewCount: 110,

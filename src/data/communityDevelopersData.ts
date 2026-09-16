@@ -9,15 +9,69 @@ import type {
   ShopItem
 } from '../types';
 import { TESDA_CSS_TRACK } from './tesdaCssNc2CourseData';
+import { getTenantCourseDetailedModules } from './tenantCoursesDetailedData';
+
+export const RONNEL_INSTRUCTOR = {
+  name: 'Ronnel M. Aviguetero',
+  role: 'CEO and FOUNDER of KEZJED SOLUTIONS',
+  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+  verified: true,
+  credentials: 'CEO and FOUNDER of KEZJED SOLUTIONS • Senior Enterprise Technology Architect & Executive Faculty',
+};
 
 export const PASTORAL_DEVOTIONAL = {
-  pastorName: 'Pastor Joven Nel Jed Aviguetero (Kuya Jed)',
-  role: 'Founder, Lead Cloud Architect & Pastor-Mentor',
+  pastorName: 'Ronnel M. Aviguetero',
+  role: 'CEO and FOUNDER of KEZJED SOLUTIONS',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
   verseOfTheDay: '“For I know the plans I have for you,” declares the Lord, “plans to prosper you and not to harm you, plans to give you hope and a future.” — Jeremiah 29:11',
-  messageOfTheDay: 'You are not behind! Do not be intimidated by syntax errors or technical jargon. Every master engineer in the world once started at zero. With every line of code you write, you have mentorship, prayer, and a supportive community championing your success.',
-  bayanihanMotto: 'Tech Community Fellowship: No Learner Left Behind from Zero to Hero.',
+  messageOfTheDay: 'You are not behind! Do not be intimidated by syntax errors or technical jargon. Every master engineer in the world once started at zero. At KEZJED SOLUTIONS, we are committed to providing you with true, production-grade curriculum, real hands-on systems, and dedicated mentorship every step of the way.',
+  bayanihanMotto: 'KEZJED SOLUTIONS Tech Academy: No Learner Left Behind from Zero to Hero.',
 };
+
+export function enrichCourseWithRealCurriculum(course: Track): Track {
+  course.instructor = RONNEL_INSTRUCTOR;
+  const detailed = getTenantCourseDetailedModules(course.id);
+  if (detailed && detailed.length > 0) {
+    course.modules = detailed.map((m, mIdx) => ({
+      id: `mod-${course.id}-${mIdx + 1}`,
+      track_id: course.id,
+      title: m.title,
+      duration: m.duration,
+      overview: m.overview,
+      lessons: m.lessons.length,
+      topics: m.lessons.map(l => l.title),
+      lessonItems: m.lessons.map((l, lIdx) => ({
+        id: `les-${course.id}-${mIdx + 1}-${lIdx + 1}`,
+        module_id: `mod-${course.id}-${mIdx + 1}`,
+        title: l.title,
+        duration: l.duration,
+        video_url: l.videoUrl,
+        content: l.theoryContent,
+        objective: l.objective,
+        code_snippet: l.codeSnippet,
+        activity: l.handsOnActivity ? {
+          title: l.handsOnActivity.title,
+          instructions: l.handsOnActivity.instructions,
+          starterCode: l.handsOnActivity.starterCode,
+          expectedOutcome: l.handsOnActivity.expectedOutcome,
+        } : undefined,
+        exam: l.exam,
+        worksheet: l.googleSheetsAssignment ? {
+          title: l.googleSheetsAssignment.title,
+          sheetName: l.googleSheetsAssignment.sheetName,
+          description: l.googleSheetsAssignment.description,
+          templateUrl: l.googleSheetsAssignment.templateUrl,
+          deliverables: l.googleSheetsAssignment.deliverables,
+          rubric: l.googleSheetsAssignment.rubric,
+        } : undefined,
+        order_index: lIdx + 1,
+        progress: 0,
+      })),
+    }));
+    course.lessonsCount = detailed.reduce((sum, mod) => sum + mod.lessons.length, 0);
+  }
+  return course;
+}
 
 export const COMMUNITY_EVENTS: CommunityEvent[] = [
   {
@@ -93,20 +147,20 @@ export const COMMUNITY_EVENTS: CommunityEvent[] = [
 export const COMMUNITY_DEVELOPERS: CommunityDeveloper[] = [
   {
     id: 'dev-pastor-jed',
-    name: 'Pastor Joven Nel Jed Aviguetero',
-    handle: '@kuya_jed',
+    name: 'Ronnel M. Aviguetero',
+    handle: '@ronnel_kezjed',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-    roleTitle: 'Founder, Lead Cloud Architect & Pastor-Mentor',
-    specialty: 'Full-Stack Web, Cloud Data & Servant Leadership in Tech',
+    roleTitle: 'CEO and FOUNDER of KEZJED SOLUTIONS',
+    specialty: 'Full-Stack Web, Cloud Data, AI & Enterprise Solutions',
     category: 'fullstack',
     location: 'Antipolo & Quezon City, Philippines',
     rating: 5.00,
     reviewCount: 780,
     studentsCount: 3450,
     coursesCount: 3,
-    bio: 'Full-fledged ICT instructor, TESDA CSS NC II Certified Trainer/Assessor, cloud data architect, and pastor-mentor dedicated to uplifting aspiring tech professionals.',
-    credentials: 'TESDA CSS NC II Certified • National TVET Trainer Certificate (NTTC / TM1) • LPT • Lead Enterprise Cloud Architect',
-    companyOrBackground: 'EPICADEMY • Certified TVET Faculty',
+    bio: 'CEO and FOUNDER of KEZJED SOLUTIONS. Full-fledged ICT instructor, TESDA CSS NC II Certified Trainer/Assessor, cloud data architect, and tech executive dedicated to uplifting aspiring tech professionals and delivering enterprise solutions.',
+    credentials: 'CEO and FOUNDER of KEZJED SOLUTIONS • TESDA CSS NC II Certified • National TVET Trainer Certificate (NTTC / TM1) • LPT • Lead Enterprise Cloud Architect',
+    companyOrBackground: 'KEZJED SOLUTIONS • Executive Faculty',
     githubUrl: 'https://github.com',
     linkedinUrl: 'https://linkedin.com',
     websiteUrl: 'https://epicademy.ph',
@@ -656,11 +710,16 @@ export const getAllTenantCourses = (): Track[] => {
   const courses: Track[] = [];
   COMMUNITY_DEVELOPERS.forEach(dev => {
     dev.courses.forEach(course => {
-      courses.push(course);
+      courses.push(enrichCourseWithRealCurriculum(course));
     });
   });
   return courses;
 };
+
+// Ensure all courses in COMMUNITY_DEVELOPERS are fully enriched with real curricula and Ronnel M. Aviguetero branding
+COMMUNITY_DEVELOPERS.forEach(dev => {
+  dev.courses = dev.courses.map(enrichCourseWithRealCurriculum);
+});
 
 export const getDeveloperById = (id: string): CommunityDeveloper | undefined => {
   return COMMUNITY_DEVELOPERS.find(dev => dev.id === id);
