@@ -68,11 +68,11 @@ export const Navbar = ({
               <span className="font-extrabold text-xl sm:text-2xl tracking-tight text-slate-900 flex items-center gap-1.5">
                 EPICADEMY
                 <span className="text-xs uppercase px-1.5 py-0.5 rounded font-bold bg-blue-100 text-blue-700 tracking-normal">
-                  ESKWELA
+                  ACADEMY
                 </span>
               </span>
               <span className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase -mt-1">
-                Eskwela ng Bayan • Zero to Hero
+                Zero to Hero Tech &amp; Vocational Hub
               </span>
             </div>
           </a>
@@ -172,7 +172,7 @@ export const Navbar = ({
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <span>👨‍🏫 Para sa Guro</span>
+                <span>👨‍🏫 For Educators</span>
               </button>
               <button
                 onClick={() => onTogglePerspective('student')}
@@ -182,7 +182,7 @@ export const Navbar = ({
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <span>🎓 Para sa Mag-aaral</span>
+                <span>🎓 For Students</span>
               </button>
             </div>
 
@@ -190,10 +190,10 @@ export const Navbar = ({
             <button
               onClick={onOpenTeacherSetup}
               className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl border border-blue-200 transition-colors flex items-center gap-1.5 cursor-pointer"
-              title="Gabay ng Faculty & Pastor's Desk"
+              title="Faculty & Mentorship Portal"
             >
               <User className="w-3.5 h-3.5 text-blue-600" />
-              <span>🙏 Pastor & Faculty</span>
+              <span>👨‍🏫 Faculty Portal</span>
             </button>
 
             {/* Course Studio Button */}
@@ -202,7 +202,7 @@ export const Navbar = ({
               className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>+ Gumawa ng Kurso</span>
+              <span>+ Create Course</span>
             </button>
 
             {/* Become Tenant Button */}
@@ -210,10 +210,10 @@ export const Navbar = ({
               <button
                 onClick={onOpenApplyTenant}
                 className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 transition-colors flex items-center gap-1.5 cursor-pointer"
-                title="Magbahagi ng Karunungan bilang Mentor"
+                title="Share Knowledge as a Mentor"
               >
                 <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-                <span>+ Maging Mentor</span>
+                <span>+ Become a Mentor</span>
               </button>
             )}
 
@@ -227,7 +227,7 @@ export const Navbar = ({
                 <button
                   onClick={handleLogout}
                   className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
-                  title="Mag-Sign Out"
+                  title="Sign Out"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -238,13 +238,13 @@ export const Navbar = ({
                   onClick={() => onOpenAuth('signin')}
                   className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors cursor-pointer"
                 >
-                  Pumasok (Sign In)
+                  Sign In
                 </button>
                 <button
                   onClick={() => onOpenAuth('signup')}
                   className="px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md shadow-blue-500/20 transition-all cursor-pointer hover:scale-102"
                 >
-                  Simulan ng Libre
+                  Get Started Free
                 </button>
               </>
             )}

@@ -139,39 +139,39 @@ export const CheckoutModal = ({
 
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                🙏 Mabuhay at Pagpalain! Kumpirmado ang Iyong Pag-aaral
+                🎉 Enrollment Confirmed!
               </span>
               <h3 className="text-2xl font-black text-slate-900 mt-2">
-                Maligayang Pagdating sa {track.title}!
+                Welcome to {track.title}!
               </h3>
               <p className="text-sm text-slate-600 mt-1 max-w-md mx-auto leading-relaxed">
                 {isFree ? (
-                  <>Naka-enroll ka na nang libre at mayroon nang lifetime access. Nawa'y magbunga nang sagana ang iyong pagsusumikap para sa iyong pamilya at kinabukasan!</>
+                  <>You are enrolled with free lifetime access. May your dedication bear abundant fruit for your career and future!</>
                 ) : (
-                  <>Napatunayan ang bayad via <strong>{paymentMethod.toUpperCase()}</strong>. Nawa'y magbunga nang sagana ang iyong pagsusumikap para sa iyong pamilya at kinabukasan!</>
+                  <>Payment verified via <strong>{paymentMethod.toUpperCase()}</strong>. May your dedication bear abundant fruit for your career and future!</>
                 )}
               </p>
             </div>
 
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 max-w-md mx-auto text-left space-y-2 text-xs text-slate-700">
               <div className="flex justify-between">
-                <span className="text-slate-500">Account ng Mag-aaral:</span>
+                <span className="text-slate-500">Student Account:</span>
                 <span className="font-bold text-slate-900">{email}</span>
               </div>
               {!isFree && (
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Paraan ng Pagbayad:</span>
+                  <span className="text-slate-500">Payment Method:</span>
                   <span className="font-bold uppercase text-blue-600">
                     {paymentMethod === 'gcash' ? 'GCash Express' : paymentMethod === 'gotyme' ? 'GoTyme Bank' : paymentMethod === 'maya' ? 'Maya Wallet' : 'QRPh National Bank'}
                   </span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-slate-500">Kabuuang Matrikula (PHP):</span>
+                <span className="text-slate-500">Total Tuition (PHP):</span>
                 <span className="font-bold text-emerald-600 text-sm">{isFree ? 'FREE (₱0)' : `₱${totalPhp.toLocaleString()} PHP`}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Biyayang Tagumpay:</span>
+                <span className="text-slate-500">Career Milestone:</span>
                 <span className="font-bold text-blue-600">{track.careerMilestone || 'Certified Developer'}</span>
               </div>
             </div>
@@ -180,7 +180,7 @@ export const CheckoutModal = ({
               onClick={handleEnterClassroom}
               className="w-full max-w-md mx-auto py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
-              <span>Pumasok sa Classroom Workspace</span>
+              <span>Enter Classroom Workspace</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

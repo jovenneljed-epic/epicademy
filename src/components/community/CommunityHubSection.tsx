@@ -31,11 +31,11 @@ interface CommunityHubSectionProps {
 }
 
 const IDEA_CATEGORIES = [
-  { id: '💡 Ideya sa App / SaaS', label: '💡 Ideya sa App / SaaS', color: 'bg-amber-100 text-amber-900 border-amber-300' },
-  { id: '💻 Tanong sa Coding & Web', label: '💻 Tanong sa Coding & Web', color: 'bg-blue-100 text-blue-900 border-blue-300' },
-  { id: '🛠️ TESDA Hardware & Lab', label: '🛠️ TESDA Hardware & Lab', color: 'bg-emerald-100 text-emerald-900 border-emerald-300' },
-  { id: '🤝 Ka-Collab sa Proyekto', label: '🤝 Ka-Collab sa Proyekto', color: 'bg-purple-100 text-purple-900 border-purple-300' },
-  { id: '🙏 Gabay at Pasasalamat', label: '🙏 Gabay at Pasasalamat', color: 'bg-rose-100 text-rose-900 border-rose-300' },
+  { id: '💡 App & SaaS Idea', label: '💡 App & SaaS Idea', color: 'bg-amber-100 text-amber-900 border-amber-300' },
+  { id: '💻 Coding & Web Dev Question', label: '💻 Coding & Web Dev Question', color: 'bg-blue-100 text-blue-900 border-blue-300' },
+  { id: '🛠️ TESDA Hardware & Systems', label: '🛠️ TESDA Hardware & Systems', color: 'bg-emerald-100 text-emerald-900 border-emerald-300' },
+  { id: '🤝 Project Collaboration', label: '🤝 Project Collaboration', color: 'bg-purple-100 text-purple-900 border-purple-300' },
+  { id: '🙏 Mentorship & Reflections', label: '🙏 Mentorship & Reflections', color: 'bg-rose-100 text-rose-900 border-rose-300' },
 ];
 
 export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpenAuth, currentUser }) => {
@@ -65,7 +65,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
   const [newPostContent, setNewPostContent] = useState('');
   const [newPostChannel, setNewPostChannel] = useState('ideas');
   const [newPostCategory, setNewPostCategory] = useState(IDEA_CATEGORIES[0].id);
-  const [newPostTags, setNewPostTags] = useState('ideya, pinoydev, bayanihan');
+  const [newPostTags, setNewPostTags] = useState('ideas, dev, community');
   const [guestAuthorName, setGuestAuthorName] = useState('');
   const [successBannerMsg, setSuccessBannerMsg] = useState<string | null>(null);
 
@@ -161,28 +161,28 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
 
     const authorName = currentUser?.email 
       ? currentUser.email.split('@')[0] 
-      : (guestAuthorName.trim() || 'Kapatid na Developer');
+      : (guestAuthorName.trim() || 'Community Member');
 
     const authorRole = currentUser?.role === 'educator' 
       ? 'Instructor & Mentor' 
-      : (guestAuthorName.trim() ? 'Community Innovator' : 'Mag-aaral / Apprentice');
+      : (guestAuthorName.trim() ? 'Community Innovator' : 'Student / Apprentice');
 
-    const isIdea = newPostChannel === 'ideas' || newPostCategory.includes('Ideya');
+    const isIdea = newPostChannel === 'ideas' || newPostCategory.includes('Idea');
 
     const parsedTags = newPostTags
       .split(',')
       .map(t => t.trim().replace(/^#/, ''))
       .filter(Boolean);
 
-    if (isIdea && !parsedTags.includes('IdeyaBayan')) {
-      parsedTags.unshift('IdeyaBayan');
+    if (isIdea && !parsedTags.includes('CommunityIdea')) {
+      parsedTags.unshift('CommunityIdea');
     }
 
     const newPost: CommunityPost = {
       id: `post-${Date.now()}`,
       channel: newPostChannel,
       trackCategory: 'all',
-      timestamp: 'Ngayon lang',
+      timestamp: 'Just now',
       title: newPostTitle.trim(),
       content: newPostContent.trim(),
       isIdea,
@@ -192,7 +192,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
         role: authorRole,
         avatar: currentUser ? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         isEducator: currentUser?.role === 'educator',
-        tierBadge: currentUser?.role === 'educator' ? 'Guro' : 'Kasapi',
+        tierBadge: currentUser?.role === 'educator' ? 'Instructor' : 'Member',
       },
       likes: 1,
       repliesCount: 0,
@@ -207,7 +207,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
     setShowPostComposer(false);
     setExpandedPostId(newPost.id);
 
-    setSuccessBannerMsg('🎉 Maraming salamat! Matagumpay na naibahagi ang iyong ideya sa buong komunidad.');
+    setSuccessBannerMsg('🎉 Thank you! Your discussion has been successfully posted to the community.');
     setTimeout(() => setSuccessBannerMsg(null), 4500);
 
     try {
@@ -234,7 +234,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
 
     const repAuthorName = currentUser?.email
       ? currentUser.email.split('@')[0]
-      : (replyNameByPost[postId]?.trim() || 'Kapatid na Developer');
+      : (replyNameByPost[postId]?.trim() || 'Community Member');
 
     const repAuthorRole = currentUser?.role === 'educator' 
       ? 'Instructor / Mentor' 
@@ -248,10 +248,10 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
         role: repAuthorRole,
         avatar: currentUser ? 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80' : 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
         isEducator: currentUser?.role === 'educator',
-        tierBadge: currentUser?.role === 'educator' ? 'Guro' : 'Kasapi',
+        tierBadge: currentUser?.role === 'educator' ? 'Instructor' : 'Member',
       },
       content: replyText,
-      timestamp: 'Ngayon lang',
+      timestamp: 'Just now',
       likes: 1,
       isLiked: true,
     };
@@ -333,7 +333,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
               className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow-md shadow-amber-500/20 transition-all flex items-center gap-2 cursor-pointer hover:scale-105"
             >
               <Lightbulb className="w-4 h-4 text-slate-950" />
-              <span>Ibahagi ang Iyong Ideya (Share Your Idea)</span>
+              <span>Share Your Idea</span>
             </button>
 
             <button
@@ -348,7 +348,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
               }`}
             >
               <Lightbulb className={`w-4 h-4 ${filterIdeasOnly ? 'text-amber-600 fill-amber-500' : 'text-slate-400'}`} />
-              <span>{filterIdeasOnly ? 'Showing Ideas Only (Click to Show All)' : 'Filter: Mga Ideya Lamang'}</span>
+              <span>{filterIdeasOnly ? 'Showing Ideas Only (Click to Show All)' : 'Filter: Ideas Only'}</span>
             </button>
           </div>
         </div>
@@ -365,7 +365,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
               onClick={() => setSuccessBannerMsg(null)}
               className="text-xs text-emerald-700 font-bold hover:underline cursor-pointer"
             >
-              Isara
+              Close
             </button>
           </div>
         )}
@@ -391,7 +391,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
             {/* Channels Card */}
             <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider text-slate-500 mb-3 px-1">
-                <span>CHANNELS & CIRCLES</span>
+                <span>CHANNELS &amp; CIRCLES</span>
                 <button 
                   type="button"
                   onClick={loadPosts}
@@ -432,10 +432,10 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
             <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-white rounded-3xl p-5 border-2 border-amber-300 shadow-sm space-y-3">
               <div className="flex items-center gap-2 text-amber-900 font-black text-xs uppercase tracking-wider">
                 <Lightbulb className="w-4 h-4 text-amber-600 fill-amber-400" />
-                <span>Bayanihan Idea Incubator</span>
+                <span>Community Idea Incubator</span>
               </div>
               <p className="text-xs text-slate-700 leading-relaxed font-medium">
-                May naisip ka bang web app, mobile utility, o hardware project para sa Pilipinas? I-post dito para makahanap ng mga ka-team at makakuha ng feedback mula sa mentors!
+                Have an idea for a web app, mobile utility, or hardware project? Post it here to recruit teammates and receive actionable feedback from mentors!
               </p>
               <button
                 type="button"
@@ -447,7 +447,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                 className="w-full py-2 px-3 bg-white hover:bg-amber-50 text-amber-900 border border-amber-300 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5 text-amber-600" />
-                <span>Mag-pitch ng Bagong Ideya</span>
+                <span>Pitch a New Idea</span>
               </button>
             </div>
 
@@ -489,14 +489,14 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                 <span>Upcoming Community Cohorts</span>
               </div>
               <div className="p-3 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-1 text-xs">
-                <span className="text-[10px] font-bold text-blue-700 uppercase">Sabado • 2:00 PM PHT</span>
-                <p className="font-black text-slate-900">TESDA CSS NC II Practical Lab Q&A</p>
+                <span className="text-[10px] font-bold text-blue-700 uppercase">Saturday • 2:00 PM PHT</span>
+                <p className="font-black text-slate-900">TESDA CSS NC II Practical Lab Q&amp;A</p>
                 <p className="text-slate-600 text-[11px]">Host: Engr. Joven Nel Jed Aviguetero</p>
               </div>
               <div className="p-3 bg-emerald-50/50 rounded-2xl border border-emerald-100 space-y-1 text-xs">
-                <span className="text-[10px] font-bold text-emerald-700 uppercase">Linggo • 7:00 PM PHT</span>
-                <p className="font-black text-slate-900">Full-Stack SaaS & Ideation Mentoring</p>
-                <p className="text-slate-600 text-[11px]">Host: bossROD & ZAN Mentors</p>
+                <span className="text-[10px] font-bold text-emerald-700 uppercase">Sunday • 7:00 PM PHT</span>
+                <p className="font-black text-slate-900">Full-Stack SaaS &amp; Ideation Mentoring</p>
+                <p className="text-slate-600 text-[11px]">Host: bossROD &amp; ZAN Mentors</p>
               </div>
             </div>
 
@@ -519,7 +519,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                   >
                     <span>Start a discussion, ask a question, or share an idea...</span>
                     <span className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-xl border border-blue-100 shrink-0">
-                      + Gumawa ng Post
+                      + Create Post
                     </span>
                   </button>
                 </div>
@@ -528,20 +528,20 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                     <div className="flex items-center gap-2">
                       <Lightbulb className="w-4 h-4 text-amber-500" />
-                      <span className="text-sm font-black text-slate-900">Magbahagi ng Ideya o Magtanong sa Komunidad</span>
+                      <span className="text-sm font-black text-slate-900">Share an Idea or Ask the Community</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setShowPostComposer(false)}
                       className="text-xs text-slate-400 hover:text-slate-700 font-bold cursor-pointer"
                     >
-                      Isara (Cancel)
+                      Close (Cancel)
                     </button>
                   </div>
 
                   {/* Category Pills Selector */}
                   <div>
-                    <span className="text-xs font-bold text-slate-600 block mb-1.5">Uri ng Post (Post Type):</span>
+                    <span className="text-xs font-bold text-slate-600 block mb-1.5">Post Type:</span>
                     <div className="flex flex-wrap gap-2">
                       {IDEA_CATEGORIES.map((cat) => (
                         <button
@@ -549,7 +549,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                           type="button"
                           onClick={() => {
                             setNewPostCategory(cat.id);
-                            if (cat.id.includes('Ideya')) setNewPostChannel('ideas');
+                            if (cat.id.includes('Idea')) setNewPostChannel('ideas');
                             else if (cat.id.includes('TESDA')) setNewPostChannel('tesda-workshop');
                             else if (cat.id.includes('Coding')) setNewPostChannel('code-help');
                           }}
@@ -568,14 +568,14 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                   {/* Post Title */}
                   <div>
                     <label className="text-xs font-bold text-slate-700 block mb-1">
-                      Pamagat ng Talakayan / Ideya (Discussion Title):
+                      Discussion Title / Idea Pitch:
                     </label>
                     <input
                       type="text"
                       required
                       value={newPostTitle}
                       onChange={(e) => setNewPostTitle(e.target.value)}
-                      placeholder="Hal: '💡 Ideya: Mobile app para sa mga mag-aaral ng TESDA na may offline reviewer'..."
+                      placeholder="E.g., '💡 Idea: Offline-first LMS for public schools with solar power sync'..."
                       className="w-full px-4 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white font-medium"
                     />
                   </div>
@@ -583,14 +583,14 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                   {/* Post Content */}
                   <div>
                     <label className="text-xs font-bold text-slate-700 block mb-1">
-                      Nilalaman at Paliwanag (Description & Context):
+                      Description &amp; Context:
                     </label>
                     <textarea
                       required
                       rows={4}
                       value={newPostContent}
                       onChange={(e) => setNewPostContent(e.target.value)}
-                      placeholder="Ipaliwanag ang iyong ideya, code question, o gustong itanong sa mga mentors at kapwa mag-aaral..."
+                      placeholder="Explain your idea, code question, or what you would like feedback on from mentors and fellow learners..."
                       className="w-full px-4 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white resize-none font-normal leading-relaxed"
                     />
                   </div>
@@ -599,19 +599,19 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                     <div>
                       <label className="text-xs font-bold text-slate-700 block mb-1">
-                        Ibahagi bilang (Author Name):
+                        Author Name:
                       </label>
                       {currentUser?.email ? (
                         <div className="px-3 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-between">
                           <span>{currentUser.email}</span>
-                          <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md uppercase">Naka-login</span>
+                          <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md uppercase">Signed In</span>
                         </div>
                       ) : (
                         <input
                           type="text"
                           value={guestAuthorName}
                           onChange={(e) => setGuestAuthorName(e.target.value)}
-                          placeholder="Iyong Pangalan o Nickname (Hal: Juan Dela Cruz)"
+                          placeholder="Your Name or Nickname (e.g., Alex Johnson)"
                           className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
                         />
                       )}
@@ -619,13 +619,13 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
 
                     <div>
                       <label className="text-xs font-bold text-slate-700 block mb-1">
-                        Mga Tags (Comma separated):
+                        Tags (Comma separated):
                       </label>
                       <input
                         type="text"
                         value={newPostTags}
                         onChange={(e) => setNewPostTags(e.target.value)}
-                        placeholder="ideya, react, supabase, tesda"
+                        placeholder="ideas, react, typescript, hardware"
                         className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium"
                       />
                     </div>
@@ -640,14 +640,14 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                         onChange={(e) => setNewPostChannel(e.target.value)}
                         className="bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
                       >
-                        <option value="ideas">💡 Ideya at Proyekto (Idea Hub)</option>
-                        <option value="code-help">💻 Tanungan sa Code at Web Dev</option>
+                        <option value="ideas">💡 Ideas &amp; Innovation Hub</option>
+                        <option value="code-help">💻 Coding &amp; Tech Q&amp;A</option>
                         <option value="tesda-workshop">🛠️ TESDA CSS NC II Workshop</option>
-                        <option value="devotional">🙏 Gabay at Panalangin</option>
-                        <option value="bossrod">🚀 bossROD Academy Circle</option>
-                        <option value="zan-mindset">💼 ZAN Community & Freelancing</option>
-                        <option value="mahabi-design">🎨 MAHABI+ Malasakit Design</option>
-                        <option value="victories">🎉 Pasasalamat at Tagumpay</option>
+                        <option value="devotional">🙏 Mentorship &amp; Growth</option>
+                        <option value="bossrod">🚀 Software Architecture &amp; Engineering</option>
+                        <option value="zan-mindset">💼 Freelancing &amp; Client Acquisition</option>
+                        <option value="mahabi-design">🎨 UI/UX &amp; Design Systems</option>
+                        <option value="victories">🎉 Wins &amp; Project Showcases</option>
                       </select>
                     </div>
 
@@ -658,7 +658,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                           onClick={() => onOpenAuth('signup')}
                           className="px-3 py-2 text-xs font-bold text-blue-600 hover:underline cursor-pointer"
                         >
-                          Mag-login para sa Verified Badge
+                          Sign in for Verified Badge
                         </button>
                       )}
                       <button
@@ -666,7 +666,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                         className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs sm:text-sm rounded-xl shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <Send className="w-3.5 h-3.5" />
-                        <span>I-publish ang Post (Share Idea)</span>
+                        <span>Publish Post (Share Idea)</span>
                       </button>
                     </div>
                   </div>
@@ -694,9 +694,9 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                   onChange={(e) => setSortBy(e.target.value as any)}
                   className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
                 >
-                  <option value="latest">Pinakabago (Latest)</option>
-                  <option value="popular">Pinaka-Maraming Like (Popular)</option>
-                  <option value="discussed">Pinaka-Aktibong Usapan (Most Discussed)</option>
+                  <option value="latest">Latest</option>
+                  <option value="popular">Most Liked (Popular)</option>
+                  <option value="discussed">Most Discussed</option>
                 </select>
               </div>
             </div>
@@ -807,7 +807,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                           }`}
                         >
                           <MessageSquare className="w-4 h-4" />
-                          <span>{post.repliesCount || postReplies.length} Tugon (Replies)</span>
+                          <span>{post.repliesCount || postReplies.length} Replies</span>
                           {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                         </button>
                       </div>
@@ -821,7 +821,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                         }}
                         className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer flex items-center gap-1"
                       >
-                        <span>Mag-reply / Makibahagi →</span>
+                        <span>Reply / Join Discussion →</span>
                       </button>
                     </div>
 
@@ -829,8 +829,8 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                     {isExpanded && (
                       <div className="mt-4 pt-4 border-t border-slate-100 space-y-4 bg-slate-50/70 p-4 rounded-2xl">
                         <div className="flex items-center justify-between text-xs font-black text-slate-700">
-                          <span>Talakayan at mga Tugon ({postReplies.length}):</span>
-                          <span className="text-[11px] text-slate-400">Bayanihan Discussion</span>
+                          <span>Discussion &amp; Community Replies ({postReplies.length}):</span>
+                          <span className="text-[11px] text-slate-400">Open Community Thread</span>
                         </div>
 
                         {/* Existing Replies List */}
@@ -883,7 +883,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                           </div>
                         ) : (
                           <div className="text-center py-4 text-xs text-slate-500 italic">
-                            Wala pang tugon. Maging una sa pagbabahagi ng iyong opinyon o payo!
+                            No replies yet. Be the first to share your thoughts or advice!
                           </div>
                         )}
 
@@ -903,7 +903,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                                 required
                                 value={replyTextByPost[post.id] || ''}
                                 onChange={(e) => setReplyTextByPost(prev => ({ ...prev, [post.id]: e.target.value }))}
-                                placeholder={`Sumagot kay ${post.author.name} (Magbahagi ng solusyon, feedback, o pasasalamat)...`}
+                                placeholder={`Reply to ${post.author.name} (Share a solution, advice, or feedback)...`}
                                 className="w-full px-3.5 py-2 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none font-normal"
                               />
 
@@ -913,7 +913,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                                     type="text"
                                     value={replyNameByPost[post.id] || ''}
                                     onChange={(e) => setReplyNameByPost(prev => ({ ...prev, [post.id]: e.target.value }))}
-                                    placeholder="Iyong Pangalan (Default: Kapatid)"
+                                    placeholder="Your Name (Default: Member)"
                                     className="px-2.5 py-1 text-xs bg-white border border-slate-200 rounded-lg w-44 focus:outline-none font-medium"
                                   />
                                 )}
@@ -923,7 +923,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                                     className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                                   >
                                     <Send className="w-3 h-3" />
-                                    <span>Ipadala ang Tugon</span>
+                                    <span>Send Reply</span>
                                   </button>
                                 </div>
                               </div>
@@ -943,9 +943,9 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                   <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
                     <Lightbulb className="w-6 h-6" />
                   </div>
-                  <h4 className="font-bold text-base text-slate-800">Walang nahanap na post sa channel na ito</h4>
+                  <h4 className="font-bold text-base text-slate-800">No discussions found in this channel</h4>
                   <p className="text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
-                    Maging una sa pagbabahagi ng iyong ideya o tanong dito sa channel na ito!
+                    Be the first to share your ideas, insights, or questions in this channel!
                   </p>
                   <button
                     type="button"
@@ -957,7 +957,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                     }}
                     className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl shadow-sm hover:bg-blue-700 transition-all cursor-pointer"
                   >
-                    + Magsimula ng Usapan
+                    + Start Discussion
                   </button>
                 </div>
               )}

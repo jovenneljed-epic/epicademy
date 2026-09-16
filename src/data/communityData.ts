@@ -1,15 +1,15 @@
 import type { CommunityPost } from '../types';
 
 export const CHANNELS = [
-  { id: 'all', name: '🔥 Lahat ng Usapan', count: 1840 },
-  { id: 'ideas', name: '💡 Ideya at Proyekto (Idea Hub)', count: 640 },
-  { id: 'devotional', name: '🙏 Gabay at Panalangin', count: 96 },
-  { id: 'bossrod', name: '🚀 bossROD Academy Circle', count: 520 },
+  { id: 'all', name: '🔥 All Discussions', count: 1840 },
+  { id: 'ideas', name: '💡 Ideas & Innovation Hub', count: 640 },
+  { id: 'devotional', name: '🙏 Mentorship & Growth', count: 96 },
+  { id: 'bossrod', name: '🚀 Software Architecture & Engineering', count: 520 },
   { id: 'tesda-workshop', name: '🛠️ TESDA CSS NC II Workshop', count: 390 },
-  { id: 'code-help', name: '💻 Tanungan sa Code at Web Dev', count: 480 },
-  { id: 'zan-mindset', name: '💼 ZAN Community & Freelancing', count: 430 },
-  { id: 'mahabi-design', name: '🎨 MAHABI+ Malasakit Design', count: 310 },
-  { id: 'victories', name: '🎉 Pasasalamat at Tagumpay', count: 260 },
+  { id: 'code-help', name: '💻 Coding & Tech Q&A', count: 480 },
+  { id: 'zan-mindset', name: '💼 Freelancing & Client Acquisition', count: 430 },
+  { id: 'mahabi-design', name: '🎨 UI/UX & Design Systems', count: 310 },
+  { id: 'victories', name: '🎉 Wins & Project Showcases', count: 260 },
 ];
 
 export const INITIAL_POSTS: CommunityPost[] = [
@@ -21,18 +21,18 @@ export const INITIAL_POSTS: CommunityPost[] = [
     ideaCategory: 'EdTech & Offline Learning',
     author: {
       name: 'Pastor Joven Nel Jed (Kuya Jed)',
-      role: 'Tagapagtatag & ICT Trainer / LPT',
+      role: 'Founder & ICT Trainer / LPT',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
       isEducator: true,
-      tierBadge: 'Punong Guro',
+      tierBadge: 'Lead Instructor',
     },
-    timestamp: '25 mins ang nakalipas',
-    title: '💡 Ideya ng Bayan: Open-Source Offline LMS para sa mga Public High School sa Probinsya',
-    content: 'Mga kapatid at kapwa developers, may naisip akong proyektong pampubliko: Gumawa tayo ng isang lightweight, offline-first local web portal na maaaring patakbuhin sa isang lumang desktop o Raspberry Pi sa computer laboratory ng mga eskwelahan na walang internet connection (gamit ang ating skills sa TESDA CSS NC II Networking at Client-Server architecture).\n\nMaaaring i-cache dito ang mga HTML5, CSS3, at programming worksheets para kahit walang Wi-Fi data ang mag-aaral, makakapag-code sila sa browser. Sino ang gustong makiisa at mag-ambag sa open-source code nito dito sa ating komunidad?',
+    timestamp: '25 mins ago',
+    title: '💡 Community Idea: Open-Source Offline LMS for Provincial Public High Schools',
+    content: 'Fellow developers and learners, here is an idea for a public-impact project: Let us build a lightweight, offline-first local web portal that can run on an older desktop or Raspberry Pi in school computer labs without internet connectivity (leveraging our skills from TESDA CSS NC II Networking and Client-Server architecture).\n\nWe can cache HTML5, CSS3, and programming exercises locally so students can practice coding right in their browsers even without data. Who wants to join hands and contribute open-source code to this community initiative?',
     likes: 482,
     repliesCount: 4,
     isLiked: true,
-    tags: ['IdeyaBayan', 'OpenSource', 'TESDA', 'OfflineLMS', 'Collab'],
+    tags: ['CommunityIdea', 'OpenSource', 'TESDA', 'OfflineLMS', 'Collaboration'],
     replies: [
       {
         id: 'rep-idea-1',
@@ -43,8 +43,8 @@ export const INITIAL_POSTS: CommunityPost[] = [
           avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
           tierBadge: 'Level 7 Graduate'
         },
-        content: 'Napakagandang adhikain po nito Kuya Jed! Pwede akong tumulong sa paggawa ng Docker container at NGINX reverse proxy configuration para plug-and-play na lang sa lab switches.',
-        timestamp: '15 mins ang nakalipas',
+        content: 'Such a meaningful initiative, Kuya Jed! I can help build the Docker container and NGINX reverse proxy configuration for seamless plug-and-play deployment across lab switches.',
+        timestamp: '15 mins ago',
         likes: 38,
         isLiked: false,
       },
@@ -55,10 +55,10 @@ export const INITIAL_POSTS: CommunityPost[] = [
           name: 'Ate Bea Santos',
           role: 'Frontend Enthusiast (Bacolod)',
           avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-          tierBadge: 'Level 5 Mag-aaral'
+          tierBadge: 'Level 5 Apprentice'
         },
-        content: 'Gusto ko pong mag-volunteer sa UI design at pag-convert ng modules sa Progressive Web App (PWA) para may offline service worker caching!',
-        timestamp: '10 mins ang nakalipas',
+        content: 'I would love to volunteer on the UI design and convert modules into a Progressive Web App (PWA) with offline service worker caching!',
+        timestamp: '10 mins ago',
         likes: 29,
         isLiked: true,
       },
@@ -67,12 +67,12 @@ export const INITIAL_POSTS: CommunityPost[] = [
         postId: 'post-idea-1',
         author: {
           name: 'Bro. Arnel Reyes',
-          role: 'TESDA CSS NC II Passer',
+          role: 'TESDA CSS NC II Certified',
           avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
           tierBadge: 'Certified NC II'
         },
-        content: 'Pwede ko pong ibahagi ang script para sa Windows Server 2022 DHCP scope at DNS local resolution para auto-detect ng client PCs sa lab!',
-        timestamp: '5 mins ang nakalipas',
+        content: 'I can contribute the automated PowerShell script for Windows Server 2022 DHCP scopes and DNS local resolution so client PCs in the lab auto-detect the LMS!',
+        timestamp: '5 mins ago',
         likes: 19,
         isLiked: false,
       }
@@ -86,18 +86,18 @@ export const INITIAL_POSTS: CommunityPost[] = [
     ideaCategory: 'FinTech & Micro-SaaS',
     author: {
       name: 'Kuya bossROD',
-      role: 'Founder ng bossROD Academy',
+      role: 'Founder of bossROD Academy',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
       isEducator: true,
       tierBadge: 'Master Architect',
     },
-    timestamp: '1 oras ang nakalipas',
-    title: '💡 Micro-SaaS Ideya: GCash & Maya Instant QR Payment Tracker para sa mga Sari-Sari Stores',
-    content: 'Naisip nyo ba kung gaano karaming nanay at tatay na may sari-sari store ang naloloko sa fake screenshot ng GCash payment? Kung gagawa tayo ng simpleng web app gamit ang Supabase Realtime at Webhook listener na magpapatunog ng audio confirmation ("₱150 natanggap mula kay Juan!") sa lumang Android phone nila, malaking tulong ito sa micro-entrepreneurs natin.\n\nNasa Level 6 at 7 ng ating Web Dev roadmap ang sapat na kaalaman para magawa ito gamit ang Node.js at PostgreSQL. Sino ang gustong bumuo ng MVP ngayong buwan?',
+    timestamp: '1 hour ago',
+    title: '💡 Micro-SaaS Idea: Instant QR Payment Tracker with Audio Alerts for Neighborhood Stores',
+    content: 'Have you ever considered how many family-owned convenience stores struggle with fake payment confirmation screenshots? If we build a simple web utility with Supabase Realtime and Webhook listeners that triggers an immediate audio announcement ("₱150 received from customer!") on their Android phone or tablet, it will protect countless local merchants.\n\nLevel 6 and Level 7 of our Web Dev curriculum cover everything needed with Node.js and PostgreSQL. Who wants to team up and ship an MVP this month?',
     likes: 395,
     repliesCount: 3,
     isLiked: false,
-    tags: ['MicroSaaS', 'GCash', 'Maya', 'PinoyTech', 'IdeyaBayan'],
+    tags: ['MicroSaaS', 'FinTech', 'Realtime', 'Startup', 'CommunityIdea'],
     replies: [
       {
         id: 'rep-idea-2-1',
@@ -108,8 +108,8 @@ export const INITIAL_POSTS: CommunityPost[] = [
           avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
           tierBadge: 'Active Member'
         },
-        content: 'Count me in Kuya bossROD! Pwede tayong gumamit ng Web Audio API para sa push notification sound.',
-        timestamp: '40 mins ang nakalipas',
+        content: 'Count me in, bossROD! We can use the browser Web Audio API for custom synthesized audio chime and notification sounds.',
+        timestamp: '40 mins ago',
         likes: 22,
         isLiked: false,
       },
@@ -118,13 +118,13 @@ export const INITIAL_POSTS: CommunityPost[] = [
         postId: 'post-idea-2',
         author: {
           name: 'Daniel Zan Baltazar',
-          role: 'ZAN Community Founder',
+          role: 'Founder of ZAN Community',
           avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
           isEducator: true,
           tierBadge: 'Mentor'
         },
-        content: 'Napakagandang negosyo nito sa komunidad. Pwedeng subscription model na ₱99/month lang para abot-kaya ng bawat tindahan!',
-        timestamp: '25 mins ang nakalipas',
+        content: 'This is a high-value community solution. A micro-subscription model at ₱99/month makes it accessible to every neighborhood store!',
+        timestamp: '25 mins ago',
         likes: 31,
         isLiked: true,
       }
@@ -136,30 +136,30 @@ export const INITIAL_POSTS: CommunityPost[] = [
     trackCategory: 'all',
     author: {
       name: 'Pastor Joven Nel Jed (Kuya Jed)',
-      role: 'Tagapagtatag & Pastor-Mentor',
+      role: 'Founder & Faculty Mentor',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
       isEducator: true,
-      tierBadge: 'Punong Guro',
+      tierBadge: 'Lead Instructor',
     },
-    timestamp: '2 oras ang nakalipas',
-    title: '🙏 Paalala sa Araw na Ito: "Hindi ka huli, kapatid." Huwag matakot magsimula muli.',
-    content: 'Marami sa inyo ang nag-message sa akin na nakakaramdam ng imposter syndrome kapag nakakakita ng ibang developers online na magagaling na. Kapatid, ang iyong takbuhin ay para sa iyo at sa iyong pamilya. Huwag mong ikumpara ang iyong simula sa gitna ng iba. Sa bawat linyang isinusulat mo, may kasama kang panalangin at buong komunidad na aalalay sa iyo.',
+    timestamp: '2 hours ago',
+    title: '🙏 Daily Reflection: "You are not behind." Never be afraid to begin again.',
+    content: 'Many of you have messaged me about battling imposter syndrome when seeing advanced developers online. Remember: your journey is your own, dedicated to your family and your future. Do not compare your beginning to someone else\'s middle. With every line of code you write, you are supported by prayer and a community that believes in your potential.',
     likes: 312,
     repliesCount: 2,
     isLiked: true,
-    tags: ['TechMindset', 'Bayanihan', 'Pananalig', 'HindiKaHuli'],
+    tags: ['DeveloperMindset', 'Growth', 'Faith', 'Encouragement'],
     replies: [
       {
         id: 'rep-1-1',
         postId: 'post-1',
         author: {
           name: 'Sister Mary Grace',
-          role: 'Mag-aaral mula Cebu',
+          role: 'Learner from Cebu',
           avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-          tierBadge: 'Masigasig na Mag-aaral'
+          tierBadge: 'Dedicated Student'
         },
-        content: 'Maraming salamat po Kuya Jed! Eksakto po ito sa pinagdadaanan ko kanina habang nagde-debug ng HTML tags. Nakakataba ng puso.',
-        timestamp: '1 oras ang nakalipas',
+        content: 'Thank you so much for this encouragement! This was exactly what I needed today while debugging layout issues. Truly heartening.',
+        timestamp: '1 hour ago',
         likes: 24,
         isLiked: false,
       },
@@ -168,12 +168,12 @@ export const INITIAL_POSTS: CommunityPost[] = [
         postId: 'post-1',
         author: {
           name: 'Bro. Joshua Dela Cruz',
-          role: 'Level 3 Mag-aaral',
+          role: 'Level 3 Student',
           avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
-          tierBadge: 'Mag-aaral'
+          tierBadge: 'Student'
         },
-        content: 'Amen! Salamat sa paalala na ang ating pagsusumikap ay para sa Panginoon at sa ating mga mahal sa buhay.',
-        timestamp: '35 mins ang nakalipas',
+        content: 'Amen! Thank you for the reminder that our diligence and hard work are for our purpose and our loved ones.',
+        timestamp: '35 mins ago',
         likes: 18,
         isLiked: true,
       }
@@ -185,14 +185,14 @@ export const INITIAL_POSTS: CommunityPost[] = [
     trackCategory: 'stem',
     author: {
       name: 'Kuya bossROD',
-      role: 'Founder ng bossROD Academy',
+      role: 'Founder of bossROD Academy',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
       isEducator: true,
       tierBadge: 'Master Architect',
     },
-    timestamp: '3 oras ang nakalipas',
-    title: '🔥 Bakit hindi ka dapat matakot sa AI: Gamitin itong kasangkapan para umasenso!',
-    content: 'Sa ating mga kapwa developers dito sa EPICADEMY: Ang AI ay hindi kalaban kundi multiplier ng iyong talino. Kung naiintindihan mo ang computer science fundamentals at marunong kang mag-isip nang malalim, ikaw ang magmamando sa AI tools. Magkita-kita tayo sa ating darating na Sabado live session!',
+    timestamp: '3 hours ago',
+    title: '🔥 Why You Shouldn\'t Fear AI: Harness It as Your Force Multiplier',
+    content: 'To our developer community at EPICADEMY: AI is not a competitor, but a force multiplier for your intelligence. If you deeply grasp computer science fundamentals and structured problem-solving, you will direct and architect with AI tools rather than be replaced by them. See you all in our upcoming live Saturday session!',
     likes: 215,
     repliesCount: 1,
     isLiked: false,
@@ -207,8 +207,8 @@ export const INITIAL_POSTS: CommunityPost[] = [
           avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
           tierBadge: 'Alumnus'
         },
-        content: 'Totoo po ito. Simula noong ginamit ko ang Claude at Gemini bilang pair-programmer habang pinag-aaralan ang React state, dumoble ang bilis ko matuto.',
-        timestamp: '2 oras ang nakalipas',
+        content: 'Spot on! Ever since using Claude and Gemini as pair-programmers while mastering React state management, my learning pace has doubled.',
+        timestamp: '2 hours ago',
         likes: 15,
         isLiked: false,
       }
@@ -220,31 +220,31 @@ export const INITIAL_POSTS: CommunityPost[] = [
     trackCategory: 'stem',
     author: {
       name: 'Bro. Joshua Dela Cruz',
-      role: 'Level 3 Mag-aaral mula Batangas',
+      role: 'Level 3 Student from Batangas',
       avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
       isEducator: false,
-      tierBadge: 'Masigasig na Mag-aaral',
+      tierBadge: 'Dedicated Student',
     },
-    timestamp: '5 oras ang nakalipas',
-    title: '😭 Salamat sa Panginoon at kay Kuya Jed! Naka-graduate na ako sa Level 1 HTML & CSS!',
-    content: 'Akala ko dati hindi ko kaya mag-code dahil nagtatrabaho ako sa service crew sa umaga. Pero dahil sa step-by-step Taglish lessons at mga video assignments dito sa EPICADEMY, nakagawa ako ng unang responsive website para sa maliit na bakery ng nanay ko. Tuloy-tuloy lang tayo mga kapatid, may awa ang Diyos!',
+    timestamp: '5 hours ago',
+    title: '🎉 Breakthrough Moment: Successfully Completed Level 1 HTML & CSS Masterclass!',
+    content: 'I used to think I could never learn how to program because I work morning shifts in food service. But thanks to the structured, step-by-step masterclasses and practical assignments here on EPICADEMY, I just built and launched the first responsive website for my mother\'s bakery business. Keep going everyone, consistent hard work pays off!',
     likes: 428,
     repliesCount: 2,
     isLiked: true,
-    tags: ['Tagumpay', 'Pagsusumikap', 'HTML5', 'Inspirasyon'],
+    tags: ['SuccessStory', 'Dedication', 'HTML5', 'Inspiration'],
     replies: [
       {
         id: 'rep-3-1',
         postId: 'post-3',
         author: {
           name: 'Pastor Joven Nel Jed (Kuya Jed)',
-          role: 'Tagapagtatag & Mentor',
+          role: 'Founder & Mentor',
           avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
           isEducator: true,
-          tierBadge: 'Punong Guro'
+          tierBadge: 'Lead Instructor'
         },
-        content: 'Purihin ang Panginoon, Joshua! Tuwang-tuwa kami para sa iyo at sa iyong nanay. Patunay ka na walang pangarap na malayo sa masipag at may takot sa Diyos.',
-        timestamp: '4 oras ang nakalipas',
+        content: 'Praise God, Joshua! We are thrilled for you and your family. You are living proof that no ambition is out of reach when powered by discipline, faith, and perseverance.',
+        timestamp: '4 hours ago',
         likes: 84,
         isLiked: true,
       }
@@ -256,18 +256,18 @@ export const INITIAL_POSTS: CommunityPost[] = [
     trackCategory: 'business',
     author: {
       name: 'Daniel Zan Baltazar',
-      role: 'Founder ng ZAN COMMUNITY',
+      role: 'Founder of ZAN COMMUNITY',
       avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
       isEducator: true,
       tierBadge: 'Freelance Mentor',
     },
-    timestamp: '8 oras ang nakalipas',
-    title: '💡 3 Tips sa Pakikipag-usap sa Foreign Tech Clients nang may Respeto at Kumpiyansa',
-    content: 'Kahit hindi perpekto ang English mo, ang pinakamahalaga sa dayuhang kliyente ay ang iyong "clarity, honesty, and reliability". Mag-commit lamang sa kaya mong gawin, mag-update araw-araw, at laging maging magalang. Ang dangal ng Pilipinong developer ay nasa katapatan.',
+    timestamp: '8 hours ago',
+    title: '💡 3 Practical Principles for Communicating Confidently with Global Clients',
+    content: 'Even if English is not your native language, global clients value clarity, honesty, and reliability above all else. Only commit to what you can deliver, communicate daily progress proactively, and always remain courteous. The hallmark of an outstanding developer is dependability and integrity.',
     likes: 189,
     repliesCount: 1,
     isLiked: false,
-    tags: ['Freelancing', 'ZANCommunity', 'RemoteWork', 'Mindset'],
+    tags: ['Freelancing', 'ZANCommunity', 'RemoteWork', 'ProfessionalGrowth'],
     replies: [
       {
         id: 'rep-4-1',
@@ -278,8 +278,8 @@ export const INITIAL_POSTS: CommunityPost[] = [
           avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
           tierBadge: 'Member'
         },
-        content: 'Solid advice Sir Zan! Sobrang na-appreciate ng client ko sa US noong naging tapat ako sa delay imbis na mag-dahilan. Mas lalo silang nagtiwala.',
-        timestamp: '6 oras ang nakalipas',
+        content: 'Invaluable advice, Sir Zan! My US client deeply appreciated full transparency about a delay instead of making excuses. It built lasting trust.',
+        timestamp: '6 hours ago',
         likes: 16,
         isLiked: false,
       }
@@ -291,18 +291,18 @@ export const INITIAL_POSTS: CommunityPost[] = [
     trackCategory: 'creative',
     author: {
       name: 'Ate Elena Gomez',
-      role: 'MAHABI+ Lead (Ex-Maya)',
+      role: 'MAHABI+ Design Lead (Ex-Maya)',
       avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
       isEducator: true,
       tierBadge: 'MAHABI+ Advocate',
     },
-    timestamp: '12 oras ang nakalipas',
-    title: '🎨 Ang Diwa ng Malasakit sa Pagdidisenyo ng Apps para sa mga Pilipino',
-    content: 'Sa MAHABI+, naniniwala kami na ang UI/UX ay hindi lang tungkol sa magagandang kulay. Ito ay pakikiramay sa gumagamit—paano mapapadali ang pagpapadala ng pera ng isang OFW sa kanyang pamilya nang walang kalituhan? Iyon ang tunay na disenyo na may puso.',
+    timestamp: '12 hours ago',
+    title: '🎨 The Spirit of Empathy and Malasakit in Designing Digital Products',
+    content: 'At MAHABI+, we believe UI/UX design is more than aesthetic color palettes. It is about human empathy—how do we make sending funds home seamless and confusion-free for an overseas worker on a weak mobile connection? That is authentic, purpose-driven design.',
     likes: 276,
     repliesCount: 1,
     isLiked: true,
-    tags: ['MalasakitUX', 'MAHABI', 'HumanExperience', 'Figma'],
+    tags: ['HumanCenteredDesign', 'MAHABI', 'UserExperience', 'Figma'],
     replies: [
       {
         id: 'rep-5-1',
@@ -313,8 +313,8 @@ export const INITIAL_POSTS: CommunityPost[] = [
           avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
           tierBadge: 'Member'
         },
-        content: 'Napaka-inspiring Ate Elena! Kaya pala iba ang impact ng Pinoy-centered design kapag may tunay na malasakit sa user.',
-        timestamp: '10 oras ang nakalipas',
+        content: 'So inspiring, Elena! Truly shows the profound impact of empathetic, user-first design systems.',
+        timestamp: '10 hours ago',
         likes: 21,
         isLiked: false,
       }
