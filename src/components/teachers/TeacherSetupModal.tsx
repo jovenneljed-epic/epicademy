@@ -9,7 +9,8 @@ import {
   Users, 
   Sparkles, 
   ShieldCheck,
-  Plus
+  Plus,
+  BookOpen
 } from 'lucide-react';
 import { registerTeacherAccount, fetchTeachersFromDB } from '../../lib/supabaseClient';
 import type { TeacherProfile, RegisterTeacherInput } from '../../types';
@@ -18,6 +19,7 @@ interface TeacherSetupModalProps {
   isOpen: boolean;
   onClose: () => void;
   onTeacherCreated?: (teacher: TeacherProfile) => void;
+  onOpenCourseBuilder?: () => void;
 }
 
 const PRESET_AVATARS = [
@@ -32,6 +34,7 @@ export const TeacherSetupModal = ({
   isOpen,
   onClose,
   onTeacherCreated,
+  onOpenCourseBuilder,
 }: TeacherSetupModalProps) => {
   const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
   const [fullName, setFullName] = useState('');
@@ -175,6 +178,20 @@ export const TeacherSetupModal = ({
             <Users className="w-3.5 h-3.5" />
             <span>Active Instructors ({teachers.length})</span>
           </button>
+
+          {onOpenCourseBuilder && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenCourseBuilder();
+              }}
+              className="ml-auto px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Launch Course Studio →</span>
+            </button>
+          )}
         </div>
 
         {/* Tab Content */}

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { CommunityPost, Track, ModuleItem, CreateTrackInput, TeacherProfile, RegisterTeacherInput } from '../types';
 import { ZERO_TO_HERO_COURSES, ZERO_TO_HERO_TRACKS, getZeroToHeroCourse } from '../data/zeroToHeroCoursesData';
+import { TESDA_CSS_TRACK } from '../data/tesdaCssNc2CourseData';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ukhmrgbkrfawgszltzsr.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_uB7grQdiSm_z6PzMvXITdA_Kdih_GuP';
@@ -13,6 +14,25 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
   },
 });
+
+export const TEACHER_TRACKS_STORAGE_KEY = 'epicademy_teacher_tracks';
+
+export function getLocalTeacherTracks(): Track[] {
+  try {
+    const data = localStorage.getItem(TEACHER_TRACKS_STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveLocalTeacherTracks(tracks: Track[]): void {
+  try {
+    localStorage.setItem(TEACHER_TRACKS_STORAGE_KEY, JSON.stringify(tracks));
+  } catch (err) {
+    console.error('Failed to save teacher tracks locally', err);
+  }
+}
 
 // Guard to prevent concurrent multiple seed loops in the frontend
 let isSeedingInProgress = false;
@@ -163,8 +183,8 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
       .order('level_index', { ascending: true });
 
     if (error || !data || data.length === 0) {
-     
-      return { tracks: ZERO_TO_HERO_TRACKS, error: null };
+      const localTeacherTracks = getLocalTeacherTracks();
+      return { tracks: [...localTeacherTracks, ...ZERO_TO_HERO_TRACKS], error: null };
     }
 
     const dbTracks: Track[] = data.map((row: any) => {
@@ -207,31 +227,37 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
         popular: Boolean(row.popular),
         published: Boolean(row.published ?? true),
         isCustomCourse: true,
+        isTeacherCreated: Boolean(row.is_teacher_created ?? true),
+        authorEmail: row.author_email || undefined,
       };
     });
 
-    if (dbTracks.length < 9) {
-      const existingIds = new Set(dbTracks.map(t => t.id));
-      const missingTracks = ZERO_TO_HERO_TRACKS.filter(t => !existingIds.has(t.id));
-      const combined = [...dbTracks, ...missingTracks].sort((a, b) => {
-        if (a.isBundle && !b.isBundle) return 1;
-        if (!a.isBundle && b.isBundle) return -1;
-        return (a.levelIndex || 99) - (b.levelIndex || 99);
-      });
-   
-      return { tracks: combined, error: null };
-    }
+    const localTeacherTracks = getLocalTeacherTracks();
+    const localMap = new Map(localTeacherTracks.map(t => [t.id, t]));
+    
+    // Combine dbTracks with local teacher tracks, allowing local teacher tracks to override or supplement
+    const mergedTeacherAndDb: Track[] = [...localTeacherTracks];
+    dbTracks.forEach(dt => {
+      if (!localMap.has(dt.id)) {
+        mergedTeacherAndDb.push(dt);
+      }
+    });
 
-    return {
-      tracks: dbTracks.sort((a, b) => {
-        if (a.isBundle && !b.isBundle) return 1;
-        if (!a.isBundle && b.isBundle) return -1;
-        return (a.levelIndex || 99) - (b.levelIndex || 99);
-      }),
-      error: null,
-    };
+    const existingIds = new Set(mergedTeacherAndDb.map(t => t.id));
+    const missingStandardTracks = ZERO_TO_HERO_TRACKS.filter(t => !existingIds.has(t.id));
+
+    const combined = [...mergedTeacherAndDb, ...missingStandardTracks].sort((a, b) => {
+      if (a.isTeacherCreated && !b.isTeacherCreated) return -1;
+      if (!a.isTeacherCreated && b.isTeacherCreated) return 1;
+      if (a.isBundle && !b.isBundle) return 1;
+      if (!a.isBundle && b.isBundle) return -1;
+      return (a.levelIndex || 99) - (b.levelIndex || 99);
+    });
+
+    return { tracks: combined, error: null };
   } catch (err) {
-    return { tracks: ZERO_TO_HERO_TRACKS, error: err };
+    const localTeacherTracks = getLocalTeacherTracks();
+    return { tracks: [...localTeacherTracks, ...ZERO_TO_HERO_TRACKS], error: err };
   }
 }
 
@@ -327,7 +353,7 @@ export async function seedHTMLCourseToSupabase(): Promise<{ track: Track | null;
 
 export async function createTrackInDB(input: CreateTrackInput): Promise<{ track: Track | null; error: any }> {
   try {
-    const trackId = `track-${Date.now()}`;
+    const trackId = input.id || `track-${Date.now()}`;
     const slug = input.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + `-${Math.floor(Math.random() * 1000)}`;
     const categoryLabel = getCategoryLabel(input.category);
 
@@ -338,105 +364,139 @@ export async function createTrackInDB(input: CreateTrackInput): Promise<{ track:
 
     const user = await getCurrentUser();
 
-    // 1. Upsert Track
-    const { data: trackRow, error: trackError } = await supabase
-      .from('tracks')
-      .upsert(
-        [
-          {
-            id: trackId,
-            user_id: user?.id || null,
-            title: input.title,
-            category: input.category,
-            category_label: categoryLabel,
-            slug,
-            level: input.level,
-            description: input.description,
-            duration: input.duration || '4 Weeks',
-            skills: input.skills,
-            color_theme: input.colorTheme || 'from-blue-600 to-indigo-700',
-            instructor_name: input.instructorName || (user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Instructor'),
-            instructor_role: input.instructorRole || 'Lead Instructor',
-            instructor_avatar: input.instructorAvatar || (user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'),
-            instructor_verified: true,
-            instructor_credentials: 'Epicademy Creator',
-            rating: 5.0,
-            review_count: 0,
-            active_learners: 1,
-            lessons_count: totalLessonsCount,
-            published: true,
-          },
-        ],
-        { onConflict: 'id' }
-      )
-      .select()
-      .single();
-
-    if (trackError) {
-      return { track: null, error: trackError };
-    }
-
-    // 2. Upsert Modules & Lessons
-    for (let mIdx = 0; mIdx < input.modules.length; mIdx++) {
-      const mod = input.modules[mIdx];
-      const moduleId = `mod-${Date.now()}-${mIdx}`;
-
-      const { error: modError } = await supabase
-        .from('modules')
-        .upsert(
-          [
-            {
-              id: moduleId,
-              track_id: trackId,
-              title: mod.title,
-              duration: mod.duration || '1 Week',
-              order_index: mIdx + 1,
-            },
-          ],
-          { onConflict: 'id' }
-        );
-
-      if (!modError && mod.lessons && mod.lessons.length > 0) {
-        const lessonInserts = mod.lessons.map((les, lIdx) => ({
-          id: `les-${Date.now()}-${mIdx}-${lIdx}`,
+    // Map nested modules and lessons with activities, exams, and worksheets
+    const mappedModules: ModuleItem[] = input.modules.map((m, mIdx) => {
+      const moduleId = m.id || `mod-${trackId}-${mIdx + 1}`;
+      return {
+        id: moduleId,
+        track_id: trackId,
+        title: m.title,
+        duration: m.duration || '1 Week',
+        overview: m.overview || '',
+        order_index: mIdx + 1,
+        lessons: m.lessons.length,
+        topics: m.lessons.map(l => l.title),
+        lessonItems: m.lessons.map((l, lIdx) => ({
+          id: l.id || `les-${trackId}-${mIdx + 1}-${lIdx + 1}`,
           module_id: moduleId,
-          title: les.title,
-          duration: les.duration || '15 mins',
-          video_url: les.videoUrl || '',
-          content: les.content || '',
+          title: l.title,
+          duration: l.duration || '15 mins',
+          video_url: l.videoUrl || '',
+          content: l.content || '',
+          objective: l.objective || '',
+          code_snippet: l.codeSnippet || '',
+          activity: l.activity,
+          exam: l.exam,
+          worksheet: l.worksheet,
+          classroom_link: l.classroomLink || '',
           order_index: lIdx + 1,
-        }));
-
-        await supabase.from('lessons').upsert(lessonInserts, { onConflict: 'id' });
-      }
-    }
+          progress: 0,
+        })),
+      };
+    });
 
     const createdTrack: Track = {
-      id: trackRow.id,
-      title: trackRow.title,
-      category: trackRow.category,
-      categoryLabel: trackRow.category_label,
-      slug: trackRow.slug,
-      badge: 'New Course',
-      level: trackRow.level,
+      id: trackId,
+      title: input.title,
+      category: input.category,
+      categoryLabel,
+      slug,
+      badge: 'Teacher Created Course',
+      level: input.level,
+      price: input.price !== undefined ? input.price : 0,
+      originalPrice: input.originalPrice !== undefined ? input.originalPrice : 0,
+      isPaid: input.isPaid !== undefined ? input.isPaid : false,
+      careerMilestone: `Certified Graduate in ${input.title}`,
       instructor: {
-        name: trackRow.instructor_name,
-        role: trackRow.instructor_role,
-        avatar: trackRow.instructor_avatar,
+        name: input.instructorName || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Faculty Member',
+        role: input.instructorRole || 'Lead Instructor & Course Author',
+        avatar: input.instructorAvatar || user?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         verified: true,
-        credentials: trackRow.instructor_credentials,
+        credentials: 'Verified Epicademy Faculty Educator',
       },
       rating: 5.0,
       reviewCount: 0,
       activeLearners: 1,
       lessonsCount: totalLessonsCount,
-      duration: trackRow.duration,
-      description: trackRow.description,
-      skills: trackRow.skills || [],
-      colorTheme: trackRow.color_theme,
+      duration: input.duration || '4 Weeks',
+      description: input.description,
+      skills: input.skills || ['Core Competencies'],
+      colorTheme: input.colorTheme || 'from-blue-600 to-indigo-700',
       published: true,
       isCustomCourse: true,
+      isTeacherCreated: true,
+      authorEmail: user?.email,
+      modules: mappedModules,
     };
+
+    // 1. Immediately persist to Local Storage for high reliability
+    const existing = getLocalTeacherTracks().filter(t => t.id !== trackId);
+    saveLocalTeacherTracks([createdTrack, ...existing]);
+
+    // 2. Best-effort Supabase sync
+    try {
+      await supabase.from('tracks').upsert([
+        {
+          id: trackId,
+          user_id: user?.id || null,
+          title: input.title,
+          category: input.category,
+          category_label: categoryLabel,
+          slug,
+          level: input.level,
+          description: input.description,
+          duration: input.duration || '4 Weeks',
+          skills: input.skills,
+          color_theme: input.colorTheme || 'from-blue-600 to-indigo-700',
+          instructor_name: createdTrack.instructor.name,
+          instructor_role: createdTrack.instructor.role,
+          instructor_avatar: createdTrack.instructor.avatar,
+          instructor_verified: true,
+          instructor_credentials: createdTrack.instructor.credentials,
+          rating: 5.0,
+          review_count: 0,
+          active_learners: 1,
+          lessons_count: totalLessonsCount,
+          published: true,
+        },
+      ], { onConflict: 'id' });
+
+      for (let mIdx = 0; mIdx < mappedModules.length; mIdx++) {
+        const mod = mappedModules[mIdx];
+        await supabase.from('modules').upsert([
+          {
+            id: mod.id,
+            track_id: trackId,
+            title: mod.title,
+            duration: mod.duration || '1 Week',
+            order_index: mIdx + 1,
+          },
+        ], { onConflict: 'id' });
+
+        if (mod.lessonItems && mod.lessonItems.length > 0) {
+          const lessonInserts = mod.lessonItems.map((les, lIdx) => ({
+            id: les.id,
+            module_id: mod.id,
+            title: les.title,
+            duration: les.duration || '15 mins',
+            video_url: les.video_url || '',
+            content: JSON.stringify({
+              content: les.content,
+              objective: les.objective,
+              codeSnippet: les.code_snippet,
+              activity: les.activity,
+              exam: les.exam,
+              worksheet: les.worksheet,
+            }),
+            order_index: lIdx + 1,
+          }));
+
+          await supabase.from('lessons').upsert(lessonInserts, { onConflict: 'id' });
+        }
+      }
+    } catch {
+      // Ignore Supabase sync failure; local storage copy is already safely stored
+    }
 
     return { track: createdTrack, error: null };
   } catch (err) {
@@ -444,7 +504,29 @@ export async function createTrackInDB(input: CreateTrackInput): Promise<{ track:
   }
 }
 
+export async function updateTrackInDB(trackId: string, input: CreateTrackInput): Promise<{ track: Track | null; error: any }> {
+  try {
+    input.id = trackId;
+    return await createTrackInDB(input);
+  } catch (err) {
+    return { track: null, error: err };
+  }
+}
+
 export async function fetchTrackModulesAndLessons(trackId: string): Promise<ModuleItem[]> {
+  // 1. Check if it's the TESDA CSS NC II track
+  if (trackId === 'track-tesda-css-nc2' || trackId === TESDA_CSS_TRACK.id) {
+    return TESDA_CSS_TRACK.modules || [];
+  }
+
+  // 2. Check Local Teacher Tracks
+  const localTeacherTracks = getLocalTeacherTracks();
+  const localTrack = localTeacherTracks.find(t => t.id === trackId);
+  if (localTrack && localTrack.modules && localTrack.modules.length > 0) {
+    return localTrack.modules;
+  }
+
+  // 3. Check Supabase
   try {
     const { data: modulesData, error: modError } = await supabase
       .from('modules')
@@ -460,6 +542,7 @@ export async function fetchTrackModulesAndLessons(trackId: string): Promise<Modu
           track_id: trackId,
           title: m.title,
           duration: m.duration,
+          overview: m.overview,
           lessons: m.lessons.length,
           topics: m.lessons.map(l => l.title),
           lessonItems: m.lessons.map((l, lIdx) => ({
@@ -468,8 +551,25 @@ export async function fetchTrackModulesAndLessons(trackId: string): Promise<Modu
             title: l.title,
             duration: l.duration,
             video_url: l.videoUrl,
-            content: JSON.stringify(l),
+            content: l.theoryContent || '',
+            objective: l.objective || '',
+            code_snippet: l.codeSnippet || '',
+            activity: l.handsOnActivity ? {
+              title: l.handsOnActivity.title,
+              instructions: l.handsOnActivity.instructions,
+              starterCode: l.handsOnActivity.starterCode,
+              expectedOutcome: l.handsOnActivity.expectedOutcome,
+            } : undefined,
+            worksheet: l.googleSheetsAssignment ? {
+              title: l.googleSheetsAssignment.title,
+              sheetName: l.googleSheetsAssignment.sheetName,
+              description: l.googleSheetsAssignment.description,
+              templateUrl: l.googleSheetsAssignment.templateUrl,
+              deliverables: l.googleSheetsAssignment.deliverables,
+              rubric: l.googleSheetsAssignment.rubric,
+            } : undefined,
             order_index: lIdx + 1,
+            progress: 0,
           })),
         }));
       }
@@ -492,14 +592,34 @@ export async function fetchTrackModulesAndLessons(trackId: string): Promise<Modu
         duration: mod.duration,
         lessons: relatedLessons.length,
         topics: relatedLessons.map((l: any) => l.title),
-        lessonItems: relatedLessons.map((l: any) => ({
-          id: l.id,
-          module_id: l.module_id,
-          title: l.title,
-          duration: l.duration,
-          video_url: l.video_url,
-          content: l.content,
-        })),
+        lessonItems: relatedLessons.map((l: any) => {
+          let parsedExtra: any = {};
+          if (l.content && (l.content.startsWith('{') || l.content.startsWith('['))) {
+            try {
+              parsedExtra = JSON.parse(l.content);
+            } catch {
+              parsedExtra = { content: l.content };
+            }
+          } else {
+            parsedExtra = { content: l.content };
+          }
+
+          return {
+            id: l.id,
+            module_id: l.module_id,
+            title: l.title,
+            duration: l.duration,
+            video_url: l.video_url,
+            content: parsedExtra.content || l.content,
+            objective: parsedExtra.objective || '',
+            code_snippet: parsedExtra.codeSnippet || '',
+            activity: parsedExtra.activity,
+            exam: parsedExtra.exam,
+            worksheet: parsedExtra.worksheet,
+            order_index: l.order_index,
+            progress: 0,
+          };
+        }),
       };
     });
 
@@ -512,6 +632,7 @@ export async function fetchTrackModulesAndLessons(trackId: string): Promise<Modu
         track_id: trackId,
         title: m.title,
         duration: m.duration,
+        overview: m.overview,
         lessons: m.lessons.length,
         topics: m.lessons.map(l => l.title),
         lessonItems: m.lessons.map((l, lIdx) => ({
@@ -520,8 +641,13 @@ export async function fetchTrackModulesAndLessons(trackId: string): Promise<Modu
           title: l.title,
           duration: l.duration,
           video_url: l.videoUrl,
-          content: JSON.stringify(l),
+          content: l.theoryContent,
+          objective: l.objective,
+          code_snippet: l.codeSnippet,
+          activity: l.handsOnActivity,
+          worksheet: l.googleSheetsAssignment,
           order_index: lIdx + 1,
+          progress: 0,
         })),
       }));
     }
@@ -530,12 +656,14 @@ export async function fetchTrackModulesAndLessons(trackId: string): Promise<Modu
 }
 
 export async function deleteTrackFromDB(trackId: string): Promise<{ error: any }> {
-  const { error } = await supabase
-    .from('tracks')
-    .delete()
-    .eq('id', trackId);
-
-  return { error };
+  try {
+    const remaining = getLocalTeacherTracks().filter(t => t.id !== trackId);
+    saveLocalTeacherTracks(remaining);
+    const { error } = await supabase.from('tracks').delete().eq('id', trackId);
+    return { error };
+  } catch (err) {
+    return { error: err };
+  }
 }
 
 export async function enrollUserInTrack(trackId: string, userEmail: string) {

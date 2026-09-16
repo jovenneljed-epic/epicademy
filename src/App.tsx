@@ -19,9 +19,10 @@ import { TeacherSetupModal } from './components/teachers/TeacherSetupModal';
 import { CheckoutModal } from './components/modals/CheckoutModal';
 import { DeveloperProfileModal } from './components/modals/DeveloperProfileModal';
 import { ApplyTenantModal } from './components/modals/ApplyTenantModal';
-import { getCurrentUser, supabase } from './lib/supabaseClient';
-import type { Track, CommunityDeveloper } from './types';
+import { getCurrentUser, supabase, fetchTrackModulesAndLessons } from './lib/supabaseClient';
+import type { Track, CommunityDeveloper, ModuleItem } from './types';
 import { CreateCommunityModal } from './components/modals/CreateCommunityModal';
+import { LessonViewer } from './components/classroom/LessonViewer';
 
 // =========================================================================
 // COC 1: INSTALLING AND CONFIGURING COMPUTER SYSTEMS (14 Lessons)
@@ -129,6 +130,11 @@ export function App() {
   const [linkSavedMsg, setLinkSavedMsg] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
 
+  // Dynamic Teacher / Custom Tracks state in Classroom
+  const [activeTrackModules, setActiveTrackModules] = useState<ModuleItem[]>([]);
+  const [activeModuleIndex, setActiveModuleIndex] = useState(0);
+  const [completedLessonIds, setCompletedLessonIds] = useState<Record<string, boolean>>({});
+
   // Active Supabase user state
   const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string } | null>(null);
 
@@ -165,6 +171,29 @@ export function App() {
     setAuthModalOpen(true);
   };
 
+  const openTrackClassroom = async (track: Track) => {
+    setSelectedActiveTrack(track);
+    if (track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2) {
+      setActiveCoc('coc1');
+      setActiveLessonIndex(0);
+      setTempLinkInput(COC1_LESSONS[0].classroomLink);
+      setActiveTrackModules([]);
+      setIsClassroomOpen(true);
+      return;
+    }
+
+    let mods: ModuleItem[] = [];
+    if (track.modules && track.modules.length > 0) {
+      mods = track.modules;
+    } else {
+      mods = await fetchTrackModulesAndLessons(track.id);
+    }
+    setActiveTrackModules(mods);
+    setActiveModuleIndex(0);
+    setActiveLessonIndex(0);
+    setIsClassroomOpen(true);
+  };
+
   const handleEnrollTrack = (track: Track) => {
     const isFree = (track.price || 49) === 0 || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2;
     
@@ -174,11 +203,7 @@ export function App() {
     }
 
     if (isFree) {
-      setSelectedActiveTrack(track);
-      setActiveCoc('coc1');
-      setActiveLessonIndex(0);
-      setTempLinkInput(COC1_LESSONS[0].classroomLink);
-      setIsClassroomOpen(true);
+      openTrackClassroom(track);
     } else {
       setCheckoutTrack(track);
       setCheckoutModalOpen(true);
@@ -186,11 +211,7 @@ export function App() {
   };
 
   const handleSuccessEnroll = (track: Track) => {
-    setSelectedActiveTrack(track);
-    setActiveCoc('coc1');
-    setActiveLessonIndex(0);
-    setTempLinkInput(COC1_LESSONS[0].classroomLink);
-    setIsClassroomOpen(true);
+    openTrackClassroom(track);
   };
 
   const handleSelectDeveloper = (dev: CommunityDeveloper) => {
@@ -273,6 +294,12 @@ export function App() {
   const allCocLessons = [...coc1Data, ...coc2Data, ...coc3Data, ...coc4Data];
   const totalCompletedCount = allCocLessons.filter(l => l.progress >= 80).length;
   const overallCourseProgress = Math.round((totalCompletedCount / allCocLessons.length) * 100);
+
+  // Dynamic course progress for teacher/custom courses
+  const totalDynamicLessons = activeTrackModules.reduce((acc, m) => acc + (m.lessonItems?.length || 0), 0);
+  const completedDynamicCount = activeTrackModules.flatMap(m => m.lessonItems || []).filter(l => Boolean(l.id && completedLessonIds[l.id])).length;
+  const dynamicCourseProgress = totalDynamicLessons > 0 ? Math.min(100, Math.round((completedDynamicCount / totalDynamicLessons) * 100)) : 0;
+  const effectiveOverallProgress = activeTrackModules.length > 0 ? dynamicCourseProgress : overallCourseProgress;
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white">
@@ -365,6 +392,10 @@ export function App() {
         isOpen={courseBuilderOpen}
         onClose={() => setCourseBuilderOpen(false)}
         onCourseCreated={handleCourseCreated}
+        onPreviewCourse={(track) => {
+          setCourseBuilderOpen(false);
+          openTrackClassroom(track);
+        }}
         userEmail={currentUser?.email}
       />
 
@@ -374,6 +405,7 @@ export function App() {
         onTeacherCreated={(teacher) => {
           setCurrentUser({ email: teacher.email, role: 'educator' });
         }}
+        onOpenCourseBuilder={() => setCourseBuilderOpen(true)}
       />
 
       <DeveloperProfileModal
@@ -403,12 +435,15 @@ export function App() {
           <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between text-white shrink-0">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                {activeCoc.toUpperCase()} • Overall Course Progress: {overallCourseProgress}%
+                {activeTrackModules.length > 0
+                  ? `${activeTrackModules[activeModuleIndex]?.title || 'Module'} • Progress: ${effectiveOverallProgress}%`
+                  : `${activeCoc.toUpperCase()} • Overall Course Progress: ${effectiveOverallProgress}%`
+                }
               </span>
               <h2 className="text-base sm:text-lg font-black mt-0.5">{selectedActiveTrack.title}</h2>
             </div>
             <div className="flex items-center gap-3">
-              {overallCourseProgress === 100 && (
+              {effectiveOverallProgress === 100 && (
                 <button
                   onClick={() => setShowCertificateModal(true)}
                   className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black transition-all shadow-lg animate-pulse cursor-pointer flex items-center gap-1.5"
@@ -420,6 +455,7 @@ export function App() {
                 onClick={() => {
                   setIsClassroomOpen(false);
                   setSelectedActiveTrack(null);
+                  setActiveTrackModules([]);
                 }}
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
               >
@@ -430,6 +466,157 @@ export function App() {
 
           <div className="flex-1 bg-slate-950 overflow-y-auto p-6 text-white flex flex-col items-center">
             <div className="max-w-6xl w-full space-y-6">
+              {activeTrackModules.length > 0 ? (
+                /* ======================================================== */
+                /* TEACHER / CUSTOM AUTHOR SUITE LMS CLASSROOM               */
+                /* ======================================================== */
+                <>
+                  {/* Subject & Module Navigation Bar */}
+                  <div className="flex items-center justify-between bg-slate-900 border border-slate-800 p-3 rounded-2xl flex-wrap gap-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {activeTrackModules.map((mod, mIdx) => {
+                        const isCurrent = activeModuleIndex === mIdx;
+                        const modLessons = mod.lessonItems || [];
+                        const completedInMod = modLessons.filter(l => Boolean(l.id && completedLessonIds[l.id])).length;
+                        const isModDone = modLessons.length > 0 && completedInMod === modLessons.length;
+                        return (
+                          <button
+                            key={mod.id || mIdx}
+                            onClick={() => {
+                              setActiveModuleIndex(mIdx);
+                              setActiveLessonIndex(0);
+                            }}
+                            className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                              isCurrent 
+                                ? 'bg-blue-600 text-white shadow-md' 
+                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                            }`}
+                          >
+                            <span>{mod.title}</span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                              isCurrent ? 'bg-blue-800 text-blue-100' : 'bg-slate-700 text-slate-400'
+                            }`}>
+                              {completedInMod}/{modLessons.length}
+                            </span>
+                            {isModDone && <span className="text-emerald-400">✓</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Main Grid: Lesson Viewer on Left, Lesson Directory on Right */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Left 2 Cols: Lesson Viewer */}
+                    <div className="lg:col-span-2">
+                      {(() => {
+                        const currentMod = activeTrackModules[activeModuleIndex] || activeTrackModules[0];
+                        const modLessons = currentMod?.lessonItems || [];
+                        const curLesson = modLessons[activeLessonIndex] || modLessons[0];
+
+                        if (!curLesson) {
+                          return (
+                            <div className="p-12 text-center bg-slate-900 border border-slate-800 rounded-2xl text-slate-400 space-y-3">
+                              <p className="font-bold text-white text-base">No lessons created for this subject yet.</p>
+                              <p className="text-xs text-slate-400">Open the Course Creator Studio from the Navbar to add lessons, activities, and exams.</p>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <LessonViewer
+                            key={curLesson.id || `les-${activeLessonIndex}`}
+                            lessonTitle={curLesson.title}
+                            duration={curLesson.duration}
+                            objective={curLesson.objective}
+                            videoUrl={curLesson.video_url}
+                            theoryContent={curLesson.content}
+                            codeSnippet={curLesson.code_snippet}
+                            activity={curLesson.activity}
+                            exam={curLesson.exam}
+                            worksheet={curLesson.worksheet}
+                            classroomLink={curLesson.classroomLink || curLesson.classroom_link}
+                            onSaveClassroomLink={(link) => {
+                              curLesson.classroomLink = link;
+                              curLesson.classroom_link = link;
+                              alert('Classroom assignment link saved!');
+                            }}
+                            isCompleted={Boolean(curLesson.id && completedLessonIds[curLesson.id])}
+                            onCompleteLesson={() => {
+                              if (curLesson.id) {
+                                const lId = curLesson.id;
+                                setCompletedLessonIds(prev => ({ ...prev, [lId]: true }));
+                              }
+                            }}
+                          />
+                        );
+                      })()}
+                    </div>
+
+                    {/* Right Col: Lessons Directory */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 h-fit max-h-[78vh] overflow-y-auto">
+                      {(() => {
+                        const currentMod = activeTrackModules[activeModuleIndex] || activeTrackModules[0];
+                        const modLessons = currentMod?.lessonItems || [];
+
+                        return (
+                          <>
+                            <h4 className="font-black text-sm text-white uppercase tracking-wider border-b border-slate-800 pb-3 flex items-center justify-between sticky top-0 bg-slate-900 z-10">
+                              <span className="truncate mr-2">{currentMod?.title || 'Syllabus'}</span>
+                              <span className="text-xs font-normal text-emerald-400 shrink-0">{modLessons.length} Lessons</span>
+                            </h4>
+
+                            <div className="space-y-2">
+                              {modLessons.map((les, lIdx) => {
+                                const isDone = Boolean(les.id && completedLessonIds[les.id]);
+                                const isCurrent = activeLessonIndex === lIdx;
+
+                                return (
+                                  <button
+                                    key={les.id || lIdx}
+                                    onClick={() => setActiveLessonIndex(lIdx)}
+                                    className={`w-full text-left p-3 rounded-xl border transition-all flex flex-col gap-1 cursor-pointer ${
+                                      isCurrent
+                                        ? 'bg-blue-600/20 border-blue-500 text-white shadow-md'
+                                        : isDone
+                                        ? 'bg-slate-800/60 border-slate-700 text-slate-200'
+                                        : 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-800 text-slate-300'
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
+                                        isCurrent ? 'bg-blue-600 text-white' : isDone ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30' : 'bg-slate-700 text-slate-300'
+                                      }`}>
+                                        Lesson {lIdx + 1} • {les.duration || '15 mins'}
+                                      </span>
+                                      {isDone ? (
+                                        <span className="text-xs font-bold text-emerald-400">✓ Complete</span>
+                                      ) : (
+                                        <span className="text-[10px] text-slate-500">Incomplete</span>
+                                      )}
+                                    </div>
+                                    <p className="font-bold text-xs mt-1 leading-snug">{les.title}</p>
+                                    <div className="flex items-center gap-2 text-[10px] text-slate-400 pt-0.5 flex-wrap">
+                                      {les.video_url && <span>🎥 Video</span>}
+                                      {les.activity && <span>🛠️ Activity</span>}
+                                      {les.exam && <span>📝 Exam</span>}
+                                      {les.worksheet && <span>📊 Worksheet</span>}
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* ======================================================== */
+                /* TESDA CSS NC II VOCATIONAL WORKSPACE                     */
+                /* ======================================================== */
+                <>
               
               {/* COC Navigation Switcher Bar */}
               <div className="flex items-center justify-between bg-slate-900 border border-slate-800 p-3 rounded-2xl flex-wrap gap-3">
@@ -642,6 +829,8 @@ export function App() {
                 </div>
 
               </div>
+                </>
+              )}
 
             </div>
           </div>
@@ -661,10 +850,10 @@ export function App() {
 
             <div className="text-center space-y-2">
               <span className="text-xs font-black uppercase tracking-widest bg-amber-100 text-amber-800 px-3 py-1 rounded-full border border-amber-300">
-                Official TESDA Vocational Credential
+                {selectedActiveTrack?.isTeacherCreated ? 'Certified Faculty Masterclass Credential' : 'Official Course Completion Credential'}
               </span>
               <h2 className="text-3xl font-black font-serif text-slate-900">Certificate of Completion</h2>
-              <p className="text-xs text-slate-500">EPIC Learning / EPICADEMY Vocational Masterclass & Certification Program</p>
+              <p className="text-xs text-slate-500">EPIC Learning / EPICADEMY Masterclass & Certification Program</p>
             </div>
 
             <div className="text-center py-6 border-y border-slate-200 space-y-3">
@@ -673,18 +862,18 @@ export function App() {
                 {currentUser?.email || 'Valued Student & Scholar'}
               </h3>
               <p className="text-xs text-slate-700 leading-relaxed max-w-xl mx-auto pt-2">
-                For successfully completing all 4 Certificates of Competency (COC 1, COC 2, COC 3, & COC 4) comprising 50 comprehensive lessons in
+                For successfully completing all rigorous subjects, practical activities, and examinations in
               </p>
-              <h4 className="font-extrabold text-sm text-slate-900">Computer Systems Servicing (CSS) NC II Masterclass</h4>
+              <h4 className="font-extrabold text-sm text-slate-900">{selectedActiveTrack?.title}</h4>
             </div>
 
             <div className="flex items-center justify-between pt-4 text-xs">
               <div>
-                <p className="font-bold text-slate-900">Engr. Joven Nel Jed Aviguetero, LPT, TM1</p>
-                <p className="text-[10px] text-slate-500">Lead Instructor & Administrator</p>
+                <p className="font-bold text-slate-900">{selectedActiveTrack?.instructor?.name || 'Lead Instructor'}</p>
+                <p className="text-[10px] text-slate-500">{selectedActiveTrack?.instructor?.role || 'Course Creator & Faculty'}</p>
               </div>
               <div className="text-right">
-                <p className="font-mono font-bold text-emerald-600">Verified ID: EPIC-CSS-2026-001</p>
+                <p className="font-mono font-bold text-emerald-600">Verified ID: EPIC-{(selectedActiveTrack?.id || 'CERT').slice(0, 10).toUpperCase()}-2026</p>
                 <p className="text-[10px] text-slate-500">Issued Date: {new Date().toLocaleDateString()}</p>
               </div>
             </div>

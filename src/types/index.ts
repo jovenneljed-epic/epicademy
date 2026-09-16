@@ -25,6 +25,48 @@ export interface RegisterTeacherInput {
   avatarUrl?: string;
 }
 
+export interface ActivityRubricCriteria {
+  criteria: string;
+  points: number;
+}
+
+export interface ActivityItem {
+  title: string;
+  instructions: string[];
+  starterCode?: string;
+  expectedOutcome?: string;
+  rubric?: ActivityRubricCriteria[];
+}
+
+export interface ExamQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation?: string;
+}
+
+export interface ExamItem {
+  title: string;
+  passingScore: number;
+  questions: ExamQuestion[];
+}
+
+export interface WorksheetPrompt {
+  id: string;
+  prompt: string;
+}
+
+export interface WorksheetItem {
+  title: string;
+  sheetName?: string;
+  description: string;
+  templateUrl?: string;
+  deliverables?: string[];
+  rubric?: { criteria: string; points: number }[];
+  questions?: WorksheetPrompt[];
+}
+
 export interface LessonItem {
   id?: string;
   module_id?: string;
@@ -32,7 +74,15 @@ export interface LessonItem {
   duration: string;
   video_url?: string;
   content?: string;
+  objective?: string;
+  code_snippet?: string;
   order_index?: number;
+  activity?: ActivityItem;
+  exam?: ExamItem;
+  worksheet?: WorksheetItem;
+  classroom_link?: string;
+  classroomLink?: string;
+  progress?: number;
 }
 
 export interface ModuleItem {
@@ -40,6 +90,7 @@ export interface ModuleItem {
   track_id?: string;
   title: string;
   duration?: string;
+  overview?: string;
   order_index?: number;
   lessons?: number;
   topics?: string[];
@@ -73,6 +124,8 @@ export interface Track {
   popular?: boolean;
   published?: boolean;
   isCustomCourse?: boolean;
+  isTeacherCreated?: boolean;
+  authorEmail?: string;
   price?: number;
   originalPrice?: number;
   levelIndex?: number;
@@ -84,19 +137,29 @@ export interface Track {
 }
 
 export interface CreateLessonInput {
+  id?: string;
   title: string;
   duration: string;
   videoUrl?: string;
   content?: string;
+  objective?: string;
+  codeSnippet?: string;
+  activity?: ActivityItem;
+  exam?: ExamItem;
+  worksheet?: WorksheetItem;
+  classroomLink?: string;
 }
 
 export interface CreateModuleInput {
+  id?: string;
   title: string;
   duration: string;
+  overview?: string;
   lessons: CreateLessonInput[];
 }
 
 export interface CreateTrackInput {
+  id?: string;
   title: string;
   category: 'stem' | 'business' | 'creative' | 'humanities' | 'wellness' | 'other';
   level: 'Beginner' | 'Intermediate' | 'Advanced' | 'All Levels';
@@ -107,6 +170,9 @@ export interface CreateTrackInput {
   instructorName: string;
   instructorRole: string;
   instructorAvatar?: string;
+  price?: number;
+  originalPrice?: number;
+  isPaid?: boolean;
   modules: CreateModuleInput[];
 }
 
