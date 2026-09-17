@@ -23,6 +23,7 @@ interface NavbarProps {
   onOpenApplyTenant?: () => void;
   onOpenCredentials?: () => void;
   onOpenDossier?: () => void;
+  onOpenTuition?: () => void;
   currentUser?: { email?: string; role?: string } | null;
   onSignOut?: () => void;
 }
@@ -36,6 +37,7 @@ export const Navbar = ({
   onOpenApplyTenant,
   onOpenCredentials,
   onOpenDossier,
+  onOpenTuition,
   currentUser,
   onSignOut,
 }: NavbarProps) => {
@@ -171,6 +173,15 @@ export const Navbar = ({
                 className="px-3 py-2 text-sm font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
               >
                 <span>💼 Career Dossier</span>
+              </button>
+            )}
+
+            {onOpenTuition && (
+              <button
+                onClick={onOpenTuition}
+                className="px-3 py-2 text-sm font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <span>💳 Tuition &amp; Plans</span>
               </button>
             )}
 
@@ -336,6 +347,17 @@ export const Navbar = ({
               <Plus className="w-4 h-4" />
               <span>+ Build New Course</span>
             </button>
+            {onOpenTuition && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenTuition();
+                }}
+                className="w-full text-left px-3 py-2 text-base font-bold text-emerald-700 hover:bg-emerald-50 rounded-lg flex items-center gap-2 cursor-pointer"
+              >
+                <span>💳 Tuition &amp; Plans</span>
+              </button>
+            )}
             <a 
               href="#tracks" 
               onClick={() => setMobileMenuOpen(false)}

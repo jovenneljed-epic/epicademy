@@ -1,6 +1,6 @@
 // Philippine Payment Configuration & Price Converters
 
-export type PhilippinePaymentMethod = 'gcash' | 'gotyme' | 'maya' | 'qrph';
+export type PhilippinePaymentMethod = 'gcash' | 'gotyme' | 'maya' | 'qrph' | 'card';
 
 const PHP_PRICE_MAP: Record<number, number> = {
   29: 1499,
@@ -25,8 +25,8 @@ export const formatPhp = (amount: number): string => {
 };
 
 export const PHILIPPINE_MERCHANT_INFO = {
-  accountName: 'EPICADEMY INC. / JOVEN NEL JED',
+  accountName: 'KEZJED SOLUTIONS / RONNEL M. AVIGUETERO',
   gotymeAccountNumber: '0183-9482-1049',
-  gcashMerchant: 'EPICADEMY PH (0917-829-3041)',
-  mayaHandle: '@epicademy_ph',
+  gcashMerchant: 'KEZJED SOLUTIONS (0917-829-3041)',
+  mayaHandle: '@kezjed_solutions',
 };

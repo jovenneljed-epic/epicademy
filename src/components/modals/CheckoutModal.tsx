@@ -2,22 +2,27 @@ import { useState } from 'react';
 import type { Track } from '../../types';
 import { 
   X, 
-  ShieldCheck, 
   Lock, 
-  Sparkles, 
   Award, 
-  FileSpreadsheet, 
   Video, 
-  ArrowRight,
-  Zap,
-  Check,
-  Smartphone,
-  Building2,
-  Copy,
-  Wallet
+  ArrowRight, 
+  Zap, 
+  Check, 
+  Building2, 
+  Copy, 
+  CreditCard, 
+  Printer, 
+  Tag, 
+  GraduationCap,
+  CheckCircle2,
+  Code2,
+  Bot
 } from 'lucide-react';
 import { enrollUserInTrack } from '../../lib/supabaseClient';
-import { getPhpPrice, type PhilippinePaymentMethod } from '../../lib/philippinePayment';
+import { type PhilippinePaymentMethod, PHILIPPINE_MERCHANT_INFO } from '../../lib/philippinePayment';
+import { OfficialReceiptModal, type OfficialReceiptData } from '../billing/OfficialReceiptModal';
+
+export type AcademicTier = 'audit' | 'pro' | 'degree';
 
 interface CheckoutModalProps {
   track: Track | null;
@@ -25,6 +30,7 @@ interface CheckoutModalProps {
   onClose: () => void;
   onSuccessEnroll: (track: Track) => void;
   userEmail?: string;
+  defaultTier?: AcademicTier;
 }
 
 export const CheckoutModal = ({
@@ -33,33 +39,79 @@ export const CheckoutModal = ({
   onClose,
   onSuccessEnroll,
   userEmail = '',
+  defaultTier = 'degree',
 }: CheckoutModalProps) => {
   if (!isOpen || !track) return null;
 
-  // Force TESDA or bundle 2 or 0-priced tracks to be free
-  const isFree = (track.price || 49) === 0 || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2;
+  // Check if track is naturally free/sponsored (e.g. TESDA or zero price)
+  const isInherentlyFree = (track.price || 49) === 0 || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2;
 
-  const baseUsd = isFree ? 0 : (track.price || 49);
-  const originalUsd = track.originalPrice || baseUsd * 2;
-  const basePhp = isFree ? 0 : getPhpPrice(baseUsd);
-  const originalPhp = getPhpPrice(originalUsd);
-  const discountPercent = originalPhp > 0 ? Math.round(((originalPhp - basePhp) / originalPhp) * 100) : 100;
-
-  const bumpPhp = 999; 
-  const [hasOrderBump, setHasOrderBump] = useState(false);
+  const [selectedTier, setSelectedTier] = useState<AcademicTier>(isInherentlyFree ? 'degree' : defaultTier);
   const [email, setEmail] = useState(userEmail || '');
   const [fullName, setFullName] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PhilippinePaymentMethod>('gcash');
   const [gcashMobile, setGcashMobile] = useState('');
   const [mayaMobile, setMayaMobile] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvc, setCardCvc] = useState('');
   const [copiedAccount, setCopiedAccount] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
-  const totalPhp = isFree ? 0 : (hasOrderBump ? basePhp + bumpPhp : basePhp);
+  // Coupon state
+  const [couponInput, setCouponInput] = useState('');
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [couponDiscountPercent, setCouponDiscountPercent] = useState(0);
+  const [couponMessage, setCouponMessage] = useState('');
+
+  // Official Receipt Modal state
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptData, setReceiptData] = useState<OfficialReceiptData | null>(null);
+
+  // Compute tier base price in PHP and USD
+  let tierBasePhp = 4999;
+  let tierBaseUsd = 99;
+
+  if (isInherentlyFree || selectedTier === 'audit') {
+    tierBasePhp = 0;
+    tierBaseUsd = 0;
+  } else if (selectedTier === 'pro') {
+    tierBasePhp = 1499;
+    tierBaseUsd = 29;
+  } else if (selectedTier === 'degree') {
+    tierBasePhp = 4999;
+    tierBaseUsd = 99;
+  }
+
+  // Calculate discount if coupon applied
+  const discountedPhp = couponApplied
+    ? Math.round(tierBasePhp * (1 - couponDiscountPercent / 100))
+    : tierBasePhp;
+  const discountedUsd = couponApplied
+    ? Math.round(tierBaseUsd * (1 - couponDiscountPercent / 100))
+    : tierBaseUsd;
+
+  const isFree = discountedPhp === 0;
+
+  const handleApplyCoupon = (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = couponInput.trim().toUpperCase();
+    if (code === 'KEZJED100' || code === 'RONNEL100' || code === 'SCHOLAR100') {
+      setCouponApplied(true);
+      setCouponDiscountPercent(100);
+      setCouponMessage('🎉 100% Full Academic Scholarship Applied!');
+    } else if (code === 'KEZJED50' || code === 'EARLY50') {
+      setCouponApplied(true);
+      setCouponDiscountPercent(50);
+      setCouponMessage('🎉 50% Founder Privilege Discount Applied!');
+    } else {
+      setCouponMessage('⚠️ Invalid coupon code. Try "KEZJED100" for full scholarship.');
+    }
+  };
 
   const handleCopyGoTyme = () => {
-    navigator.clipboard.writeText('018394821049');
+    navigator.clipboard.writeText(PHILIPPINE_MERCHANT_INFO.gotymeAccountNumber);
     setCopiedAccount(true);
     setTimeout(() => setCopiedAccount(false), 2000);
   };
@@ -71,9 +123,15 @@ export const CheckoutModal = ({
       return;
     }
 
-    if (!isFree && paymentMethod === 'gcash' && !gcashMobile) {
-      alert('Please enter your GCash mobile number (e.g., 09171234567).');
-      return;
+    if (!isFree) {
+      if (paymentMethod === 'gcash' && !gcashMobile) {
+        alert('Please enter your GCash mobile number (e.g., 09171234567).');
+        return;
+      }
+      if (paymentMethod === 'card' && (!cardNumber || !cardExpiry || !cardCvc)) {
+        alert('Please enter valid credit/debit card details.');
+        return;
+      }
     }
 
     setIsProcessing(true);
@@ -82,6 +140,23 @@ export const CheckoutModal = ({
     } catch {
       // Continue even if table migrating
     }
+
+    const timestamp = Date.now();
+    const resolvedName = fullName.trim() || (email.split('@')[0] ? email.split('@')[0].toUpperCase() : 'VALUED SCHOLAR');
+    const generatedReceipt: OfficialReceiptData = {
+      receiptNumber: `OR-2026-${Math.floor(100000 + Math.random() * 900000)}`,
+      studentName: resolvedName,
+      studentEmail: email,
+      courseTitle: track.title,
+      tierName: selectedTier === 'audit' ? 'Free Community Audit' : selectedTier === 'pro' ? 'Pro Scholar Track' : 'Accredited Degree Track',
+      paymentMethod: isFree ? 'Scholarship / Free Audit' : paymentMethod.toUpperCase(),
+      totalAmountPhp: discountedPhp,
+      totalAmountUsd: discountedUsd,
+      paymentDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      transactionReference: `KEZJED-TXN-${timestamp}`,
+    };
+
+    setReceiptData(generatedReceipt);
 
     setTimeout(() => {
       setIsProcessing(false);
@@ -95,60 +170,52 @@ export const CheckoutModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200">
       <div className="relative bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden my-6">
         
-        {/* Top Header Banner */}
-        <div className={`p-6 bg-gradient-to-r ${track.colorTheme || 'from-blue-600 to-indigo-700'} text-white relative`}>
-          <button
-            onClick={onClose}
-            className="absolute top-5 right-5 p-2 bg-black/20 hover:bg-black/30 rounded-full text-white/90 hover:text-white transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="text-xs font-black uppercase tracking-wider bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full">
-              Level {track.levelIndex || 1} of 9
-            </span>
-            {isFree ? (
-              <span className="text-xs font-bold bg-emerald-500/30 text-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-400/30 flex items-center gap-1">
-                🇵🇭 100% Free Access
+        {/* Modal Top Bar */}
+        <div className="bg-slate-950 px-6 py-4 border-b border-slate-800 flex items-center justify-between text-white">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+              <GraduationCap className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-400">
+                Official Tuition &amp; Academic Enrollment
               </span>
-            ) : (
-              <span className="text-xs font-bold bg-emerald-500/30 text-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-400/30 flex items-center gap-1">
-                🇵🇭 Philippine Gateway • {discountPercent}% OFF
-              </span>
-            )}
+              <h3 className="text-sm font-black text-white truncate max-w-xs sm:max-w-md">
+                {track.title}
+              </h3>
+            </div>
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-black leading-tight pr-8">
-            {track.title}
-          </h2>
-          <p className="text-xs sm:text-sm text-white/80 mt-1">
-            Instructor: {track.instructor.name} • {track.duration} Lifetime Curriculum
-          </p>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         {isComplete ? (
-          /* Enrollment Success State */
-          <div className="p-8 text-center space-y-5">
-            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
-              <Check className="w-9 h-9 stroke-[3]" />
+          /* Enrollment Confirmed Screen */
+          <div className="p-8 text-center space-y-6">
+            <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-inner">
+              <CheckCircle2 className="w-8 h-8" />
             </div>
 
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                🎉 Enrollment Confirmed!
+                🎉 Enrollment &amp; Tuition Verified!
               </span>
               <h3 className="text-2xl font-black text-slate-900 mt-2">
                 Welcome to {track.title}!
               </h3>
               <p className="text-sm text-slate-600 mt-1 max-w-md mx-auto leading-relaxed">
                 {isFree ? (
-                  <>You are enrolled with free lifetime access. May your dedication bear abundant fruit for your career and future!</>
+                  <>You are enrolled with instant academic access under <strong>KEZJED SOLUTIONS</strong>.</>
                 ) : (
-                  <>Payment verified via <strong>{paymentMethod.toUpperCase()}</strong>. May your dedication bear abundant fruit for your career and future!</>
+                  <>Tuition confirmed via <strong>{paymentMethod.toUpperCase()}</strong>. Your official electronic receipt and student workspace are ready.</>
                 )}
               </p>
             </div>
@@ -158,414 +225,452 @@ export const CheckoutModal = ({
                 <span className="text-slate-500">Student Account:</span>
                 <span className="font-bold text-slate-900">{email}</span>
               </div>
-              {!isFree && (
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Payment Method:</span>
-                  <span className="font-bold uppercase text-blue-600">
-                    {paymentMethod === 'gcash' ? 'GCash Express' : paymentMethod === 'gotyme' ? 'GoTyme Bank' : paymentMethod === 'maya' ? 'Maya Wallet' : 'QRPh National Bank'}
-                  </span>
-                </div>
-              )}
               <div className="flex justify-between">
-                <span className="text-slate-500">Total Tuition (PHP):</span>
-                <span className="font-bold text-emerald-600 text-sm">{isFree ? 'FREE (₱0)' : `₱${totalPhp.toLocaleString()} PHP`}</span>
+                <span className="text-slate-500">Enrolled Academic Tier:</span>
+                <span className="font-bold text-blue-700">
+                  {selectedTier === 'audit' ? 'Free Community Audit' : selectedTier === 'pro' ? 'Pro Scholar Track' : 'Accredited Degree Track'}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Career Milestone:</span>
-                <span className="font-bold text-blue-600">{track.careerMilestone || 'Certified Developer'}</span>
+                <span className="text-slate-500">Total Tuition:</span>
+                <span className="font-bold text-emerald-600 text-sm">
+                  {isFree ? 'FREE (₱0)' : `₱${discountedPhp.toLocaleString()} PHP`}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Authorized Faculty:</span>
+                <span className="font-bold text-slate-900">Ronnel M. Aviguetero (CEO &amp; FOUNDER)</span>
               </div>
             </div>
 
-            <button
-              onClick={handleEnterClassroom}
-              className="w-full max-w-md mx-auto py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
-            >
-              <span>Enter Classroom Workspace</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <div className="space-y-2.5 max-w-md mx-auto">
+              <button
+                type="button"
+                onClick={handleEnterClassroom}
+                className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition cursor-pointer"
+              >
+                <span>Enter Classroom Workspace Now</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              {receiptData && (
+                <button
+                  type="button"
+                  onClick={() => setShowReceiptModal(true)}
+                  className="w-full py-3 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-300 font-bold text-xs border border-slate-700 shadow flex items-center justify-center gap-2 transition cursor-pointer"
+                >
+                  <Printer className="w-4 h-4 text-amber-400" />
+                  <span>View &amp; Print Official Electronic Receipt (e-OR)</span>
+                </button>
+              )}
+            </div>
           </div>
         ) : (
-          /* Checkout Form */
+          /* Enrollment & Tuition Form */
           <form onSubmit={handleCheckoutSubmit} className="p-6 sm:p-7 space-y-6">
             
-            {/* Price Stack Banner in PHP */}
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1">
-                  <span>🇵🇭 Course Tuition (Philippine Peso)</span>
-                </span>
-                <div className="flex items-baseline gap-2 mt-0.5">
-                  {isFree ? (
-                    <span className="text-3xl font-black text-emerald-600">FREE</span>
-                  ) : (
-                    <>
-                      <span className="text-3xl font-black text-slate-900">₱{basePhp.toLocaleString()}</span>
-                      <span className="text-sm font-semibold text-slate-400 line-through">₱{originalPhp.toLocaleString()}</span>
-                      <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                        Save ₱{(originalPhp - basePhp).toLocaleString()}
-                      </span>
-                    </>
-                  )}
-                </div>
-                <span className="text-[11px] text-slate-400 font-medium">{isFree ? '100% Free Lifetime Access' : `Approx. \${baseUsd} USD equivalent`}</span>
+            {/* 1. ACADEMIC TIER SELECTOR */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                  Select Academic Enrollment Tier:
+                </label>
+                {isInherentlyFree && (
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                    100% Institutional Scholarship
+                  </span>
+                )}
               </div>
 
-              <div className="flex items-center gap-3 text-xs text-slate-600">
-                <div className="flex items-center gap-1">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>BSP Regulated</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Lock className="w-4 h-4 text-blue-600" />
-                  <span>QRPh Verified</span>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* TIER 1: AUDIT */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedTier('audit')}
+                  className={`p-3.5 rounded-2xl border-2 text-left transition cursor-pointer flex flex-col justify-between ${
+                    selectedTier === 'audit'
+                      ? 'border-blue-600 bg-blue-50/50 shadow-sm'
+                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block">Community</span>
+                    <span className="text-xs font-black text-slate-900 block mt-0.5">Free Audit</span>
+                    <div className="text-sm font-black text-slate-900 mt-1">₱0</div>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-2 leading-snug">
+                    Lecture theory, masterclass videos, and reading materials.
+                  </p>
+                </button>
+
+                {/* TIER 2: PRO SCHOLAR */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedTier('pro')}
+                  className={`p-3.5 rounded-2xl border-2 text-left transition cursor-pointer flex flex-col justify-between ${
+                    selectedTier === 'pro'
+                      ? 'border-blue-600 bg-blue-50/50 shadow-sm'
+                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 block">Interactive</span>
+                    <span className="text-xs font-black text-slate-900 block mt-0.5">Pro Scholar</span>
+                    <div className="text-sm font-black text-slate-900 mt-1">
+                      {isInherentlyFree ? 'FREE' : '₱1,499'} <span className="text-[10px] text-slate-400 font-normal">($29)</span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-2 leading-snug">
+                    Live Code Sandbox IDE, Kezjed AI Mentor, auto-graded rubrics.
+                  </p>
+                </button>
+
+                {/* TIER 3: ACCREDITED DEGREE */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedTier('degree')}
+                  className={`p-3.5 rounded-2xl border-2 text-left transition cursor-pointer flex flex-col justify-between relative ${
+                    selectedTier === 'degree'
+                      ? 'border-emerald-600 bg-emerald-50/50 shadow-md ring-2 ring-emerald-500/20'
+                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  <span className="absolute -top-2 right-3 text-[9px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 px-2 py-0.5 rounded-full shadow-xs">
+                    Accredited
+                  </span>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 block">Recommended</span>
+                    <span className="text-xs font-black text-slate-900 block mt-0.5">Degree Track</span>
+                    <div className="text-sm font-black text-emerald-700 mt-1">
+                      {isInherentlyFree ? 'FREE' : '₱4,999'} <span className="text-[10px] text-slate-400 font-normal">($99)</span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-600 mt-2 leading-snug">
+                    Verifiable Diploma, Registrar Transcript, TESDA TRB &amp; Mentorship.
+                  </p>
+                </button>
               </div>
             </div>
 
             {/* Everything Included Stack */}
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">
-                Included in Your Enrollment:
+            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
+              <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-600">
+                Included in your {selectedTier === 'audit' ? 'Free Audit' : selectedTier === 'pro' ? 'Pro Scholar' : 'Accredited Degree'} Tier:
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-100">
-                  <Video className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span>Full Course Video Masterclasses</span>
+                <div className="flex items-center gap-2">
+                  <Video className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                  <span>12 Comprehensive Engineering Lessons</span>
                 </div>
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-100">
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Google Sheets Assignments & Rubrics</span>
+                <div className="flex items-center gap-2">
+                  <Code2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Live Code Sandbox &amp; Grader</span>
                 </div>
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-100">
-                  <Award className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Verified Completion Certificate</span>
+                <div className="flex items-center gap-2">
+                  <Bot className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                  <span>24/7 Kezjed AI Coding Mentor</span>
                 </div>
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-100">
-                  <Zap className="w-4 h-4 text-purple-600 shrink-0" />
-                  <span>Lifetime Access & Future Updates</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Student Details */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Student Information
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Juan Dela Cruz"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="juan@epicademy.ph"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  />
+                <div className="flex items-center gap-2">
+                  <Award className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span>KEZJED Verifiable Diploma &amp; Transcript</span>
                 </div>
               </div>
             </div>
 
-            {/* Order Bump (Only if not free) */}
-            {!isFree && (
-              <div 
-                onClick={() => setHasOrderBump(!hasOrderBump)}
-                className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3 select-none ${
-                  hasOrderBump 
-                    ? 'border-amber-400 bg-amber-50/70 shadow-sm' 
-                    : 'border-dashed border-slate-300 hover:border-slate-400 bg-slate-50/50'
-                }`}
-              >
+            {/* Student Account Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Full Student Name
+                </label>
                 <input
-                  type="checkbox"
-                  checked={hasOrderBump}
-                  onChange={() => {}} 
-                  className="mt-1 w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500 cursor-pointer"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="e.g. Maria Santos"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                      SPECIAL ADD-ON: 1-on-1 Code Review & Discord Mentorship
-                    </span>
-                    <span className="text-xs font-black text-amber-800">+₱{bumpPhp.toLocaleString()}</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Student Email (Required for Access &amp; e-OR)
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="student@example.com"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* Scholarship / Coupon Code Input */}
+            {!isFree && (
+              <div className="space-y-1.5">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Tag className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
+                    <input
+                      type="text"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      placeholder="Have a Scholarship / Promo Code? (e.g. KEZJED100)"
+                      className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-300 bg-white text-xs uppercase font-mono placeholder:normal-case placeholder:font-sans focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
                   </div>
-                  <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
-                    Have your project assignments personally graded with line-by-line GitHub reviews and private student Discord community access.
-                  </p>
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition cursor-pointer"
+                  >
+                    Apply Code
+                  </button>
                 </div>
+                {couponMessage && (
+                  <p className={`text-[11px] font-medium ${couponApplied ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    {couponMessage}
+                  </p>
+                )}
               </div>
             )}
 
-            {/* PHILIPPINE PAYMENT METHOD SELECTOR (Hidden if Free) */}
+            {/* PAYMENT METHOD SELECTOR (Hidden if Free) */}
             {!isFree && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-                    <span>Select Philippine Payment Method</span>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                    Select Payment Method:
                   </h4>
-                  <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
-                    Instant Verification
+                  <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                    Instant Automated Activation
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  
-                  {/* 1. GCASH */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {/* GCASH */}
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('gcash')}
-                    className={`p-3 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between gap-1 relative ${
+                    className={`p-2.5 rounded-xl border-2 text-left transition cursor-pointer flex flex-col justify-between ${
                       paymentMethod === 'gcash'
-                        ? 'border-[#007DFE] bg-blue-50/60 shadow-sm'
+                        ? 'border-[#007DFE] bg-blue-50/70 shadow-xs'
                         : 'border-slate-200 hover:border-slate-300 bg-white'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="w-7 h-7 rounded-lg bg-[#007DFE] text-white flex items-center justify-center font-black text-xs">
-                        G
-                      </div>
-                      {paymentMethod === 'gcash' && (
-                        <span className="w-2 h-2 rounded-full bg-[#007DFE]" />
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-xs font-black text-slate-900 block mt-1">GCash</span>
-                      <span className="text-[10px] text-slate-500 block">Mobile e-Wallet</span>
-                    </div>
+                    <span className="text-xs font-black text-slate-900">GCash</span>
+                    <span className="text-[9px] text-slate-500">e-Wallet</span>
                   </button>
 
-                  {/* 2. GOTYME BANK */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('gotyme')}
-                    className={`p-3 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between gap-1 relative ${
-                      paymentMethod === 'gotyme'
-                        ? 'border-[#00B4D8] bg-cyan-50/60 shadow-sm'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="w-7 h-7 rounded-lg bg-[#00B4D8] text-white flex items-center justify-center font-black text-xs">
-                        GT
-                      </div>
-                      {paymentMethod === 'gotyme' && (
-                        <span className="w-2 h-2 rounded-full bg-[#00B4D8]" />
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-xs font-black text-slate-900 block mt-1">GoTyme Bank</span>
-                      <span className="text-[10px] text-slate-500 block">Digital Bank Transfer</span>
-                    </div>
-                  </button>
-
-                  {/* 3. MAYA */}
+                  {/* MAYA */}
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('maya')}
-                    className={`p-3 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between gap-1 relative ${
+                    className={`p-2.5 rounded-xl border-2 text-left transition cursor-pointer flex flex-col justify-between ${
                       paymentMethod === 'maya'
-                        ? 'border-emerald-500 bg-emerald-50/60 shadow-sm'
+                        ? 'border-emerald-500 bg-emerald-50/70 shadow-xs'
                         : 'border-slate-200 hover:border-slate-300 bg-white'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-black text-xs">
-                        M
-                      </div>
-                      {paymentMethod === 'maya' && (
-                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-xs font-black text-slate-900 block mt-1">Maya</span>
-                      <span className="text-[10px] text-slate-500 block">Wallet & Visa</span>
-                    </div>
+                    <span className="text-xs font-black text-slate-900">Maya</span>
+                    <span className="text-[9px] text-slate-500">Wallet</span>
                   </button>
 
-                  {/* 4. QRPH / ONLINE BANKING */}
+                  {/* CREDIT/DEBIT CARD */}
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('card')}
+                    className={`p-2.5 rounded-xl border-2 text-left transition cursor-pointer flex flex-col justify-between ${
+                      paymentMethod === 'card'
+                        ? 'border-indigo-600 bg-indigo-50/70 shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <span className="text-xs font-black text-slate-900">Card</span>
+                    <span className="text-[9px] text-slate-500">Visa / MC</span>
+                  </button>
+
+                  {/* QRPH */}
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('qrph')}
-                    className={`p-3 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between gap-1 relative ${
+                    className={`p-2.5 rounded-xl border-2 text-left transition cursor-pointer flex flex-col justify-between ${
                       paymentMethod === 'qrph'
-                        ? 'border-purple-600 bg-purple-50/60 shadow-sm'
+                        ? 'border-purple-600 bg-purple-50/70 shadow-xs'
                         : 'border-slate-200 hover:border-slate-300 bg-white'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="w-7 h-7 rounded-lg bg-purple-700 text-white flex items-center justify-center font-black text-xs">
-                        QR
-                      </div>
-                      {paymentMethod === 'qrph' && (
-                        <span className="w-2 h-2 rounded-full bg-purple-600" />
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-xs font-black text-slate-900 block mt-1">QRPh & Banks</span>
-                      <span className="text-[10px] text-slate-500 block">BDO, BPI, UnionBank</span>
-                    </div>
+                    <span className="text-xs font-black text-slate-900">QRPh</span>
+                    <span className="text-[9px] text-slate-500">All PH Banks</span>
                   </button>
 
+                  {/* GOTYME */}
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('gotyme')}
+                    className={`p-2.5 rounded-xl border-2 text-left transition cursor-pointer flex flex-col justify-between ${
+                      paymentMethod === 'gotyme'
+                        ? 'border-[#00B4D8] bg-cyan-50/70 shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <span className="text-xs font-black text-slate-900">GoTyme</span>
+                    <span className="text-[9px] text-slate-500">Digital Bank</span>
+                  </button>
                 </div>
 
-                {/* 1. GCASH DETAILS */}
+                {/* GCASH INPUT */}
                 {paymentMethod === 'gcash' && (
-                  <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 space-y-3 animate-in fade-in duration-150">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Smartphone className="w-4 h-4 text-[#007DFE]" />
-                        <span className="text-xs font-bold text-slate-900">GCash Express Payment</span>
-                      </div>
-                      <span className="text-[10px] font-bold text-[#007DFE] bg-white px-2 py-0.5 rounded-full border border-blue-200">
-                        Zero Processing Fee
-                      </span>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                        GCash Registered Mobile Number (09XXXXXXXXX)
-                      </label>
-                      <input
-                        type="tel"
-                        required
-                        value={gcashMobile}
-                        onChange={(e) => setGcashMobile(e.target.value)}
-                        placeholder="0917 123 4567"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-blue-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#007DFE]"
-                      />
-                    </div>
+                  <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200 space-y-2">
+                    <label className="block text-[11px] font-bold text-slate-700">
+                      GCash Registered Mobile Number:
+                    </label>
+                    <input
+                      type="tel"
+                      value={gcashMobile}
+                      onChange={(e) => setGcashMobile(e.target.value)}
+                      placeholder="0917 123 4567"
+                      className="w-full px-3 py-2 rounded-xl border border-blue-300 bg-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-[10px] text-slate-500">
+                      Merchant: <strong>{PHILIPPINE_MERCHANT_INFO.accountName}</strong>
+                    </p>
                   </div>
                 )}
 
-                {/* 2. GOTYME BANK DETAILS */}
-                {paymentMethod === 'gotyme' && (
-                  <div className="p-4 rounded-2xl bg-cyan-50/70 border border-cyan-200 space-y-3 animate-in fade-in duration-150">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-[#00B4D8]" />
-                        <span className="text-xs font-bold text-slate-900">GoTyme Bank Direct Transfer</span>
-                      </div>
-                      <span className="text-[10px] font-bold text-[#00B4D8] bg-white px-2 py-0.5 rounded-full border border-cyan-200">
-                        Tyme / Robinsons Digital
-                      </span>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-white border border-cyan-100 space-y-2 text-xs">
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500">Account Name:</span>
-                        <span className="font-bold text-slate-900">EPICADEMY INC. / JOVEN NEL JED</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500">GoTyme Account No.:</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono font-bold text-slate-900">0183-9482-1049</span>
-                          <button
-                            type="button"
-                            onClick={handleCopyGoTyme}
-                            className="p-1 text-slate-400 hover:text-cyan-600 rounded cursor-pointer"
-                            title="Copy Account Number"
-                          >
-                            {copiedAccount ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. MAYA DETAILS */}
+                {/* MAYA INPUT */}
                 {paymentMethod === 'maya' && (
-                  <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-3 animate-in fade-in duration-150">
+                  <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-2">
+                    <label className="block text-[11px] font-bold text-slate-700">
+                      Maya Mobile Number or @handle:
+                    </label>
+                    <input
+                      type="text"
+                      value={mayaMobile}
+                      onChange={(e) => setMayaMobile(e.target.value)}
+                      placeholder="0918 987 6543 or @student_handle"
+                      className="w-full px-3 py-2 rounded-xl border border-emerald-300 bg-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                )}
+
+                {/* CREDIT / DEBIT CARD INPUT */}
+                {paymentMethod === 'card' && (
+                  <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Wallet className="w-4 h-4 text-emerald-600" />
-                        <span className="text-xs font-bold text-slate-900">Maya Wallet & Digital Bank</span>
-                      </div>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-200">
-                        Maya Certified
-                      </span>
+                      <label className="block text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                        <CreditCard className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Credit or Debit Card Details:</span>
+                      </label>
+                      <span className="text-[9px] text-slate-500 font-bold">Visa • Mastercard • JCB</span>
                     </div>
 
-                    <div>
-                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Maya Registered Mobile Number or @handle
-                      </label>
+                    <input
+                      type="text"
+                      value={cardNumber}
+                      onChange={(e) => setCardNumber(e.target.value)}
+                      placeholder="4123 4567 8901 2345"
+                      className="w-full px-3 py-2 rounded-xl border border-indigo-300 bg-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+
+                    <div className="grid grid-cols-2 gap-2">
                       <input
                         type="text"
-                        required
-                        value={mayaMobile}
-                        onChange={(e) => setMayaMobile(e.target.value)}
-                        placeholder="0918 987 6543 or @juan_dev"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        value={cardExpiry}
+                        onChange={(e) => setCardExpiry(e.target.value)}
+                        placeholder="MM / YY"
+                        className="px-3 py-2 rounded-xl border border-indigo-300 bg-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                      <input
+                        type="password"
+                        maxLength={4}
+                        value={cardCvc}
+                        onChange={(e) => setCardCvc(e.target.value)}
+                        placeholder="CVC"
+                        className="px-3 py-2 rounded-xl border border-indigo-300 bg-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
                     </div>
                   </div>
                 )}
 
-                {/* 4. QRPH NATIONAL BANK TRANSFER */}
-                {paymentMethod === 'qrph' && (
-                  <div className="p-4 rounded-2xl bg-purple-50/70 border border-purple-200 space-y-3 animate-in fade-in duration-150">
+                {/* GOTYME BANK */}
+                {paymentMethod === 'gotyme' && (
+                  <div className="p-3.5 rounded-2xl bg-cyan-50/70 border border-cyan-200 space-y-2 text-xs">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-purple-700" />
-                        <span className="text-xs font-bold text-slate-900">QRPh & InstaPay Philippine Banks</span>
-                      </div>
-                      <span className="text-[10px] font-bold text-purple-700 bg-white px-2 py-0.5 rounded-full border border-purple-200">
-                        BDO • BPI • UnionBank • RCBC
-                      </span>
+                      <span className="font-bold text-slate-900">GoTyme Bank Account:</span>
+                      <button
+                        type="button"
+                        onClick={handleCopyGoTyme}
+                        className="text-cyan-700 hover:text-cyan-900 font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+                      >
+                        {copiedAccount ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedAccount ? 'Copied' : 'Copy Number'}</span>
+                      </button>
                     </div>
+                    <div className="font-mono font-bold text-sm text-slate-900 bg-white p-2 rounded-xl border border-cyan-200">
+                      {PHILIPPINE_MERCHANT_INFO.gotymeAccountNumber}
+                    </div>
+                    <p className="text-[10px] text-slate-500">
+                      Account Name: <strong>{PHILIPPINE_MERCHANT_INFO.accountName}</strong>
+                    </p>
+                  </div>
+                )}
 
-                    <div className="p-3 rounded-xl bg-white border border-purple-100 text-xs text-slate-600 leading-relaxed">
-                      Scan using any Philippine banking app supporting the <strong>QRPh National Standard</strong> (BPI, BDO Online, UnionBank, RCBC Pulz, or Chinabank).
+                {/* QRPH */}
+                {paymentMethod === 'qrph' && (
+                  <div className="p-3.5 rounded-2xl bg-purple-50/70 border border-purple-200 text-xs space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-purple-700" />
+                      <span className="font-bold text-slate-900">QRPh National Philippine Banking Standard</span>
                     </div>
+                    <p className="text-[11px] text-slate-600">
+                      Compatible with BDO, BPI, UnionBank, RCBC Pulz, Metrobank, and Chinabank.
+                    </p>
                   </div>
                 )}
 
               </div>
             )}
 
-            {/* Checkout Submit CTA */}
-            <div className="pt-2">
+            {/* Total Tuition Card & Submit Action */}
+            <div className="pt-2 space-y-2.5">
+              <div className="bg-slate-900 text-white rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Tuition Due:</span>
+                  <div className="font-mono font-black text-xl text-emerald-400">
+                    {isFree ? 'FREE (₱0)' : `₱${discountedPhp.toLocaleString()} PHP`}
+                  </div>
+                </div>
+                <div className="text-right text-[11px] text-slate-400">
+                  <span>Authorized by:</span>
+                  <strong className="block text-white">KEZJED SOLUTIONS</strong>
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={isProcessing}
-                className={`w-full py-4 px-6 rounded-2xl text-white font-black text-base shadow-xl flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-75 ${
-                  isFree
-                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25'
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-blue-500/25'
-                }`}
+                className="w-full py-4 px-6 rounded-2xl text-white font-black text-sm shadow-xl flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-75 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-blue-500/25 active:scale-98"
               >
                 {isProcessing ? (
-                  <span>{isFree ? 'Enrolling for Free...' : `Connecting to ${paymentMethod.toUpperCase()} Gateway...`}</span>
+                  <span>Processing Academic Enrollment...</span>
                 ) : isFree ? (
                   <>
-                    <Zap className="w-5 h-5 text-amber-300 fill-amber-300" />
+                    <Zap className="w-4 h-4 text-amber-300 fill-amber-300" />
                     <span>Confirm Free Enrollment Now • ₱0</span>
                   </>
                 ) : (
                   <>
                     <Lock className="w-4 h-4" />
-                    <span>Pay with {paymentMethod.toUpperCase()} • ₱{totalPhp.toLocaleString()} PHP</span>
+                    <span>Complete Enrollment with {paymentMethod.toUpperCase()} • ₱{discountedPhp.toLocaleString()} PHP</span>
                   </>
                 )}
               </button>
-              <p className="text-center text-[11px] text-slate-400 mt-2">
-                {isFree 
-                  ? '⚡ Instant lifetime access activated immediately with zero payment required.'
-                  : '🔒 Protected by BSP QRPh Standards & 256-bit SSL encryption. Instant classroom workspace access.'}
+
+              <p className="text-center text-[10px] text-slate-400">
+                🔒 Protected by 256-bit SSL encryption • Official electronic receipt (e-OR) issued immediately upon completion.
               </p>
             </div>
 
@@ -573,6 +678,15 @@ export const CheckoutModal = ({
         )}
 
       </div>
+
+      {/* Official Electronic Receipt Modal */}
+      {receiptData && (
+        <OfficialReceiptModal
+          isOpen={showReceiptModal}
+          onClose={() => setShowReceiptModal(false)}
+          receiptData={receiptData}
+        />
+      )}
     </div>
   );
 };

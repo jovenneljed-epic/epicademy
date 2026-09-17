@@ -9,8 +9,10 @@ import {
   Copy, 
   Sparkles, 
   ShieldCheck, 
-  AlertTriangle
+  AlertTriangle,
+  Bot
 } from 'lucide-react';
+import { KezjedAiMentor } from '../ai/KezjedAiMentor';
 
 interface CodeSandboxRunnerProps {
   lessonTitle: string;
@@ -96,6 +98,7 @@ console.log('Sandbox environment initialized for: ${lessonTitle}');`;
   const [copied, setCopied] = useState(false);
   const [testResults, setTestResults] = useState<{ passed: boolean; label: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAiMentorOpen, setIsAiMentorOpen] = useState(false);
 
   // Compile and execute in iframe
   const handleRunCode = () => {
@@ -252,6 +255,16 @@ console.log('Sandbox environment initialized for: ${lessonTitle}');`;
               JS (ES6+)
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setIsAiMentorOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer active:scale-95"
+            title="Ask Kezjed AI Mentor for Socratic Debugging & Guidance"
+          >
+            <Bot className="w-3.5 h-3.5 text-blue-200" />
+            <span>Ask Kezjed AI</span>
+          </button>
 
           <button
             onClick={handleRunCode}
@@ -416,6 +429,26 @@ console.log('Sandbox environment initialized for: ${lessonTitle}');`;
           </button>
         </div>
       </div>
+
+      <KezjedAiMentor
+        isOpen={isAiMentorOpen}
+        onClose={() => setIsAiMentorOpen(false)}
+        lessonTitle={lessonTitle}
+        currentCode={{ html: htmlCode, css: cssCode, js: jsCode }}
+        currentObjective={expectedOutcome}
+        onApplyCodeSnippet={(lang, code) => {
+          if (lang === 'html') {
+            setHtmlCode(code);
+            setActiveTab('html');
+          } else if (lang === 'css') {
+            setCssCode(code);
+            setActiveTab('css');
+          } else if (lang === 'js') {
+            setJsCode(code);
+            setActiveTab('js');
+          }
+        }}
+      />
     </div>
   );
 };

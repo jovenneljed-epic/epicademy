@@ -26,6 +26,7 @@ import { LessonViewer } from './components/classroom/LessonViewer';
 import { AcademicCredentialsModal } from './components/credentials/AcademicCredentialsModal';
 import { TesdaTrbModal } from './components/classroom/TesdaTrbModal';
 import { StudentDossierModal } from './components/profile/StudentDossierModal';
+import { ZERO_TO_HERO_TRACKS } from './data/zeroToHeroCoursesData';
 
 // =========================================================================
 // COC 1: INSTALLING AND CONFIGURING COMPUTER SYSTEMS (14 Lessons)
@@ -321,6 +322,10 @@ export function App() {
         onOpenApplyTenant={() => setApplyTenantOpen(true)}
         onOpenCredentials={() => setShowCertificateModal(true)}
         onOpenDossier={() => setShowDossierModal(true)}
+        onOpenTuition={() => {
+          setCheckoutTrack(ZERO_TO_HERO_TRACKS[0]);
+          setCheckoutModalOpen(true);
+        }}
         currentUser={currentUser}
         onSignOut={() => setCurrentUser(null)}
       />

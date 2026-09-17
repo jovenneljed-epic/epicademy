@@ -11,10 +11,12 @@ import {
   Layers, 
   Table, 
   Award, 
-  RotateCcw
+  RotateCcw,
+  Bot
 } from 'lucide-react';
 import type { ActivityItem, ExamItem, WorksheetItem } from '../../types';
 import { CodeSandboxRunner } from './CodeSandboxRunner';
+import { KezjedAiMentor } from '../ai/KezjedAiMentor';
 
 export interface LessonViewerProps {
   lessonTitle: string;
@@ -49,6 +51,7 @@ export const LessonViewer = ({
 }: LessonViewerProps) => {
   // Navigation sub-tab inside the lesson
   const [activeTab, setActiveTab] = useState<'lecture' | 'sandbox' | 'activity' | 'exam' | 'worksheet'>('lecture');
+  const [isAiMentorOpen, setIsAiMentorOpen] = useState(false);
 
   // Copy code helper
   const [copied, setCopied] = useState(false);
@@ -241,6 +244,15 @@ export const LessonViewer = ({
               <span>4. Worksheet</span>
             </button>
           )}
+
+          <button
+            type="button"
+            onClick={() => setIsAiMentorOpen(true)}
+            className="ml-auto px-3.5 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-500/20 flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+          >
+            <Bot className="w-4 h-4 text-blue-200" />
+            <span>Kezjed AI Mentor</span>
+          </button>
         </div>
       </div>
 
@@ -697,6 +709,14 @@ export const LessonViewer = ({
           <span>{isCompleted ? 'Lesson Completed ✓' : 'Mark Lesson Complete'}</span>
         </button>
       </div>
+
+      <KezjedAiMentor
+        isOpen={isAiMentorOpen}
+        onClose={() => setIsAiMentorOpen(false)}
+        lessonTitle={lessonTitle}
+        currentCode={{ html: codeSnippet || '', css: '', js: '' }}
+        currentObjective={objective}
+      />
     </div>
   );
 };
