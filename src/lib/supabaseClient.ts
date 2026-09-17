@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { CommunityPost, Track, ModuleItem, CreateTrackInput, TeacherProfile, RegisterTeacherInput } from '../types';
 import { ZERO_TO_HERO_COURSES, ZERO_TO_HERO_TRACKS, getZeroToHeroCourse } from '../data/zeroToHeroCoursesData';
 import { TESDA_CSS_TRACK } from '../data/tesdaCssNc2CourseData';
+import { PINOY_DRUM_TRACK } from '../data/pinoyDrumCourseData';
 import { getTenantCourseDetailedModules } from '../data/tenantCoursesDetailedData';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ukhmrgbkrfawgszltzsr.supabase.co';
@@ -185,14 +186,21 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
 
     if (error || !data || data.length === 0) {
       const localTeacherTracks = getLocalTeacherTracks();
-      return { tracks: [...localTeacherTracks, ...ZERO_TO_HERO_TRACKS], error: null };
+      return { tracks: [...localTeacherTracks, ...ZERO_TO_HERO_TRACKS, PINOY_DRUM_TRACK], error: null };
     }
 
     const dbTracks: Track[] = data.map((row: any) => {
       const isTesda = row.id === 'track-tesda-css-nc2';
-      const isBundle = Boolean(row.is_bundle ?? isTesda);
-      const bundleNumber = row.bundle_number || (isTesda ? 2 : undefined);
-      const bundleLabel = row.bundle_label || (isTesda ? '★ 2ND OFFICIAL COURSE BUNDLE: TESDA VOCATIONAL MASTERCLASS' : undefined);
+      const isDrum = row.id === 'track-pinoy-drum-zero-to-hero';
+      const isBundle = Boolean(row.is_bundle ?? (isTesda || isDrum));
+      const bundleNumber = row.bundle_number || (isTesda ? 2 : isDrum ? 3 : undefined);
+      const bundleLabel = row.bundle_label || (
+        isTesda 
+          ? '★ 2ND OFFICIAL COURSE BUNDLE: TESDA VOCATIONAL MASTERCLASS' 
+          : isDrum 
+          ? '★ 3RD OFFICIAL COURSE BUNDLE: PINOY DRUM MASTERCLASS' 
+          : undefined
+      );
 
       return {
         id: row.id,
@@ -200,7 +208,11 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
         category: row.category,
         categoryLabel: row.category_label || getCategoryLabel(row.category),
         slug: row.slug,
-        badge: isTesda ? '★ 2ND COURSE BUNDLE • TESDA NC II' : (row.badge || 'New Course'),
+        badge: isTesda 
+          ? '★ 2ND COURSE BUNDLE • TESDA NC II' 
+          : isDrum 
+          ? '★ 3RD COURSE BUNDLE • PINOY DRUM MASTERCLASS' 
+          : (row.badge || 'New Course'),
         level: row.level || 'Beginner',
         levelIndex: row.level_index !== null && row.level_index !== undefined ? Number(row.level_index) : undefined,
         isBundle,
@@ -208,7 +220,13 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
         bundleLabel,
         price: Number(row.price) || 49,
         originalPrice: Number(row.original_price) || (Number(row.price || 49) * 2),
-        careerMilestone: row.career_milestone || (isTesda ? 'TESDA CSS NC II National Certification Passer' : 'Certified Web Developer'),
+        careerMilestone: row.career_milestone || (
+          isTesda 
+            ? 'TESDA CSS NC II National Certification Passer' 
+            : isDrum 
+            ? 'Stage-Ready Pro Drummer & Church Sessionist' 
+            : 'Certified Web Developer'
+        ),
         isPaid: Boolean(row.is_paid ?? true),
         instructor: {
           name: row.instructor_name || 'Educator',
@@ -245,7 +263,7 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
     });
 
     const existingIds = new Set(mergedTeacherAndDb.map(t => t.id));
-    const missingStandardTracks = ZERO_TO_HERO_TRACKS.filter(t => !existingIds.has(t.id));
+    const missingStandardTracks = [...ZERO_TO_HERO_TRACKS, PINOY_DRUM_TRACK].filter(t => !existingIds.has(t.id));
 
     const combined = [...mergedTeacherAndDb, ...missingStandardTracks].sort((a, b) => {
       if (a.isTeacherCreated && !b.isTeacherCreated) return -1;
@@ -258,7 +276,7 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
     return { tracks: combined, error: null };
   } catch (err) {
     const localTeacherTracks = getLocalTeacherTracks();
-    return { tracks: [...localTeacherTracks, ...ZERO_TO_HERO_TRACKS], error: err };
+    return { tracks: [...localTeacherTracks, ...ZERO_TO_HERO_TRACKS, PINOY_DRUM_TRACK], error: err };
   }
 }
 
@@ -515,7 +533,12 @@ export async function updateTrackInDB(trackId: string, input: CreateTrackInput):
 }
 
 export async function fetchTrackModulesAndLessons(trackId: string): Promise<ModuleItem[]> {
-  // 1. Check if it's the TESDA CSS NC II track
+  // 1. Check if it's the Drum track
+  if (trackId === 'track-pinoy-drum-zero-to-hero' || trackId === PINOY_DRUM_TRACK.id) {
+    return PINOY_DRUM_TRACK.modules || [];
+  }
+
+  // 2. Check if it's the TESDA CSS NC II track
   if (trackId === 'track-tesda-css-nc2' || trackId === TESDA_CSS_TRACK.id) {
     return TESDA_CSS_TRACK.modules || [];
   }

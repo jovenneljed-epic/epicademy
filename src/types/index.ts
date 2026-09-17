@@ -31,6 +31,7 @@ export interface ActivityRubricCriteria {
 }
 
 export interface ActivityItem {
+  id?: string;
   title: string;
   instructions: string[];
   starterCode?: string;
@@ -47,7 +48,9 @@ export interface ExamQuestion {
 }
 
 export interface ExamItem {
+  id?: string;
   title: string;
+  description?: string;
   passingScore: number;
   questions: ExamQuestion[];
 }
@@ -58,6 +61,7 @@ export interface WorksheetPrompt {
 }
 
 export interface WorksheetItem {
+  id?: string;
   title: string;
   sheetName?: string;
   description: string;

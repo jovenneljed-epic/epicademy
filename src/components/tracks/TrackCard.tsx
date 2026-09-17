@@ -13,18 +13,25 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
   const pricePhp = getPhpPrice(track.price || 49);
   const origPhp = track.originalPrice ? getPhpPrice(track.originalPrice) : null;
 
-  const isBundle = track.isBundle || track.id === 'track-tesda-css-nc2';
+  const isBundle3 = Boolean(track.bundleNumber === 3 || track.id === 'track-pinoy-drum-zero-to-hero');
+  const isBundle2 = Boolean(track.bundleNumber === 2 || track.id === 'track-tesda-css-nc2');
+  const isBundle = isBundle2 || isBundle3 || Boolean(track.isBundle);
+  const isFree = (track.price || 49) === 0 || isBundle2 || isBundle3;
 
   return (
     <div className={`rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden group relative ${
-      isBundle
+      isBundle3
+        ? 'bg-gradient-to-b from-orange-50/40 via-white to-white border-2 border-amber-500 shadow-md hover:shadow-2xl ring-2 ring-orange-300/30'
+        : isBundle2
         ? 'bg-gradient-to-b from-amber-50/40 via-white to-white border-2 border-amber-400 shadow-md hover:shadow-2xl ring-2 ring-amber-300/30'
         : 'bg-white border-slate-200/90 shadow-sm hover:shadow-xl hover:border-blue-300'
     }`}>
       
       {/* Top Banner Accent */}
       <div className={`h-2.5 w-full bg-gradient-to-r ${
-        isBundle 
+        isBundle3
+          ? 'from-red-600 via-amber-500 to-yellow-400'
+          : isBundle2 
           ? 'from-amber-500 via-orange-500 to-amber-300' 
           : (track.colorTheme || 'from-blue-600 to-indigo-700')
       }`} />
@@ -34,7 +41,11 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
         {/* Category & Badge Header */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-1.5 flex-wrap">
-            {isBundle ? (
+            {isBundle3 ? (
+              <span className="text-[11px] font-black uppercase tracking-wider text-white bg-gradient-to-r from-red-600 to-amber-500 px-3 py-0.5 rounded-full shadow-xs border border-amber-400">
+                ★ 3RD COURSE BUNDLE
+              </span>
+            ) : isBundle2 ? (
               <span className="text-[11px] font-black uppercase tracking-wider text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-400 px-3 py-0.5 rounded-full shadow-xs border border-amber-300">
                 ★ 2ND COURSE BUNDLE
               </span>
@@ -48,7 +59,9 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
               </span>
             )}
             <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${
-              isBundle 
+              isBundle3
+                ? 'bg-orange-50 text-orange-900 border-orange-200 font-bold'
+                : isBundle2 
                 ? 'bg-blue-50 text-blue-800 border-blue-200 font-bold' 
                 : 'text-blue-700 bg-blue-50 border-blue-100'
             }`}>
@@ -97,7 +110,16 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
 
         {/* Skills Tags */}
         <div className="flex flex-wrap gap-1.5 mt-3">
-          {isBundle ? (
+          {isBundle3 ? (
+            <div className="w-full bg-orange-100/70 border border-orange-200 rounded-lg p-2 text-xs text-orange-950 font-semibold mb-1">
+              <span className="font-black text-slate-950 block text-[10px] uppercase tracking-wider mb-1">3 Progressive Drum Tiers:</span>
+              <div className="flex flex-wrap gap-1 text-[11px]">
+                <span className="bg-white px-2 py-0.5 rounded border border-orange-300 font-bold">Beginner: Setup & 11 Beats</span>
+                <span className="bg-white px-2 py-0.5 rounded border border-orange-300 font-bold">Advance: Sipra & OPM</span>
+                <span className="bg-white px-2 py-0.5 rounded border border-orange-300 font-bold">Pro: Chops & Masterclass</span>
+              </div>
+            </div>
+          ) : isBundle ? (
             <div className="w-full bg-amber-100/60 border border-amber-200 rounded-lg p-2 text-xs text-amber-900 font-semibold mb-1">
               <span className="font-black text-slate-950 block text-[10px] uppercase tracking-wider mb-1">4 TESDA Core Competencies (COCs):</span>
               <div className="flex flex-wrap gap-1 text-[11px]">
@@ -174,28 +196,50 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
 
       {/* Card Actions Footer */}
       <div className={`px-5 sm:px-6 py-3.5 border-t flex items-center justify-between gap-3 ${
-        isBundle ? 'bg-amber-50/60 border-amber-200' : 'bg-slate-50/80 border-slate-100'
+        isBundle3 
+          ? 'bg-orange-50/60 border-orange-200' 
+          : isBundle2 
+          ? 'bg-amber-50/60 border-amber-200' 
+          : 'bg-slate-50/80 border-slate-100'
       }`}>
         <div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-base font-black text-slate-900">₱{pricePhp.toLocaleString()}</span>
-            {origPhp && (
-              <span className="text-xs text-slate-400 line-through">₱{origPhp.toLocaleString()}</span>
+            {isFree ? (
+              <span className="text-base font-black text-emerald-600">FREE</span>
+            ) : (
+              <>
+                <span className="text-base font-black text-slate-900">₱{pricePhp.toLocaleString()}</span>
+                {origPhp && (
+                  <span className="text-xs text-slate-400 line-through">₱{origPhp.toLocaleString()}</span>
+                )}
+              </>
             )}
           </div>
           <span className="text-[10px] text-slate-500 font-semibold block">
-            GCash • GoTyme • Maya
+            {isFree ? '100% Free Lifetime Access' : 'GCash • GoTyme • Maya'}
           </span>
         </div>
         <button
           onClick={() => onEnroll(track)}
           className={`px-3.5 py-2 text-xs font-black active:scale-95 rounded-xl shadow-sm flex items-center gap-1.5 transition-all cursor-pointer ${
-            isBundle
+            isBundle3
+              ? 'bg-gradient-to-r from-red-600 via-amber-600 to-yellow-500 hover:from-red-500 hover:to-yellow-400 text-white shadow-orange-500/20'
+              : isBundle2
               ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/20'
+              : isFree
+              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
               : 'text-white bg-blue-600 hover:bg-blue-700'
           }`}
         >
-          <span>{isBundle ? `Enroll in Bundle #2 • ₱${pricePhp.toLocaleString()}` : `Enroll • ₱${pricePhp.toLocaleString()}`}</span>
+          <span>
+            {isBundle3
+              ? 'Enroll in Bundle #3 • FREE'
+              : isBundle2
+              ? 'Enroll in Bundle #2 • FREE'
+              : isFree
+              ? 'Enroll Free'
+              : `Enroll • ₱${pricePhp.toLocaleString()}`}
+          </span>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>

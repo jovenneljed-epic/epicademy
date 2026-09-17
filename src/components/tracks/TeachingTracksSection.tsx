@@ -24,6 +24,7 @@ import {
 import { fetchTracksFromDB, deleteTrackFromDB } from '../../lib/supabaseClient';
 import { getPhpPrice } from '../../lib/philippinePayment';
 import { TESDA_CSS_TRACK } from '../../data/tesdaCssNc2CourseData';
+import { PINOY_DRUM_TRACK } from '../../data/pinoyDrumCourseData';
 
 interface TeachingTracksSectionProps {
   onSelectTrack: (track: Track) => void;
@@ -55,7 +56,7 @@ export const TeachingTracksSection = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'roadmap' | 'grid'>('roadmap');
-  const [activeBundleTab, setActiveBundleTab] = useState<1 | 2>(1);
+  const [activeBundleTab, setActiveBundleTab] = useState<1 | 2 | 3>(1);
 
   const loadTracks = useCallback(async () => {
     setIsLoading(true);
@@ -252,7 +253,7 @@ export const TeachingTracksSection = ({
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-black uppercase tracking-wider text-slate-700">Official Flagship Bundles:</span>
                   </div>
-                  <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+                  <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl flex-wrap">
                     <button
                       type="button"
                       onClick={() => setActiveBundleTab(1)}
@@ -275,6 +276,18 @@ export const TeachingTracksSection = ({
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>★ Bundle #2: TESDA CSS NC II (4 COCs)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveBundleTab(3)}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                        activeBundleTab === 3 
+                          ? 'bg-gradient-to-r from-red-600 via-amber-600 to-yellow-500 text-white shadow-sm' 
+                          : 'text-orange-700 bg-orange-50 hover:bg-orange-100'
+                      }`}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>★ Bundle #3: Pinoy Drum Masterclass (6 Modules)</span>
                     </button>
                   </div>
                 </div>
@@ -339,7 +352,7 @@ export const TeachingTracksSection = ({
                       </div>
                     </div>
                   </div>
-                ) : (
+                ) : activeBundleTab === 2 ? (
                   /* BUNDLE #2 BANNER (TESDA CSS NC II) - FIXED TO FREE */
                   <div className="bg-gradient-to-r from-slate-900 via-amber-950 to-blue-950 rounded-3xl p-6 sm:p-8 text-white border-2 border-amber-500/70 shadow-2xl relative overflow-hidden ring-4 ring-amber-400/20">
                     <div className="absolute -right-12 -top-12 w-64 h-64 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
@@ -399,18 +412,76 @@ export const TeachingTracksSection = ({
                       </div>
                     </div>
                   </div>
+                ) : (
+                  /* BUNDLE #3 BANNER (PINOY DRUM MASTERCLASS - ZERO TO HERO) - 100% FREE */
+                  <div className="bg-gradient-to-r from-slate-950 via-zinc-900 to-amber-950 rounded-3xl p-6 sm:p-8 text-white border-2 border-amber-500/70 shadow-2xl relative overflow-hidden ring-4 ring-amber-500/20">
+                    <div className="absolute -right-12 -top-12 w-64 h-64 bg-red-500/20 rounded-full blur-3xl pointer-events-none" />
+                    <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
+                      <div className="space-y-2 text-center lg:text-left">
+                        <div className="flex items-center justify-center lg:justify-start gap-2 flex-wrap">
+                          <span className="text-xs font-black uppercase tracking-widest text-white bg-gradient-to-r from-red-600 to-amber-500 px-3.5 py-1 rounded-full shadow-md flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-yellow-300" /> ★ 3RD OFFICIAL COURSE BUNDLE
+                          </span>
+                          <span className="text-xs font-bold text-amber-300 bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-400/40">
+                            Tagalog Instructor • Zero to Hero Drummers
+                          </span>
+                        </div>
+                        <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                          Pinoy Drum Masterclass: Zero to Hero Professional Drumming Course
+                        </h3>
+                        <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                          Comprehensive Tagalog-instructed drum curriculum turning complete zero beginners into stage-ready heroes. Street-smart Tagalog explanations (&quot;palo&quot;, &quot;padyak&quot;, &quot;sipra&quot;), 24 verified video lessons, ASCII drum tabs, and Google Sheets practice log rubrics accredited by Ronnel M. Aviguetero, CEO and FOUNDER of KEZJED SOLUTIONS.
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 text-xs">
+                          <div className="bg-white/10 rounded-lg p-2 border border-white/10">
+                            <span className="font-bold text-amber-400 block">Tier 1: Beginner</span>
+                            <span className="text-[11px] text-slate-300">Drum Setup, 11 Beats & Fills</span>
+                          </div>
+                          <div className="bg-white/10 rounded-lg p-2 border border-white/10">
+                            <span className="font-bold text-amber-400 block">Tier 2: Advance</span>
+                            <span className="text-[11px] text-slate-300">Sipra, OPM & Worship Fills</span>
+                          </div>
+                          <div className="bg-white/10 rounded-lg p-2 border border-white/10">
+                            <span className="font-bold text-amber-400 block">Tier 3: Pro Hero</span>
+                            <span className="text-[11px] text-slate-300">Foot Speed, Solos & Clinics</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-amber-400/40 text-center shrink-0 w-full sm:w-auto ring-2 ring-amber-400/20">
+                        <span className="text-xs text-amber-300 uppercase tracking-wide block font-black">Bundle #3 Tuition</span>
+                        <div className="flex items-baseline justify-center gap-2 mt-1">
+                          <span className="text-4xl font-black text-emerald-400">FREE</span>
+                        </div>
+                        <p className="text-[11px] text-emerald-300 font-bold mt-0.5">100% Free Lifetime Access</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const drumTrack = filteredTracks.find(t => t.id === 'track-pinoy-drum-zero-to-hero' || t.bundleNumber === 3) || PINOY_DRUM_TRACK;
+                            onEnroll(drumTrack);
+                          }}
+                          className="w-full mt-3 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs sm:text-sm rounded-xl shadow-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 hover:scale-[1.02]"
+                        >
+                          <span>Enroll in Bundle #3 • FREE</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
 
               {/* Step by Step Progression Ladder */}
               <div className="relative pl-6 sm:pl-10 space-y-6 before:absolute before:left-3 sm:before:left-5 before:top-4 before:bottom-4 before:w-0.5 before:bg-gradient-to-b before:from-blue-600 before:via-indigo-500 before:to-emerald-500">
                 {filteredTracks.map((track, idx) => {
-                  const isBundle2 = Boolean(track.isBundle || track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2);
+                  const isBundle3 = Boolean(track.id === 'track-pinoy-drum-zero-to-hero' || track.bundleNumber === 3);
+                  const isBundle2 = Boolean(track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2);
+                  const isAnyBundle = isBundle2 || isBundle3 || Boolean(track.isBundle);
                   const levelNum = track.levelIndex || (idx + 1);
-                  const isHighest = levelNum === 9 && !isBundle2;
+                  const isHighest = levelNum === 9 && !isAnyBundle;
                   
                   // Check if course is free
-                  const isFree = (track.price ?? 49) === 0 || isBundle2;
+                  const isFree = (track.price ?? 49) === 0 || isBundle2 || isBundle3;
                   const pricePhp = getPhpPrice(track.price || 49);
                   const origPhp = track.originalPrice ? getPhpPrice(track.originalPrice) : null;
 
@@ -418,30 +489,49 @@ export const TeachingTracksSection = ({
                     <div key={track.id} className="relative group">
                       {/* Connected Timeline Node */}
                       <div className={`absolute -left-6 sm:-left-10 top-6 w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-black text-xs sm:text-sm shadow-md transition-transform group-hover:scale-110 ${
-                        isBundle2
+                        isBundle3
+                          ? 'bg-gradient-to-tr from-red-600 via-amber-500 to-yellow-400 text-white ring-4 ring-amber-400/80 shadow-lg shadow-orange-500/30 animate-pulse'
+                          : isBundle2
                           ? 'bg-gradient-to-tr from-amber-400 via-orange-400 to-yellow-300 text-slate-950 ring-4 ring-amber-300/80 shadow-lg shadow-amber-500/30 animate-pulse'
                           : isHighest
                           ? 'bg-amber-400 text-slate-950 ring-4 ring-amber-300/40 animate-pulse'
                           : 'bg-blue-600 text-white ring-4 ring-blue-100'
                       }`}>
-                        {isBundle2 ? '#2' : levelNum}
+                        {isBundle3 ? '#3' : isBundle2 ? '#2' : levelNum}
                       </div>
 
                       {/* Course Row Card */}
                       <div className={`rounded-2xl border p-5 sm:p-6 transition-all duration-300 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative overflow-hidden ${
-                        isBundle2
+                        isBundle3
+                          ? 'bg-gradient-to-r from-orange-50/90 via-white to-amber-50/30 border-2 border-amber-500 shadow-xl shadow-orange-500/10 hover:shadow-2xl ring-4 ring-orange-300/30'
+                          : isBundle2
                           ? 'bg-gradient-to-r from-amber-50/90 via-white to-amber-50/30 border-2 border-amber-400 shadow-xl shadow-amber-500/10 hover:shadow-2xl ring-4 ring-amber-300/30'
                           : isHighest 
                           ? 'border-amber-300 bg-gradient-to-r from-white via-amber-50/20 to-emerald-50/20 shadow-sm hover:shadow-xl' 
                           : 'bg-white border-slate-200/90 hover:border-blue-300 shadow-sm hover:shadow-xl'
                       }`}>
-                        {isBundle2 && (
+                        {isBundle3 ? (
+                          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400" />
+                        ) : isBundle2 ? (
                           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-500 via-orange-400 to-yellow-300" />
-                        )}
+                        ) : null}
 
                         <div className="space-y-2 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            {isBundle2 ? (
+                            {isBundle3 ? (
+                              <>
+                                <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full bg-gradient-to-r from-red-600 to-amber-500 text-white shadow-sm flex items-center gap-1.5">
+                                  <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+                                  ★ 3RD OFFICIAL COURSE BUNDLE
+                                </span>
+                                <span className="text-xs font-bold text-orange-950 bg-orange-100 border border-orange-300 px-2.5 py-0.5 rounded-full">
+                                  PINOY DRUM MASTERCLASS • ZERO TO HERO
+                                </span>
+                                <span className="text-xs font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full">
+                                  Tagalog Instructor • 24 Video Lessons
+                                </span>
+                              </>
+                            ) : isBundle2 ? (
                               <>
                                 <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-sm flex items-center gap-1.5">
                                   <Sparkles className="w-3.5 h-3.5 text-slate-950" />
@@ -479,20 +569,46 @@ export const TeachingTracksSection = ({
                           <h3 
                             onClick={() => onSelectTrack(track)}
                             className={`text-lg sm:text-xl font-bold transition-colors cursor-pointer flex items-center gap-2 flex-wrap ${
-                              isBundle2 ? 'text-slate-900 hover:text-amber-700 font-black' : 'text-slate-900 hover:text-blue-600'
+                              isBundle3
+                                ? 'text-slate-900 hover:text-orange-600 font-black'
+                                : isBundle2 
+                                ? 'text-slate-900 hover:text-amber-700 font-black' 
+                                : 'text-slate-900 hover:text-blue-600'
                             }`}
                           >
                             <span>{track.title}</span>
-                            {isBundle2 && (
+                            {isBundle3 ? (
+                              <span className="text-[11px] font-black uppercase bg-gradient-to-r from-red-600 to-amber-500 text-white px-2 py-0.5 rounded-md shadow-xs">
+                                OFFICIAL BUNDLE #3
+                              </span>
+                            ) : isBundle2 ? (
                               <span className="text-[11px] font-black uppercase bg-amber-400 text-slate-950 px-2 py-0.5 rounded-md shadow-xs">
                                 OFFICIAL BUNDLE #2
                               </span>
-                            )}
+                            ) : null}
                           </h3>
 
                           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-3xl">
                             {track.description}
                           </p>
+
+                          {/* 3 Tiers Mini Grid if Bundle 3 */}
+                          {isBundle3 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 pb-1">
+                              <div className="flex items-center gap-2 text-xs bg-white/90 p-2 rounded-lg border border-orange-200">
+                                <span className="font-extrabold text-orange-900 shrink-0">Tier 1:</span>
+                                <span className="text-slate-800 truncate font-medium">Beginner (Setup, 11 Beats, Fills)</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs bg-white/90 p-2 rounded-lg border border-orange-200">
+                                <span className="font-extrabold text-orange-900 shrink-0">Tier 2:</span>
+                                <span className="text-slate-800 truncate font-medium">Advance (Sipra, OPM & Worship)</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs bg-white/90 p-2 rounded-lg border border-orange-200">
+                                <span className="font-extrabold text-orange-900 shrink-0">Tier 3:</span>
+                                <span className="text-slate-800 truncate font-medium">Pro Hero (Chops, Solos & Clinics)</span>
+                              </div>
+                            </div>
+                          )}
 
                           {/* 4 COCs Mini Grid if Bundle 2 */}
                           {isBundle2 && (
@@ -554,25 +670,37 @@ export const TeachingTracksSection = ({
                               type="button"
                               onClick={() => onSelectTrack(track)}
                               className={`px-3 py-2 text-xs font-bold rounded-xl transition-colors cursor-pointer ${
-                                isBundle2
+                                isBundle3
+                                  ? 'text-orange-950 bg-orange-100 hover:bg-orange-200 border border-orange-300'
+                                  : isBundle2
                                   ? 'text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300'
                                   : 'text-slate-600 hover:text-blue-600 bg-slate-100 hover:bg-slate-200/80'
                               }`}
                             >
-                              {isBundle2 ? 'View TESDA Syllabus' : 'View Syllabus'}
+                              {isBundle3 ? 'View Drum Syllabus' : isBundle2 ? 'View TESDA Syllabus' : 'View Syllabus'}
                             </button>
                             <button
                               type="button"
                               onClick={() => onEnroll(track)}
                               className={`px-4 py-2 text-xs font-black active:scale-95 rounded-xl shadow-md flex items-center gap-1.5 transition-all cursor-pointer ${
-                                isFree
-                                  ? 'text-white bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25'
+                                isBundle3
+                                  ? 'text-white bg-gradient-to-r from-red-600 via-amber-600 to-yellow-500 hover:from-red-500 hover:to-yellow-400 shadow-orange-500/25'
                                   : isBundle2
                                   ? 'text-slate-950 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 shadow-amber-500/25'
+                                  : isFree
+                                  ? 'text-white bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25'
                                   : 'text-white bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
                               }`}
                             >
-                              <span>{isFree ? `Enroll in Bundle #2 • FREE` : `Enroll • ₱${pricePhp.toLocaleString()}`}</span>
+                              <span>
+                                {isFree 
+                                  ? isBundle3 
+                                    ? 'Enroll in Bundle #3 • FREE' 
+                                    : isBundle2 
+                                    ? 'Enroll in Bundle #2 • FREE' 
+                                    : 'Enroll • FREE'
+                                  : `Enroll • ₱${pricePhp.toLocaleString()}`}
+                              </span>
                               <ArrowRight className="w-3.5 h-3.5" />
                             </button>
                           </div>

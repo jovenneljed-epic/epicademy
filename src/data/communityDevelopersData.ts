@@ -9,6 +9,7 @@ import type {
   ShopItem
 } from '../types';
 import { TESDA_CSS_TRACK } from './tesdaCssNc2CourseData';
+import { PINOY_DRUM_TRACK } from './pinoyDrumCourseData';
 import { getTenantCourseDetailedModules } from './tenantCoursesDetailedData';
 
 export const RONNEL_INSTRUCTOR = {
@@ -157,17 +158,18 @@ export const COMMUNITY_DEVELOPERS: CommunityDeveloper[] = [
     rating: 5.00,
     reviewCount: 780,
     studentsCount: 3450,
-    coursesCount: 3,
-    bio: 'CEO and FOUNDER of KEZJED SOLUTIONS. Full-fledged ICT instructor, TESDA CSS NC II Certified Trainer/Assessor, cloud data architect, and tech executive dedicated to uplifting aspiring tech professionals and delivering enterprise solutions.',
+    coursesCount: 4,
+    bio: 'CEO and FOUNDER of KEZJED SOLUTIONS. Full-fledged ICT instructor, TESDA CSS NC II Certified Trainer/Assessor, cloud data architect, drummer-mentor, and tech executive dedicated to uplifting aspiring tech professionals and delivering enterprise solutions.',
     credentials: 'CEO and FOUNDER of KEZJED SOLUTIONS • TESDA CSS NC II Certified • National TVET Trainer Certificate (NTTC / TM1) • LPT • Lead Enterprise Cloud Architect',
     companyOrBackground: 'KEZJED SOLUTIONS • Executive Faculty',
     githubUrl: 'https://github.com',
     linkedinUrl: 'https://linkedin.com',
     websiteUrl: 'https://epicademy.ph',
-    featuredSkillTags: ['TESDA CSS NC II', 'Computer Hardware', 'Structured Cabling', 'Windows Server AD DS', 'Network Switching', 'Hardware Diagnostics', 'TVET Pedagogy'],
+    featuredSkillTags: ['TESDA CSS NC II', 'Computer Hardware', 'Structured Cabling', 'Pinoy Drum Mastery', 'Windows Server AD DS', 'Network Switching', 'Hardware Diagnostics', 'TVET Pedagogy'],
     payoutBadge: 'GoTyme Bank & GCash Verified Instructor',
     courses: [
       TESDA_CSS_TRACK,
+      PINOY_DRUM_TRACK,
       {
         id: 'track-pastor-jed-foundations',
         title: 'Bayanihan Web Foundations: From Zero to Your First Purpose-Driven Web Project',
