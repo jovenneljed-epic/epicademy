@@ -196,11 +196,12 @@ export const TrackDetailModal = ({
     return url;
   };
 
-  // Force TESDA track, Pinoy Drum track, Pinoy Piano track, or bundle 2/3/4 or 0-priced tracks to be free
+  // Force TESDA track, Pinoy Drum track, Pinoy Piano track, Pinoy Guitar track, or bundle 2/3/4/5 or 0-priced tracks to be free
   const isFree = (track.price || 49) === 0 || 
     track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2 ||
     track.id === 'track-pinoy-drum-zero-to-hero' || track.bundleNumber === 3 ||
-    track.id === 'track-pinoy-piano-zero-to-hero' || track.bundleNumber === 4;
+    track.id === 'track-pinoy-piano-zero-to-hero' || track.bundleNumber === 4 ||
+    track.id === 'track-pinoy-guitar-zero-to-hero' || track.bundleNumber === 5;
   const phpPrice = isFree ? 0 : getPhpPrice(track.price || 49);
   const origPhp = track.originalPrice ? getPhpPrice(track.originalPrice) : null;
 

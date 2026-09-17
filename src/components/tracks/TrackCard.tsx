@@ -13,15 +13,18 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
   const pricePhp = getPhpPrice(track.price || 49);
   const origPhp = track.originalPrice ? getPhpPrice(track.originalPrice) : null;
 
+  const isBundle5 = Boolean(track.bundleNumber === 5 || track.id === 'track-pinoy-guitar-zero-to-hero');
   const isBundle4 = Boolean(track.bundleNumber === 4 || track.id === 'track-pinoy-piano-zero-to-hero');
   const isBundle3 = Boolean(track.bundleNumber === 3 || track.id === 'track-pinoy-drum-zero-to-hero');
   const isBundle2 = Boolean(track.bundleNumber === 2 || track.id === 'track-tesda-css-nc2');
-  const isBundle = isBundle2 || isBundle3 || isBundle4 || Boolean(track.isBundle);
-  const isFree = (track.price || 49) === 0 || isBundle2 || isBundle3 || isBundle4;
+  const isBundle = isBundle2 || isBundle3 || isBundle4 || isBundle5 || Boolean(track.isBundle);
+  const isFree = (track.price || 49) === 0 || isBundle2 || isBundle3 || isBundle4 || isBundle5;
 
   return (
     <div className={`rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden group relative ${
-      isBundle4
+      isBundle5
+        ? 'bg-gradient-to-b from-emerald-50/40 via-white to-white border-2 border-emerald-500 shadow-md hover:shadow-2xl ring-2 ring-emerald-300/30'
+        : isBundle4
         ? 'bg-gradient-to-b from-purple-50/40 via-white to-white border-2 border-purple-500 shadow-md hover:shadow-2xl ring-2 ring-purple-300/30'
         : isBundle3
         ? 'bg-gradient-to-b from-orange-50/40 via-white to-white border-2 border-amber-500 shadow-md hover:shadow-2xl ring-2 ring-orange-300/30'
@@ -32,7 +35,9 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
       
       {/* Top Banner Accent */}
       <div className={`h-2.5 w-full bg-gradient-to-r ${
-        isBundle4
+        isBundle5
+          ? 'from-emerald-600 via-teal-600 to-amber-400'
+          : isBundle4
           ? 'from-purple-600 via-indigo-600 to-amber-400'
           : isBundle3
           ? 'from-red-600 via-amber-500 to-yellow-400'
@@ -46,7 +51,11 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
         {/* Category & Badge Header */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-1.5 flex-wrap">
-            {isBundle4 ? (
+            {isBundle5 ? (
+              <span className="text-[11px] font-black uppercase tracking-wider text-white bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-0.5 rounded-full shadow-xs border border-emerald-400">
+                ★ 5TH COURSE BUNDLE
+              </span>
+            ) : isBundle4 ? (
               <span className="text-[11px] font-black uppercase tracking-wider text-white bg-gradient-to-r from-purple-600 to-indigo-600 px-3 py-0.5 rounded-full shadow-xs border border-purple-400">
                 ★ 4TH COURSE BUNDLE
               </span>
@@ -68,7 +77,9 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
               </span>
             )}
             <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${
-              isBundle4
+              isBundle5
+                ? 'bg-emerald-50 text-emerald-900 border-emerald-200 font-bold'
+                : isBundle4
                 ? 'bg-purple-50 text-purple-900 border-purple-200 font-bold'
                 : isBundle3
                 ? 'bg-orange-50 text-orange-900 border-orange-200 font-bold'
@@ -121,7 +132,16 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
 
         {/* Skills Tags */}
         <div className="flex flex-wrap gap-1.5 mt-3">
-          {isBundle4 ? (
+          {isBundle5 ? (
+            <div className="w-full bg-emerald-100/70 border border-emerald-200 rounded-lg p-2 text-xs text-emerald-950 font-semibold mb-1">
+              <span className="font-black text-slate-950 block text-[10px] uppercase tracking-wider mb-1">3 Progressive Rhythm Tiers:</span>
+              <div className="flex flex-wrap gap-1 text-[11px]">
+                <span className="bg-white px-2 py-0.5 rounded border border-emerald-300 font-bold">Beginner: Open Chords & Strum</span>
+                <span className="bg-white px-2 py-0.5 rounded border border-emerald-300 font-bold">Groove: Barre, Muting & Bossa</span>
+                <span className="bg-white px-2 py-0.5 rounded border border-emerald-300 font-bold">Pro: Worship, Funk & Numbers</span>
+              </div>
+            </div>
+          ) : isBundle4 ? (
             <div className="w-full bg-purple-100/70 border border-purple-200 rounded-lg p-2 text-xs text-purple-950 font-semibold mb-1">
               <span className="font-black text-slate-950 block text-[10px] uppercase tracking-wider mb-1">3 Progressive Keyboard Tiers:</span>
               <div className="flex flex-wrap gap-1 text-[11px]">
@@ -216,7 +236,9 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
 
       {/* Card Actions Footer */}
       <div className={`px-5 sm:px-6 py-3.5 border-t flex items-center justify-between gap-3 ${
-        isBundle4
+        isBundle5
+          ? 'bg-emerald-50/60 border-emerald-200'
+          : isBundle4
           ? 'bg-purple-50/60 border-purple-200'
           : isBundle3 
           ? 'bg-orange-50/60 border-orange-200' 
@@ -244,7 +266,9 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
         <button
           onClick={() => onEnroll(track)}
           className={`px-3.5 py-2 text-xs font-black active:scale-95 rounded-xl shadow-sm flex items-center gap-1.5 transition-all cursor-pointer ${
-            isBundle4
+            isBundle5
+              ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-amber-500 hover:from-emerald-500 hover:to-amber-400 text-white shadow-emerald-500/20'
+              : isBundle4
               ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 text-white shadow-purple-500/20'
               : isBundle3
               ? 'bg-gradient-to-r from-red-600 via-amber-600 to-yellow-500 hover:from-red-500 hover:to-yellow-400 text-white shadow-orange-500/20'
@@ -256,7 +280,9 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
           }`}
         >
           <span>
-            {isBundle4
+            {isBundle5
+              ? 'Enroll in Bundle #5 • FREE'
+              : isBundle4
               ? 'Enroll in Bundle #4 • FREE'
               : isBundle3
               ? 'Enroll in Bundle #3 • FREE'
