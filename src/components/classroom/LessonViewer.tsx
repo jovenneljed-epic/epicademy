@@ -14,6 +14,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import type { ActivityItem, ExamItem, WorksheetItem } from '../../types';
+import { CodeSandboxRunner } from './CodeSandboxRunner';
 
 export interface LessonViewerProps {
   lessonTitle: string;
@@ -47,7 +48,7 @@ export const LessonViewer = ({
   onCompleteLesson,
 }: LessonViewerProps) => {
   // Navigation sub-tab inside the lesson
-  const [activeTab, setActiveTab] = useState<'lecture' | 'activity' | 'exam' | 'worksheet'>('lecture');
+  const [activeTab, setActiveTab] = useState<'lecture' | 'sandbox' | 'activity' | 'exam' | 'worksheet'>('lecture');
 
   // Copy code helper
   const [copied, setCopied] = useState(false);
@@ -176,6 +177,19 @@ export const LessonViewer = ({
             <span>1. Lecture &amp; Theory</span>
           </button>
 
+          <button
+            onClick={() => setActiveTab('sandbox')}
+            className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === 'sandbox'
+                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800'
+            }`}
+          >
+            <Code2 className="w-4 h-4 text-emerald-400" />
+            <span>2. Live Sandbox</span>
+            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded-full font-mono font-bold">IDE</span>
+          </button>
+
           {activity && (
             <button
               onClick={() => setActiveTab('activity')}
@@ -292,6 +306,38 @@ export const LessonViewer = ({
               </pre>
             </div>
           )}
+        </div>
+      )}
+
+      {/* SUB-TAB: LIVE CODE SANDBOX */}
+      {activeTab === 'sandbox' && (
+        <div className="space-y-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+            <div>
+              <span className="text-xs font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20 inline-block mb-1">
+                💻 Embedded In-Browser IDE &amp; Live Runtime
+              </span>
+              <h3 className="text-lg font-black text-white">Interactive Code Playground &amp; Test Suite</h3>
+              <p className="text-xs text-slate-400">Write, test, and debug code with instant live rendering and automated verification.</p>
+            </div>
+            {activity && (
+              <button
+                onClick={() => setActiveTab('activity')}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>View Activity Guide</span> →
+              </button>
+            )}
+          </div>
+
+          <CodeSandboxRunner
+            lessonTitle={lessonTitle}
+            initialCode={codeSnippet}
+            starterCode={activity?.starterCode}
+            expectedOutcome={activity?.expectedOutcome}
+            isCompleted={isCompleted}
+            onComplete={onCompleteLesson}
+          />
         </div>
       )}
 

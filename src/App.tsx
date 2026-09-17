@@ -23,6 +23,9 @@ import { getCurrentUser, supabase, fetchTrackModulesAndLessons } from './lib/sup
 import type { Track, CommunityDeveloper, ModuleItem } from './types';
 import { CreateCommunityModal } from './components/modals/CreateCommunityModal';
 import { LessonViewer } from './components/classroom/LessonViewer';
+import { AcademicCredentialsModal } from './components/credentials/AcademicCredentialsModal';
+import { TesdaTrbModal } from './components/classroom/TesdaTrbModal';
+import { StudentDossierModal } from './components/profile/StudentDossierModal';
 
 // =========================================================================
 // COC 1: INSTALLING AND CONFIGURING COMPUTER SYSTEMS (14 Lessons)
@@ -129,6 +132,8 @@ export function App() {
   const [tempLinkInput, setTempLinkInput] = useState('');
   const [linkSavedMsg, setLinkSavedMsg] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const [showTesdaTrbModal, setShowTesdaTrbModal] = useState(false);
+  const [showDossierModal, setShowDossierModal] = useState(false);
 
   // Dynamic Teacher / Custom Tracks state in Classroom
   const [activeTrackModules, setActiveTrackModules] = useState<ModuleItem[]>([]);
@@ -314,6 +319,8 @@ export function App() {
         onOpenCourseBuilder={() => setCourseBuilderOpen(true)}
         onOpenTeacherSetup={() => setTeacherSetupOpen(true)}
         onOpenApplyTenant={() => setApplyTenantOpen(true)}
+        onOpenCredentials={() => setShowCertificateModal(true)}
+        onOpenDossier={() => setShowDossierModal(true)}
         currentUser={currentUser}
         onSignOut={() => setCurrentUser(null)}
       />
@@ -442,22 +449,38 @@ export function App() {
               </span>
               <h2 className="text-base sm:text-lg font-black mt-0.5">{selectedActiveTrack.title}</h2>
             </div>
-            <div className="flex items-center gap-3">
-              {effectiveOverallProgress === 100 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {(selectedActiveTrack.id === 'track-tesda-css-nc2' || selectedActiveTrack.id.includes('tesda')) && (
                 <button
-                  onClick={() => setShowCertificateModal(true)}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-black transition-all shadow-lg animate-pulse cursor-pointer flex items-center gap-1.5"
+                  onClick={() => setShowTesdaTrbModal(true)}
+                  className="px-3 py-1.5 bg-blue-900/60 hover:bg-blue-800 border border-blue-500/40 text-blue-200 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
                 >
-                  🏆 Claim Certificate ↗
+                  <span>📋 Trainee Record Book (TRB)</span>
                 </button>
               )}
+              <button
+                onClick={() => setShowDossierModal(true)}
+                className="px-3 py-1.5 bg-indigo-900/60 hover:bg-indigo-800 border border-indigo-500/40 text-indigo-200 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <span>💼 Career Dossier</span>
+              </button>
+              <button
+                onClick={() => setShowCertificateModal(true)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 shadow ${
+                  effectiveOverallProgress === 100
+                    ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 animate-pulse'
+                    : 'bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30'
+                }`}
+              >
+                <span>🏆 {effectiveOverallProgress === 100 ? 'Claim Certificate ↗' : 'Credentials & Transcript'}</span>
+              </button>
               <button
                 onClick={() => {
                   setIsClassroomOpen(false);
                   setSelectedActiveTrack(null);
                   setActiveTrackModules([]);
                 }}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition-colors cursor-pointer"
               >
                 Exit Classroom ✕
               </button>
@@ -837,58 +860,27 @@ export function App() {
         </div>
       )}
 
-      {/* Official Certificate of Completion Modal */}
-      {showCertificateModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-3xl rounded-3xl p-8 shadow-2xl border-8 border-amber-400 text-slate-900 relative space-y-6">
-            <button
-              onClick={() => setShowCertificateModal(false)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer"
-            >
-              ✕
-            </button>
+      {/* Official Academic Credentials & Verification Suite */}
+      <AcademicCredentialsModal
+        isOpen={showCertificateModal}
+        onClose={() => setShowCertificateModal(false)}
+        track={selectedActiveTrack}
+        studentEmail={currentUser?.email}
+      />
 
-            <div className="text-center space-y-2">
-              <span className="text-xs font-black uppercase tracking-widest bg-amber-100 text-amber-800 px-3 py-1 rounded-full border border-amber-300">
-                Official Certification of Achievement
-              </span>
-              <h2 className="text-3xl font-black font-serif text-slate-900">Certificate of Completion</h2>
-              <p className="text-xs text-slate-500 font-medium">KEZJED SOLUTIONS • EPICADEMY Professional Masterclass & Certification Program</p>
-            </div>
+      {/* TESDA Trainee's Record Book (TRB) */}
+      <TesdaTrbModal
+        isOpen={showTesdaTrbModal}
+        onClose={() => setShowTesdaTrbModal(false)}
+        traineeName={currentUser?.email ? currentUser.email.split('@')[0].toUpperCase() : undefined}
+      />
 
-            <div className="text-center py-6 border-y border-slate-200 space-y-3">
-              <p className="text-xs text-slate-600 italic">This is proudly presented to</p>
-              <h3 className="text-2xl font-black text-blue-900 underline decoration-amber-400 underline-offset-8">
-                {currentUser?.email || 'Valued Student & Scholar'}
-              </h3>
-              <p className="text-xs text-slate-700 leading-relaxed max-w-xl mx-auto pt-2">
-                For successfully completing all rigorous subjects, practical activities, and examinations in
-              </p>
-              <h4 className="font-extrabold text-sm text-slate-900">{selectedActiveTrack?.title}</h4>
-            </div>
-
-            <div className="flex items-center justify-between pt-4 text-xs">
-              <div>
-                <p className="font-bold text-slate-900">Ronnel M. Aviguetero</p>
-                <p className="text-[10px] text-slate-600 font-semibold">CEO and FOUNDER of KEZJED SOLUTIONS</p>
-              </div>
-              <div className="text-right">
-                <p className="font-mono font-bold text-emerald-600">Verified ID: KEZJED-{(selectedActiveTrack?.id || 'CERT').slice(0, 10).toUpperCase()}-2026</p>
-                <p className="text-[10px] text-slate-500">Issued Date: {new Date().toLocaleDateString()}</p>
-              </div>
-            </div>
-
-            <div className="text-center pt-2">
-              <button
-                onClick={() => window.print()}
-                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-lg cursor-pointer"
-              >
-                Print / Download Certificate 🖨️
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Student Academic Dossier & Career Portfolio */}
+      <StudentDossierModal
+        isOpen={showDossierModal}
+        onClose={() => setShowDossierModal(false)}
+        studentEmail={currentUser?.email}
+      />
 
     </div>
   );

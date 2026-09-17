@@ -17,8 +17,11 @@ import {
   Edit3,
   Eye,
   ArrowRight,
-  FolderPlus,
-  Award
+  Award,
+  Users,
+  Download,
+  Search,
+  FolderPlus
 } from 'lucide-react';
 import { 
   createTrackInDB, 
@@ -27,6 +30,7 @@ import {
   getLocalTeacherTracks, 
   fetchTeachersFromDB 
 } from '../../lib/supabaseClient';
+import { INITIAL_COHORTS, INITIAL_STUDENT_ROSTER, type StudentGradeRecord } from '../../data/gradebookData';
 import type { 
   Track, 
   CreateTrackInput, 
@@ -51,7 +55,12 @@ export const CourseBuilderModal = ({
   userEmail,
 }: CourseBuilderModalProps) => {
   // Main Studio Navigation Tabs
-  const [studioTab, setStudioTab] = useState<'essentials' | 'curriculum' | 'lesson-suite' | 'my-courses'>('essentials');
+  const [studioTab, setStudioTab] = useState<'essentials' | 'curriculum' | 'lesson-suite' | 'my-courses' | 'gradebook'>('essentials');
+
+  // Faculty Gradebook States
+  const [selectedCohortId, setSelectedCohortId] = useState<string>('all');
+  const [studentSearch, setStudentSearch] = useState<string>('');
+  const [studentRoster, setStudentRoster] = useState<StudentGradeRecord[]>(INITIAL_STUDENT_ROSTER);
 
   // Course Essentials
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
@@ -583,6 +592,18 @@ export const CourseBuilderModal = ({
             >
               <Award className="w-3.5 h-3.5 text-emerald-500" />
               <span>4. My Courses ({teacherCourses.length})</span>
+            </button>
+
+            <button
+              onClick={() => setStudioTab('gradebook')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                studioTab === 'gradebook'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 text-emerald-500" />
+              <span>5. Faculty Gradebook &amp; Cohorts</span>
             </button>
           </div>
 
@@ -1659,6 +1680,182 @@ export const CourseBuilderModal = ({
                   })}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* TAB 5: FACULTY GRADEBOOK & COHORT ACADEMIC ROSTER */}
+          {studioTab === 'gradebook' && (
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 max-w-5xl mx-auto w-full animate-in fade-in duration-200">
+              {/* Gradebook Header & Metric Cards */}
+              <div className="bg-gradient-to-r from-emerald-950/40 via-slate-900 to-teal-950/40 border border-emerald-500/30 rounded-2xl p-6 text-white space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <span className="text-xs font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20 inline-block mb-1">
+                      Academic Senate &amp; Faculty Portal
+                    </span>
+                    <h4 className="text-xl font-black">Institutional Student Gradebook &amp; Cohort Records</h4>
+                    <p className="text-xs text-slate-400">
+                      Weighted computation: 40% Practical Labs • 30% Modular Exams • 20% Worksheets • 10% Attendance.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const csvContent = "data:text/csv;charset=utf-8," + 
+                        "Student Name,Email,Track,Progress,Final Grade,Letter Grade,GPA,Academic Standing,Certificate Status\n" +
+                        studentRoster.map(s => `"${s.studentName}","${s.email}","${s.trackTitle}",${s.progressPercent}%,${s.finalNumericGrade}%,${s.letterGrade},${s.gpa},"${s.academicStanding}","${s.certificateIssued ? 'Issued' : 'Pending'}"`).join("\n");
+                      const encodedUri = encodeURI(csvContent);
+                      const link = document.createElement("a");
+                      link.setAttribute("href", encodedUri);
+                      link.setAttribute("download", `epicademy_faculty_gradebook_${Date.now()}.csv`);
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Export Gradebook (CSV)
+                  </button>
+                </div>
+
+                {/* Metrics Summary Row */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-center">
+                  <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Active Scholars</span>
+                    <span className="text-xl font-black text-white font-mono">{studentRoster.length}</span>
+                  </div>
+                  <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Class GPA Average</span>
+                    <span className="text-xl font-black text-emerald-400 font-mono">3.75 / 4.0</span>
+                  </div>
+                  <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Honors Candidates</span>
+                    <span className="text-xl font-black text-amber-400 font-mono">
+                      {studentRoster.filter(s => s.academicStanding.includes('Laude')).length}
+                    </span>
+                  </div>
+                  <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Degrees Conferred</span>
+                    <span className="text-xl font-black text-blue-400 font-mono">
+                      {studentRoster.filter(s => s.certificateIssued).length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cohort Selector and Search Bar */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Filter Cohort:</span>
+                  <select
+                    value={selectedCohortId}
+                    onChange={(e) => setSelectedCohortId(e.target.value)}
+                    className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500 cursor-pointer"
+                  >
+                    <option value="all">All Academic Cohorts ({INITIAL_COHORTS.length})</option>
+                    {INITIAL_COHORTS.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="relative w-full sm:w-72">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={studentSearch}
+                    onChange={(e) => setStudentSearch(e.target.value)}
+                    placeholder="Search candidate name or email..."
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 placeholder-slate-400"
+                  />
+                </div>
+              </div>
+
+              {/* Student Roster Table */}
+              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-900 text-white font-mono text-[11px]">
+                      <tr>
+                        <th className="p-3">Candidate / Student</th>
+                        <th className="p-3">Enrolled Track</th>
+                        <th className="p-3 text-center">Progress</th>
+                        <th className="p-3 text-right">Labs Done</th>
+                        <th className="p-3 text-right">Exam Avg</th>
+                        <th className="p-3 text-right">Final Grade</th>
+                        <th className="p-3 text-center">Academic Honors</th>
+                        <th className="p-3 text-center">Certification</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-sans">
+                      {studentRoster
+                        .filter(s => selectedCohortId === 'all' || s.cohortId === selectedCohortId)
+                        .filter(s => !studentSearch || s.studentName.toLowerCase().includes(studentSearch.toLowerCase()) || s.email.toLowerCase().includes(studentSearch.toLowerCase()))
+                        .map((s) => (
+                          <tr key={s.id} className="hover:bg-slate-50 transition">
+                            <td className="p-3">
+                              <span className="font-bold text-slate-900 block">{s.studentName}</span>
+                              <span className="text-[11px] text-slate-500 font-mono">{s.email}</span>
+                            </td>
+                            <td className="p-3 text-slate-700 max-w-[200px] truncate" title={s.trackTitle}>
+                              {s.trackTitle}
+                            </td>
+                            <td className="p-3 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${s.progressPercent}%` }} />
+                                </div>
+                                <span className="font-mono text-[10px] font-bold text-slate-600">{s.progressPercent}%</span>
+                              </div>
+                            </td>
+                            <td className="p-3 text-right font-mono font-medium text-slate-700">
+                              {s.completedActivities}/{s.totalActivities}
+                            </td>
+                            <td className="p-3 text-right font-mono font-medium text-slate-700">
+                              {s.examAverage}%
+                            </td>
+                            <td className="p-3 text-right font-mono">
+                              <span className="font-black text-slate-900">{s.finalNumericGrade}%</span>
+                              <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-bold">
+                                {s.letterGrade} ({s.gpa.toFixed(1)})
+                              </span>
+                            </td>
+                            <td className="p-3 text-center">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                s.academicStanding.includes('Summa')
+                                  ? 'bg-amber-50 border-amber-300 text-amber-800'
+                                  : s.academicStanding.includes('Magna')
+                                  ? 'bg-blue-50 border-blue-300 text-blue-800'
+                                  : 'bg-slate-100 border-slate-200 text-slate-700'
+                              }`}>
+                                {s.academicStanding}
+                              </span>
+                            </td>
+                            <td className="p-3 text-center">
+                              {s.certificateIssued ? (
+                                <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded-full flex items-center justify-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Issued
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setStudentRoster(prev => prev.map(item => item.id === s.id ? { ...item, certificateIssued: true, certificateId: `EPIC-CERT-2026-${Date.now()}` } : item));
+                                    alert(`Official Certification awarded to ${s.studentName}!`);
+                                  }}
+                                  className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-[10px] rounded-lg shadow-xs transition cursor-pointer"
+                                >
+                                  Confer Degree 🏆
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           )}
 

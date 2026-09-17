@@ -21,6 +21,8 @@ interface NavbarProps {
   onOpenCourseBuilder: () => void;
   onOpenTeacherSetup: () => void;
   onOpenApplyTenant?: () => void;
+  onOpenCredentials?: () => void;
+  onOpenDossier?: () => void;
   currentUser?: { email?: string; role?: string } | null;
   onSignOut?: () => void;
 }
@@ -32,6 +34,8 @@ export const Navbar = ({
   onOpenCourseBuilder,
   onOpenTeacherSetup,
   onOpenApplyTenant,
+  onOpenCredentials,
+  onOpenDossier,
   currentUser,
   onSignOut,
 }: NavbarProps) => {
@@ -151,6 +155,25 @@ export const Navbar = ({
             <a href="#community" className="px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-lg transition-colors">
               Community Hub
             </a>
+
+            {onOpenCredentials && (
+              <button
+                onClick={onOpenCredentials}
+                className="px-3 py-2 text-sm font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <span>🎓 Verify Credential</span>
+              </button>
+            )}
+
+            {onOpenDossier && (
+              <button
+                onClick={onOpenDossier}
+                className="px-3 py-2 text-sm font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <span>💼 Career Dossier</span>
+              </button>
+            )}
+
             <a href="#pricing" className="px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-lg transition-colors">
               Pricing
             </a>
