@@ -18,8 +18,8 @@ export const TESDA_CSS_MODULES: DetailedModule[] = [
       {
         title: 'Lesson 1.1: OHS Policies, 5S Principles, Personal Protective Equipment (PPE) & ESD Protection',
         duration: '45 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=IHXzkQO_n-I',
-        videoTitle: 'TESDA CSS NC II: Occupational Health and Safety (OHS) & Tool Familiarization',
+        videoUrl: 'https://www.youtube.com/embed/m5gxAICpKps',
+        videoTitle: 'Occupational Health and Safety (OHS) Standards in CSS (Teacher Mej TV)',
         objective: 'Understand and apply OHS standards, 5S of Good Housekeeping, proper use of Anti-Static Wrist Straps, and computer toolkit preparation before opening a computer chassis.',
         theoryContent: `According to TESDA Training Regulations (TR) for Computer Systems Servicing NC II, the fundamental standard before handling any ICT equipment is Occupational Health and Safety (OHS).
 
@@ -75,8 +75,8 @@ export const TESDA_CSS_MODULES: DetailedModule[] = [
       {
         title: 'Lesson 1.2: Systematic PC Disassembly & Reassembly Procedures',
         duration: '60 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=s1fxZ-VWsHg',
-        videoTitle: 'Step-by-Step PC Disassembly & Assembly (TESDA CSS NC II Demonstration)',
+        videoUrl: 'https://www.youtube.com/embed/qkr07CutHrU',
+        videoTitle: 'How to Build a PC Step By Step: Complete Hardware Assembly (PC Builder)',
         objective: 'Demonstrate the proper sequence of disassembling and assembling a computer system unit according to manufacturer specifications.',
         theoryContent: `During the TESDA National Assessment for COC 1, candidates are given a dedicated time (typically 1 hour) to assemble a computer system unit without damaging any components.
 
@@ -144,8 +144,8 @@ Front Panel Switches Verified:    [YES / NO]`,
       {
         title: 'Lesson 1.3: Power-On Self-Test (POST), Beep Codes & BIOS/UEFI Setup',
         duration: '50 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=TIGUea7j69E',
-        videoTitle: 'BIOS/UEFI Configuration & Beep Code Diagnosis for TESDA CSS NC II',
+        videoUrl: 'https://www.youtube.com/embed/-4nZQBk2IW8',
+        videoTitle: 'Decode the Beep! - Interactive BIOS POST Beep Codes Activity (Sir Lau)',
         objective: 'Interpret POST results, diagnose beep codes, and configure BIOS/UEFI settings including Boot Sequence, XMP/DOCP, and Secure Boot.',
         theoryContent: `When the Power Switch is pressed, the first routine executed by the motherboard ROM is the Power-On Self-Test (POST).
 
@@ -213,8 +213,8 @@ Boot Device Priority #1:     [UEFI: SanDisk USB 3.0]`,
       {
         title: 'Lesson 1.4: Creating Multi-Boot & UEFI USB Installers via Rufus & Ventoy',
         duration: '40 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=Fj7n0P0L83g',
-        videoTitle: 'How to Create Bootable USB (Rufus vs Ventoy for TESDA Assessment)',
+        videoUrl: 'https://www.youtube.com/embed/Sp-IamtueQo',
+        videoTitle: 'How to Create a Bootable USB Flash Drive Using Rufus (Geeks Tutorial)',
         objective: 'Evaluate the technical differences between GPT vs MBR partition schemes and create bootable flash media compatible with modern UEFI and legacy BIOS systems.',
         theoryContent: `In the TESDA Assessment, candidates are expected to prepare and bring their own functional installation media.
 
@@ -279,8 +279,8 @@ Get-Disk | Select-Object Number, FriendlyName, PartitionStyle, TotalSize`,
       {
         title: 'Lesson 1.5: Clean OS Installation: Windows 10/11 Pro & Linux Dual-Boot',
         duration: '60 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=qbdxU1s_hZg',
-        videoTitle: 'Dual Boot Windows & Linux Ubuntu Installation for ICT Techs',
+        videoUrl: 'https://www.youtube.com/embed/kXOgKLR-gO0',
+        videoTitle: 'Windows 11 Clean Install From USB: Step-by-Step Guide (How-FixIT)',
         objective: 'Perform clean installation of Windows 10/11, configure custom disk partitioning (C: Drive for OS, D: Drive for Data), and establish a dual-boot setup with Linux.',
         theoryContent: `During the TESDA COC 1 Demonstration, candidates are assessed on their ability to partition storage drives accurately and execute a clean Operating System installation.
 
@@ -340,8 +340,8 @@ Get-Partition -DiskNumber 0`,
       {
         title: 'Lesson 1.6: Device Drivers Installation, Peripheral Verification & Software Suite',
         duration: '50 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=0h0Xj4y550E',
-        videoTitle: 'Device Drivers Installation & Device Manager Verification (TESDA CSS NC II)',
+        videoUrl: 'https://www.youtube.com/embed/Pw6xZuR_yE8',
+        videoTitle: 'How to Install Device Drivers on Windows 10/11 (Memory)',
         objective: 'Identify and install all missing device drivers (Chipset, Graphics, LAN/Audio, USB 3.0) and inspect Device Manager for zero yellow exclamation marks.',
         theoryContent: `A newly installed operating system is not production-ready until verified hardware drivers from the OEM (Original Equipment Manufacturer) are properly configured.
 
@@ -406,8 +406,8 @@ Network Adapter Status:  [Gigabit Ethernet Controller Active]`,
       {
         title: 'Lesson 2.1: Network Standards: ANSI/TIA-568-C, Cat5e/Cat6 & Color Codes',
         duration: '45 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=0gl4yv9wM7U',
-        videoTitle: 'T568A vs T568B Color Coding Explained (TESDA CSS NC II Practical Guide)',
+        videoUrl: 'https://www.youtube.com/embed/1-SInkhQ71c',
+        videoTitle: 'T568A vs T568B Network Cabling Wiring Standards (VCELINK)',
         objective: 'Memorize and apply pinout arrangements for T568A and T568B color standards and identify appropriate use cases for Straight-Through vs Crossover cables.',
         theoryContent: `The physical layer of computer networks depends fundamentally on structured cabling quality.
 
@@ -477,8 +477,8 @@ T568B: [W-O, O, W-G, BL, W-BL, G, W-BR, BR]`,
       {
         title: 'Lesson 2.2: Hands-On RJ45 Crimping, Keystone Jacks & Patch Panel Punch-Down',
         duration: '60 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=2n5qQp_M41c',
-        videoTitle: 'Proper RJ45 Crimping & Keystone Jack Punchdown Tutorial (TESDA Standard)',
+        videoUrl: 'https://www.youtube.com/embed/NWhoJp8UQpo',
+        videoTitle: 'How to Wire Up Ethernet Plugs: RJ45 Crimping & Keystone Punchdown (Switched On Network)',
         objective: 'Crimp high-grade RJ45 connectors maintaining less than 0.5 inches of unjacketed conductor and terminate modular keystone jacks using an impact punch-down tool.',
         theoryContent: `In the TESDA COC 2 practical assessment, candidates are required to assemble at least two patch cables (one Straight-Through and one Crossover) and terminate a keystone modular jack.
 
@@ -533,8 +533,8 @@ Connector Quality: No cracked plastic pins`,
       {
         title: 'Lesson 2.3: Cable Testing with LAN Tester, Wiremap Analysis & Troubleshooting',
         duration: '45 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=5a8g_WqjW5E',
-        videoTitle: 'How to Use an RJ45 Network Cable Tester & Fix Faults',
+        videoUrl: 'https://www.youtube.com/embed/y3DmOPrmBio',
+        videoTitle: 'How to Use an Ethernet Network Cable Tester (At Tech)',
         objective: 'Test assembled cables using an RJ45 LAN Cable Tester and diagnose common wiring faults: Open, Short, Miswire, and Split Pair.',
         theoryContent: `Before connecting any patch cable to network switches or computers, physical continuity must be confirmed using a network cable tester.
 
@@ -600,8 +600,8 @@ Link Speed Detected:   [1.0 Gbps Full Duplex]`,
       {
         title: 'Lesson 2.4: IPv4 Addressing, Class C Subnetting, Default Gateways & Ping Diagnostics',
         duration: '50 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=s_Ntt6eTn94',
-        videoTitle: 'IPv4 Addressing, Subnet Masks & Gateway Setup for Beginners',
+        videoUrl: 'https://www.youtube.com/embed/eHV1aOnu7oM',
+        videoTitle: 'IPv4 Addressing, Subnet Mask & Default Gateway Explained (Networking with H)',
         objective: 'Understand IPv4 Class C addressing (/24 subnet mask), configure Static IP addresses in Windows, and verify end-to-end connectivity using Ping and Traceroute.',
         theoryContent: `Every connected device on a computer network requires a unique Logical Address known as an IP Address.
 
@@ -659,8 +659,8 @@ Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)`,
       {
         title: 'Lesson 2.5: Wireless Router & Access Point Configuration (SSID, DHCP, WPA3 & MAC Filtering)',
         duration: '55 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=p35Y4X9E7Z0',
-        videoTitle: 'Configuring Wireless Router for TESDA CSS NC II (Step by Step)',
+        videoUrl: 'https://www.youtube.com/embed/zaoLj9-eUv0',
+        videoTitle: 'How To Setup & Configure a Wireless Router: SSID, Security & DHCP (ReMoN)',
         objective: 'Configure a Wireless Router via Web GUI: change default administrative credentials, establish DHCP IP pools, configure Wi-Fi SSID and WPA2/WPA3 security, and enforce Wireless MAC Filtering.',
         theoryContent: `During the TESDA COC 2 assessment, candidates are assigned a Wireless Router that must be restored to factory default settings and configured to assessment specifications.
 
@@ -727,8 +727,8 @@ MAC Filtering:        Enabled (Allow listed only)`,
       {
         title: 'Lesson 2.6: Peer-to-Peer & Client-Server Resource Sharing: File Permissions & Network Printers',
         duration: '50 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=e77j5q4BkWc',
-        videoTitle: 'How to Share Files and Printers over Network in Windows 10/11',
+        videoUrl: 'https://www.youtube.com/embed/VGmILVmzF_E',
+        videoTitle: 'How to Share Files, Folders and Network Printers on Windows (Discover You)',
         objective: 'Configure shared folders with accurate NTFS and Share permission levels and share network printers across peer workstations in a workgroup.',
         theoryContent: `The core purpose of Local Area Networks in office and educational environments is resource sharing—principally centralized storage and shared printing.
 
@@ -803,8 +803,8 @@ Write Access Tested:   [SUCCESSFUL]`,
       {
         title: 'Lesson 3.1: Windows Server Installation, Post-Install Checklist & Static IP Provisioning',
         duration: '50 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=F01d9B5o6p8',
-        videoTitle: 'Windows Server 2019/2022 Installation & Initial Server Setup (TESDA CSS NC II)',
+        videoUrl: 'https://www.youtube.com/embed/Mxb_iqJiLt8',
+        videoTitle: 'How to Install Windows Server 2022 Step by Step (Danny Moran)',
         objective: 'Install Windows Server with Desktop Experience, perform initial security hardening, and provision Static IP parameters before deploying server roles.',
         theoryContent: `In the TESDA COC 3 assessment, candidates are allocated 1 hour to configure a computer unit as a Domain Controller and join a client workstation.
 
@@ -860,8 +860,8 @@ Preferred DNS:       127.0.0.1`,
       {
         title: 'Lesson 3.2: Promoting Server to Domain Controller (DC) via Active Directory Domain Services (AD DS)',
         duration: '60 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=P_X98aJ-08c',
-        videoTitle: 'How to Install Active Directory Domain Services & Promote DC in Windows Server',
+        videoUrl: 'https://www.youtube.com/embed/FDhndiAEyxs',
+        videoTitle: 'How to Setup Active Directory Domain Services (AD DS) & Domain Controller (MSFT WebCast)',
         objective: 'Install the AD DS role in Server Manager and promote the server as a new Forest Root Domain (e.g., `epicademy.local` or `tesda.local`).',
         theoryContent: `Active Directory Domain Services (AD DS) provides the centralized identity database for computers, user accounts, and security policy enforcement across an enterprise network.
 
@@ -920,8 +920,8 @@ AD DS Status:         Running & Healthy`,
       {
         title: 'Lesson 3.3: DNS Server Configuration & Joining Client Workstation to the Domain',
         duration: '60 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=0h0Xj4y550E',
-        videoTitle: 'Joining a Windows 10 Client to a Windows Server Domain (TESDA CSS NC II)',
+        videoUrl: 'https://www.youtube.com/embed/0gdYu6bw0O0',
+        videoTitle: 'DNS Configuration & Joining Client Computer to Active Directory Domain (DO IT)',
         objective: 'Configure DNS Forward and Reverse Lookup Zones and join a client workstation to the domain with zero DNS lookup errors.',
         theoryContent: `No computer can join an Active Directory Domain if it cannot discover the Domain Controller through authoritative DNS services!
 
@@ -991,8 +991,8 @@ Reboot Verified:           [YES]`,
       {
         title: 'Lesson 3.4: Dynamic Host Configuration Protocol (DHCP) Server: Scopes, Exclusions & Reservations',
         duration: '50 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=Uf8pM8l6X30',
-        videoTitle: 'Configuring DHCP Server on Windows Server (TESDA CSS NC II Practical)',
+        videoUrl: 'https://www.youtube.com/embed/uazxed2aumk',
+        videoTitle: 'How to Install and Configure DHCP Server Scope on Windows Server (NetITGeeks)',
         objective: 'Deploy the DHCP Server role, authorize in Active Directory, create an address scope with IP exclusions, and configure static IP reservations for network equipment.',
         theoryContent: `The DHCP Server automatically assigns IP addresses, subnet masks, default gateways, and DNS addresses to network clients, eliminating manual addressing conflicts.
 
@@ -1055,8 +1055,8 @@ Lease Active:        [YES]`,
       {
         title: 'Lesson 3.5: Organizational Units (OUs), User Accounts & Security Group Management',
         duration: '50 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=3R8d0u3m_w8',
-        videoTitle: 'Creating OUs, Users, and Groups in Active Directory (TESDA CSS NC II)',
+        videoUrl: 'https://www.youtube.com/embed/cETbT22TWEE',
+        videoTitle: 'How to Create Organizational Units (OUs), Users and Security Groups in Active Directory (MSFT WebCast)',
         objective: 'Structure an Organizational Unit (OU) hierarchy, provision user accounts with security policies, and configure Security Groups for role-based access control.',
         theoryContent: `An Organizational Unit (OU) is an Active Directory container used to organize users, groups, and computer objects to link and enforce Group Policy Objects (GPO).
 
@@ -1118,8 +1118,8 @@ Logon Verified on PC:   [SUCCESSFUL]`,
       {
         title: 'Lesson 3.6: Group Policy Management (GPO): Password Policy, Wallpaper Lock & Folder Redirection',
         duration: '60 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=uK8A0P9h3Y0',
-        videoTitle: 'Configuring Group Policy Objects (GPO) for Beginners in Windows Server',
+        videoUrl: 'https://www.youtube.com/embed/JWsRbeeddfM',
+        videoTitle: 'How to Create and Link Group Policy Objects (GPO) in Active Directory (MSFT WebCast)',
         objective: 'Create and link Group Policy Objects (GPOs) to target OUs to enforce Desktop Wallpaper locks, restrict removable USB storage, and enforce password complexity requirements.',
         theoryContent: `Group Policy Management (\`gpmc.msc\`) is the primary administrative framework used to govern centralized configurations, security baselines, and environmental restrictions across connected domain workstations.
 
@@ -1192,8 +1192,8 @@ Control Panel Test:    "This operation has been cancelled due to restrictions...
       {
         title: 'Lesson 4.1: Preventive Maintenance Schedule (PMS), Cleaning & Thermal Pasting',
         duration: '45 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=Jm3X_mFz_U0',
-        videoTitle: 'Preventive Maintenance of Computer Hardware (TESDA CSS NC II Guide)',
+        videoUrl: 'https://www.youtube.com/embed/MzeA68RMoF0',
+        videoTitle: 'PC Preventive Maintenance & Deep Cleaning Guide (be quiet!)',
         objective: 'Develop monthly and quarterly Preventive Maintenance Schedules (PMS) and carry out safe cleaning of dust, fans, and dried thermal interface material.',
         theoryContent: `Preventive Maintenance (PM) consists of systematic servicing routines designed to avert unplanned downtime, reduce equipment failure, and extend hardware longevity.
 
@@ -1248,8 +1248,8 @@ Fan RPM Status:             Normal & Quiet`,
       {
         title: 'Lesson 4.2: Digital Multimeter Testing of ATX 24-Pin Power Supply & CMOS Battery',
         duration: '55 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=5FWXgQSokF4',
-        videoTitle: 'How to Test a PC Power Supply with a Multimeter (Paperclip Test & Voltages)',
+        videoUrl: 'https://www.youtube.com/embed/5FWXgQSokF4',
+        videoTitle: 'How to Test a PC Power Supply Unit (PSU) with a Multimeter (CORSAIR)',
         objective: 'Master ATX power rail voltage tolerances, perform the paperclip jumper test on Pin 16 (PS_ON#), and measure +12V, +5V, +3.3V rails and 3.0V CR2032 CMOS coin cells using a Digital Multimeter.',
         theoryContent: `In the TESDA COC 4 Demonstration and Oral Questioning, candidates are evaluated on their ability to use a Digital Multimeter to diagnose Power Supply Units (PSUs).
 
@@ -1315,8 +1315,8 @@ CMOS Battery:          3.15 V (HEALTHY)`,
       {
         title: 'Lesson 4.3: Hardware Fault Isolation: POST Diagnostic Cards, RAM Reseating & BSOD Minidumps',
         duration: '50 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=3b9aF-3b99E',
-        videoTitle: 'Troubleshooting Blue Screen of Death (BSOD) & Memory Faults for Techs',
+        videoUrl: 'https://www.youtube.com/embed/XMiEJ9CshCs',
+        videoTitle: 'How to Fix Black Screen, No Signal or Boot Failure: RAM & Hardware Diagnostics (RBN Hardware)',
         objective: 'Isolate hardware crashes using POST Diagnostic Cards, memory testing software (MemTest86), and Windows Blue Screen of Death (BSOD) minidump crash analysis via BlueScreenView.',
         theoryContent: `When a computer crashes with an unexpected reboot or displays a Blue Screen of Death (BSOD), an underlying hardware defect or low-level kernel driver crash has occurred.
 
@@ -1377,8 +1377,8 @@ Result:               Zero errors after 2 passes of memory diagnostic`,
       {
         title: 'Lesson 4.4: Software Repair Tools: SFC, DISM Image Health, Safe Mode & Malware Remediation',
         duration: '50 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=U3d4aWb4_Z0',
-        videoTitle: 'How to Repair Corrupted Windows Files with SFC and DISM Commands',
+        videoUrl: 'https://www.youtube.com/embed/rZ_LMslBEPE',
+        videoTitle: 'How to Repair Corrupted Windows with DISM & SFC Scannow (Iviewgle)',
         objective: 'Execute repair procedures on corrupted Windows system files using DISM and SFC, and remediate malware using Safe Mode and specialized removal utilities.',
         theoryContent: `Before reformatting a client computer, professional ICT technicians should first attempt to repair the operating system to preserve client files and configuration data.
 
@@ -1435,8 +1435,8 @@ Details are included in the CBS.Log windir\\Logs\\CBS\\CBS.log.`,
       {
         title: 'Lesson 4.5: Full Disk Cloning with Clonezilla / Macrium Reflect & System Image Backup',
         duration: '60 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=LClr3FPg4-8',
-        videoTitle: 'Complete Disk Cloning Tutorial with Macrium Reflect / Clonezilla',
+        videoUrl: 'https://www.youtube.com/embed/Sh5QlDa8e64',
+        videoTitle: 'How to Clone Windows System Drive to SSD with Macrium Reflect (OnlineComputerTips)',
         objective: 'Perform 1-to-1 sector disk cloning from HDD to high-speed SSD and generate System Image backups for rapid disaster recovery.',
         theoryContent: `In an enterprise office or computer lab equipped with 50 identical terminals, installing operating systems individually on each unit is inefficient. Disk cloning resolves this challenge.
 
@@ -1490,8 +1490,8 @@ Target Boot Test: [SUCCESSFUL - Boot time under 10 seconds]`,
       {
         title: 'Lesson 4.6: TESDA CSS NC II National Assessment Mock Exam, Demonstration & Job Order Sheet',
         duration: '60 mins',
-        videoUrl: 'https://www.youtube.com/watch?v=3-x0w3QpBv8',
-        videoTitle: 'TESDA CSS NC II Actual Assessment Tips & Oral Questioning Guide',
+        videoUrl: 'https://www.youtube.com/embed/derjuy-d4CI',
+        videoTitle: 'How to Pass the TESDA CSS NC II Assessment: Actual Demonstration Tips & Advice (TechCare)',
         objective: 'Prepare for the actual TESDA National Assessment: complete official Job Order documentation, pass mock demonstrations across all 4 COCs, and answer Assessor oral questioning with technical confidence.',
         theoryContent: `During the TESDA National Assessment for Computer Systems Servicing NC II, candidates are assessed by an accredited Competency Assessor across the 4 Core Competencies:
 
@@ -1614,6 +1614,23 @@ export const TESDA_CSS_TRACK: Track = {
       duration: l.duration,
       video_url: l.videoUrl,
       content: l.theoryContent,
+      objective: l.objective,
+      code_snippet: l.codeSnippet,
+      activity: l.handsOnActivity ? {
+        title: l.handsOnActivity.title,
+        instructions: l.handsOnActivity.instructions,
+        starterCode: l.handsOnActivity.starterCode,
+        expectedOutcome: l.handsOnActivity.expectedOutcome,
+      } : undefined,
+      exam: l.exam,
+      worksheet: l.googleSheetsAssignment ? {
+        title: l.googleSheetsAssignment.title,
+        sheetName: l.googleSheetsAssignment.sheetName,
+        description: l.googleSheetsAssignment.description,
+        templateUrl: l.googleSheetsAssignment.templateUrl,
+        deliverables: l.googleSheetsAssignment.deliverables,
+        rubric: l.googleSheetsAssignment.rubric,
+      } : undefined,
       order_index: lIdx + 1,
     }))
   }))
