@@ -43,10 +43,11 @@ export const CheckoutModal = ({
 }: CheckoutModalProps) => {
   if (!isOpen || !track) return null;
 
-  // Check if track is naturally free/sponsored (e.g. TESDA, Pinoy Drum, or zero price)
+  // Check if track is naturally free/sponsored (e.g. TESDA, Pinoy Drum, Pinoy Piano, or zero price)
   const isInherentlyFree = (track.price || 49) === 0 || 
     track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2 ||
-    track.id === 'track-pinoy-drum-zero-to-hero' || track.bundleNumber === 3;
+    track.id === 'track-pinoy-drum-zero-to-hero' || track.bundleNumber === 3 ||
+    track.id === 'track-pinoy-piano-zero-to-hero' || track.bundleNumber === 4;
 
   const [selectedTier, setSelectedTier] = useState<AcademicTier>(isInherentlyFree ? 'degree' : defaultTier);
   const [email, setEmail] = useState(userEmail || '');
