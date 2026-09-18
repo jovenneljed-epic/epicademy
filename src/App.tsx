@@ -411,7 +411,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-white text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white">
       {/* Top Banner */}
       <TopAnnouncement onOpenAuth={handleOpenAuth} />
 
@@ -549,7 +549,7 @@ export function App() {
       {/* Fully Interactive LMS Workspace View with Progress Bars & Locking */}
       {isClassroomOpen && selectedActiveTrack && (
         <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col animate-in fade-in duration-200">
-          <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between text-white shrink-0">
+          <div className="bg-slate-900 border-b border-slate-800 px-4 sm:px-6 py-3 sm:py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-white shrink-0">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                 {activeTrackModules.length > 0
@@ -1035,10 +1035,10 @@ export function App() {
       {!isClassroomOpen && currentUser?.role === 'admin' && (
         <button
           onClick={() => setIsAccountSettingsOpen(true)}
-          className="fixed bottom-6 right-6 z-40 px-4 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black text-xs sm:text-sm rounded-2xl shadow-2xl flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 transition-all border border-white/20 animate-in fade-in"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black text-xs sm:text-sm rounded-2xl shadow-2xl flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 transition-all border border-white/20 animate-in fade-in max-w-[calc(100vw-2rem)]"
           title="Account Settings &amp; User Management (Admin Only)"
         >
-          <Settings className="w-4 h-4" />
+          <Settings className="w-4 h-4 shrink-0" />
           <span>⚙️ Account Settings</span>
         </button>
       )}
