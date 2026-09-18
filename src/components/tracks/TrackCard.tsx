@@ -1,15 +1,17 @@
 import type { Track } from '../../types';
-import { Star, Clock, BookOpen, Users, CheckCircle, ArrowRight, Sparkles, Trash2 } from 'lucide-react';
+import { Star, Clock, BookOpen, Users, CheckCircle, ArrowRight, Sparkles, Trash2, Shield, Lock } from 'lucide-react';
 import { getPhpPrice } from '../../lib/philippinePayment';
+import { getCourseAccessPermission } from '../../lib/supabaseClient';
 
 interface TrackCardProps {
   track: Track;
   onSelectTrack: (track: Track) => void;
   onEnroll: (track: Track) => void;
   onDeleteTrack?: (trackId: string) => void;
+  currentUser?: { email?: string; role?: string } | null;
 }
 
-export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: TrackCardProps) => {
+export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack, currentUser }: TrackCardProps) => {
   const pricePhp = getPhpPrice(track.price || 49);
   const origPhp = track.originalPrice ? getPhpPrice(track.originalPrice) : null;
 
@@ -19,7 +21,9 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
   const isBundle3 = Boolean(track.bundleNumber === 3 || track.id === 'track-pinoy-drum-zero-to-hero');
   const isBundle2 = Boolean(track.bundleNumber === 2 || track.id === 'track-tesda-css-nc2');
   const isBundle = isBundle2 || isBundle3 || isBundle4 || isBundle5 || isBundle6 || Boolean(track.isBundle);
-  const isFree = (track.price || 49) === 0 || isBundle2 || isBundle3 || isBundle4 || isBundle5 || isBundle6;
+
+  const permission = getCourseAccessPermission(track, currentUser?.role, currentUser?.email);
+  const isFree = permission.isFree;
 
   return (
     <div className={`rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden group relative ${
@@ -282,7 +286,13 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
             )}
           </div>
           <span className="text-[10px] text-slate-500 font-semibold block">
-            {isFree ? '100% Free Lifetime Access' : 'GCash • GoTyme • Maya'}
+            {isFree 
+              ? '100% Free Lifetime Access' 
+              : currentUser?.role === 'admin'
+              ? '🛡️ Admin Superuser Bypass'
+              : currentUser?.role === 'contributor'
+              ? '🔒 Paid • Contributor Restricted'
+              : 'GCash • GoTyme • Maya'}
           </span>
         </div>
         <button
@@ -300,9 +310,18 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
               ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/20'
               : isFree
               ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              : currentUser?.role === 'admin'
+              ? 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white shadow-amber-600/25'
+              : currentUser?.role === 'contributor'
+              ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30'
               : 'text-white bg-blue-600 hover:bg-blue-700'
           }`}
         >
+          {currentUser?.role === 'admin' && !isFree ? (
+            <Shield className="w-3.5 h-3.5 text-amber-300" />
+          ) : currentUser?.role === 'contributor' && !isFree ? (
+            <Lock className="w-3.5 h-3.5 text-amber-400" />
+          ) : null}
           <span>
             {isBundle6
               ? 'Enroll in Bundle #6 • FREE'
@@ -316,7 +335,7 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack }: Tra
               ? 'Enroll in Bundle #2 • FREE'
               : isFree
               ? 'Enroll Free'
-              : `Enroll • ₱${pricePhp.toLocaleString()}`}
+              : permission.buttonText}
           </span>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>

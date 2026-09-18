@@ -7,6 +7,7 @@ import { PINOY_PIANO_TRACK } from '../data/pinoyPianoCourseData';
 import { PINOY_GUITAR_TRACK } from '../data/pinoyGuitarCourseData';
 import { PINOY_LEAD_GUITAR_TRACK } from '../data/pinoyLeadGuitarCourseData';
 import { getTenantCourseDetailedModules } from '../data/tenantCoursesDetailedData';
+import { getPhpPrice } from './philippinePayment';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ukhmrgbkrfawgszltzsr.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_uB7grQdiSm_z6PzMvXITdA_Kdih_GuP';
@@ -1329,14 +1330,186 @@ export async function deleteTrackFromDB(trackId: string): Promise<{ error: any }
   }
 }
 
+export const USER_ENROLLMENTS_KEY = 'epicademy_user_enrollments';
+
+export function getUserEnrolledTrackIds(email?: string | null): string[] {
+  if (!email) return [];
+  try {
+    const raw = localStorage.getItem(`${USER_ENROLLMENTS_KEY}_${email.toLowerCase().trim()}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function recordUserTrackEnrollment(email: string, trackId: string): void {
+  if (!email || !trackId) return;
+  try {
+    const cleanEmail = email.toLowerCase().trim();
+    const enrolled = new Set(getUserEnrolledTrackIds(cleanEmail));
+    enrolled.add(trackId);
+    localStorage.setItem(`${USER_ENROLLMENTS_KEY}_${cleanEmail}`, JSON.stringify(Array.from(enrolled)));
+  } catch (e) {
+    console.error('Error saving user enrollment locally:', e);
+  }
+}
+
+export function isUserEnrolledInTrack(email?: string | null, trackId?: string | null): boolean {
+  if (!email || !trackId) return false;
+  const list = getUserEnrolledTrackIds(email);
+  return list.includes(trackId);
+}
+
+export function isCourseFree(track: Track): boolean {
+  if (track.isPaid === false) return true;
+  if (track.bundleNumber === 2 || track.id === 'track-tesda-css-nc2') return true;
+  if (track.bundleNumber === 3 || track.id === 'track-pinoy-drum-zero-to-hero') return true;
+  if (track.bundleNumber === 4 || track.id === 'track-pinoy-piano-zero-to-hero') return true;
+  if (track.bundleNumber === 5 || track.id === 'track-pinoy-guitar-zero-to-hero') return true;
+  if (track.bundleNumber === 6 || track.id === 'track-pinoy-lead-guitar-zero-to-hero') return true;
+  if (track.price === 0) return true;
+  if (track.isPaid === true) return false;
+  return (track.price ?? 49) === 0;
+}
+
+export interface CourseAccessResult {
+  isFree: boolean;
+  isPaid: boolean;
+  isEnrolled: boolean;
+  canView: boolean;      // Can inspect card & syllabus
+  canOpen: boolean;      // Can open active classroom
+  badge: {
+    label: string;
+    theme: 'admin' | 'free' | 'paid' | 'enrolled' | 'restricted';
+  };
+  buttonText: string;
+  actionType: 'open_admin' | 'open_free' | 'open_enrolled' | 'contributor_restricted' | 'teacher_pay_required' | 'student_pay_required';
+  noticeText?: string;
+}
+
+export function getCourseAccessPermission(
+  track: Track,
+  role?: string,
+  email?: string
+): CourseAccessResult {
+  const isFree = isCourseFree(track);
+  const isPaid = !isFree;
+  const cleanRole = (role || 'student').toLowerCase().trim();
+  const enrolled = email ? isUserEnrolledInTrack(email, track.id) : false;
+
+  // 1. ADMIN: Can view and open EVERY paid and unpaid course
+  if (cleanRole === 'admin') {
+    return {
+      isFree,
+      isPaid,
+      isEnrolled: true,
+      canView: true,
+      canOpen: true,
+      badge: {
+        label: isFree ? 'Free • Admin Access' : 'Paid • Admin Unlimited',
+        theme: 'admin',
+      },
+      buttonText: isFree ? 'Open Course • FREE' : 'Open Course • Admin Access',
+      actionType: 'open_admin',
+    };
+  }
+
+  // 2. ANY ROLE on FREE COURSES: Free courses can be opened by anyone!
+  if (isFree) {
+    return {
+      isFree: true,
+      isPaid: false,
+      isEnrolled: true,
+      canView: true,
+      canOpen: true,
+      badge: {
+        label: '100% Free Masterclass',
+        theme: 'free',
+      },
+      buttonText: 'Open Course • FREE',
+      actionType: 'open_free',
+    };
+  }
+
+  // 3. PAID COURSE ALREADY PURCHASED / ENROLLED
+  if (enrolled) {
+    return {
+      isFree: false,
+      isPaid: true,
+      isEnrolled: true,
+      canView: true,
+      canOpen: true,
+      badge: {
+        label: 'Purchased • Enrolled',
+        theme: 'enrolled',
+      },
+      buttonText: 'Open Course • Enrolled',
+      actionType: 'open_enrolled',
+    };
+  }
+
+  // 4. CONTRIBUTOR: Can see others work, but CANNOT access paid course
+  if (cleanRole === 'contributor') {
+    return {
+      isFree: false,
+      isPaid: true,
+      isEnrolled: false,
+      canView: true,
+      canOpen: false,
+      badge: {
+        label: 'Paid • Contributor Restricted',
+        theme: 'restricted',
+      },
+      buttonText: '🔒 Paid • Outline Only',
+      actionType: 'contributor_restricted',
+      noticeText: 'Contributors can view others’ curriculum and syllabus to guide content drafting, but interactive classroom lessons are restricted for paid courses.',
+    };
+  }
+
+  // 5. TEACHER (EDUCATOR): Can only view courses but can't open unless they pay for it
+  if (cleanRole === 'educator') {
+    return {
+      isFree: false,
+      isPaid: true,
+      isEnrolled: false,
+      canView: true,
+      canOpen: false,
+      badge: {
+        label: 'Paid • Faculty Tuition Required',
+        theme: 'paid',
+      },
+      buttonText: '🔒 Unlock & Pay • ₱' + getPhpPrice(track.price || 49).toLocaleString(),
+      actionType: 'teacher_pay_required',
+      noticeText: 'Teachers can view course outlines and syllabi freely. Opening the interactive classroom requires enrollment tuition.',
+    };
+  }
+
+  // 6. STUDENT: Can only open free courses, cannot open paid courses without purchasing
+  return {
+    isFree: false,
+    isPaid: true,
+    isEnrolled: false,
+    canView: true,
+    canOpen: false,
+    badge: {
+      label: 'Paid Premium Track',
+      theme: 'paid',
+    },
+    buttonText: 'Enroll • ₱' + getPhpPrice(track.price || 49).toLocaleString(),
+    actionType: 'student_pay_required',
+    noticeText: 'Students can open all free courses. This premium track requires enrollment tuition.',
+  };
+}
+
 export async function enrollUserInTrack(trackId: string, userEmail: string) {
+  recordUserTrackEnrollment(userEmail, trackId);
   const { data, error } = await supabase
     .from('enrollments')
     .upsert(
       [
         {
           track_id: trackId,
-          user_email: userEmail,
+          user_email: userEmail.toLowerCase().trim(),
         },
       ],
       { onConflict: 'track_id,user_email' }

@@ -24,17 +24,20 @@ import { HTML_COURSE_DETAILED_MODULES } from '../../data/htmlCourseData';
 import { getZeroToHeroCourse, type DetailedLesson } from '../../data/zeroToHeroCoursesData';
 import { getTenantCourseDetailedModules } from '../../data/tenantCoursesDetailedData';
 import { getPhpPrice } from '../../lib/philippinePayment';
+import { getCourseAccessPermission } from '../../lib/supabaseClient';
 
 interface TrackDetailModalProps {
   track: Track | null;
   onClose: () => void;
   onEnroll: (track: Track) => void;
+  currentUser?: { email?: string; role?: string } | null;
 }
 
 export const TrackDetailModal = ({
   track,
   onClose,
   onEnroll,
+  currentUser,
 }: TrackDetailModalProps) => {
   const [modules, setModules] = useState<ModuleItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -229,13 +232,8 @@ export const TrackDetailModal = ({
     return url;
   };
 
-  // Force TESDA track, Pinoy Drum track, Pinoy Piano track, Pinoy Guitar track, or bundle 2/3/4/5 or 0-priced tracks to be free
-  const isFree = (track.price || 49) === 0 || 
-    track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2 ||
-    track.id === 'track-pinoy-drum-zero-to-hero' || track.bundleNumber === 3 ||
-    track.id === 'track-pinoy-piano-zero-to-hero' || track.bundleNumber === 4 ||
-    track.id === 'track-pinoy-guitar-zero-to-hero' || track.bundleNumber === 5 ||
-    track.id === 'track-pinoy-lead-guitar-zero-to-hero' || track.bundleNumber === 6;
+  const permission = getCourseAccessPermission(track, currentUser?.role, currentUser?.email);
+  const isFree = permission.isFree;
   const phpPrice = isFree ? 0 : getPhpPrice(track.price || 49);
   const origPhp = track.originalPrice ? getPhpPrice(track.originalPrice) : null;
 
@@ -579,10 +577,14 @@ export const TrackDetailModal = ({
               className={`px-6 py-2.5 font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer ${
                 isFree
                   ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20'
+                  : currentUser?.role === 'admin'
+                  ? 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white shadow-amber-600/25'
+                  : currentUser?.role === 'contributor'
+                  ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30'
                   : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20'
               }`}
             >
-              <span>{isFree ? 'Enroll for Free' : `Enroll • ₱{phpPrice.toLocaleString()}`}</span>
+              <span>{isFree ? 'Open Classroom • Free' : permission.buttonText}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

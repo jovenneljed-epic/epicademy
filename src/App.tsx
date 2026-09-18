@@ -20,7 +20,7 @@ import { TeacherSetupModal } from './components/teachers/TeacherSetupModal';
 import { CheckoutModal } from './components/modals/CheckoutModal';
 import { DeveloperProfileModal } from './components/modals/DeveloperProfileModal';
 import { ApplyTenantModal } from './components/modals/ApplyTenantModal';
-import { getCurrentUser, supabase, fetchTrackModulesAndLessons, getUserRoleByEmail, signOutUser, isAccountDeleted } from './lib/supabaseClient';
+import { getCurrentUser, supabase, fetchTrackModulesAndLessons, getUserRoleByEmail, signOutUser, isAccountDeleted, isCourseFree, isUserEnrolledInTrack } from './lib/supabaseClient';
 import type { Track, CommunityDeveloper, ModuleItem, UserRole } from './types';
 import { CreateCommunityModal } from './components/modals/CreateCommunityModal';
 import { LessonViewer } from './components/classroom/LessonViewer';
@@ -28,6 +28,7 @@ import { AcademicCredentialsModal } from './components/credentials/AcademicCrede
 import { TesdaTrbModal } from './components/classroom/TesdaTrbModal';
 import { StudentDossierModal } from './components/profile/StudentDossierModal';
 import { AccountSettingsModal } from './components/modals/AccountSettingsModal';
+import { ContributorAccessModal } from './components/modals/ContributorAccessModal';
 import { Settings } from 'lucide-react';
 import { ZERO_TO_HERO_TRACKS } from './data/zeroToHeroCoursesData';
 import { TESDA_CSS_TRACK } from './data/tesdaCssNc2CourseData';
@@ -126,6 +127,7 @@ export function App() {
   const [applyTenantOpen, setApplyTenantOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [createCommunityOpen, setCreateCommunityOpen] = useState(false);
+  const [contributorRestrictedTrack, setContributorRestrictedTrack] = useState<Track | null>(null);
 
   // Active Classroom / Workspace state
   const [isClassroomOpen, setIsClassroomOpen] = useState(false);
@@ -270,6 +272,25 @@ export function App() {
   };
 
   const openTrackClassroom = async (track: Track) => {
+    const isFree = isCourseFree(track);
+    const role = currentUser?.role || 'student';
+    const isEnrolled = currentUser?.email ? isUserEnrolledInTrack(currentUser.email, track.id) : false;
+
+    // Role-based Access Enforcement:
+    // 1. Admin can access EVERY course (paid or unpaid).
+    // 2. Any authenticated user can access free courses.
+    // 3. Enrolled users can access their purchased courses.
+    // Otherwise, block access according to role:
+    if (!isFree && role !== 'admin' && !isEnrolled) {
+      if (role === 'contributor') {
+        setContributorRestrictedTrack(track);
+        return;
+      }
+      setCheckoutTrack(track);
+      setCheckoutModalOpen(true);
+      return;
+    }
+
     setSelectedActiveTrack(track);
 
     let mods: ModuleItem[] = [];
@@ -306,24 +327,48 @@ export function App() {
   };
 
   const handleEnrollTrack = (track: Track) => {
-    const isFree = (track.price || 49) === 0 || 
-      track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2 ||
-      track.id === 'track-pinoy-drum-zero-to-hero' || track.bundleNumber === 3 ||
-      track.id === 'track-pinoy-piano-zero-to-hero' || track.bundleNumber === 4 ||
-      track.id === 'track-pinoy-guitar-zero-to-hero' || track.bundleNumber === 5 ||
-      track.id === 'track-pinoy-lead-guitar-zero-to-hero' || track.bundleNumber === 6;
-    
-    if (isFree && !currentUser) {
-      handleOpenAuth('signup', '', track.id);
+    const isFree = isCourseFree(track);
+    const role = currentUser?.role || 'student';
+    const isEnrolled = currentUser?.email ? isUserEnrolledInTrack(currentUser.email, track.id) : false;
+
+    // 1. Admin: Able to view & open EVERY paid and unpaid course directly
+    if (role === 'admin') {
+      openTrackClassroom(track);
       return;
     }
 
+    // 2. Free Course: Open directly for all (prompt auth if guest)
     if (isFree) {
+      if (!currentUser) {
+        handleOpenAuth('signup', '', track.id);
+        return;
+      }
       openTrackClassroom(track);
-    } else {
+      return;
+    }
+
+    // 3. Paid Course already enrolled / purchased
+    if (isEnrolled) {
+      openTrackClassroom(track);
+      return;
+    }
+
+    // 4. Contributor: Only see others' work, but cannot access because it's paid
+    if (role === 'contributor') {
+      setContributorRestrictedTrack(track);
+      return;
+    }
+
+    // 5. Teacher (Educator): Can view courses but can't open unless they pay for it
+    if (role === 'educator') {
       setCheckoutTrack(track);
       setCheckoutModalOpen(true);
+      return;
     }
+
+    // 6. Student: Can only open free courses, must pay for paid courses
+    setCheckoutTrack(track);
+    setCheckoutModalOpen(true);
   };
 
   const handleSuccessEnroll = (track: Track) => {
@@ -469,6 +514,7 @@ export function App() {
           onOpenAuth={handleOpenAuth}
           onOpenCourseBuilder={() => setCourseBuilderOpen(true)}
           refreshTrigger={refreshTrigger}
+          currentUser={currentUser}
         />
         <CommunityDevelopersSection
           onSelectDeveloper={handleSelectDeveloper}
@@ -514,6 +560,7 @@ export function App() {
         track={selectedTrack}
         onClose={() => setSelectedTrack(null)}
         onEnroll={handleEnrollTrack}
+        currentUser={currentUser}
       />
 
       <CheckoutModal
@@ -522,6 +569,22 @@ export function App() {
         onClose={() => setCheckoutModalOpen(false)}
         onSuccessEnroll={handleSuccessEnroll}
         userEmail={currentUser?.email}
+        currentUserRole={currentUser?.role}
+      />
+
+      <ContributorAccessModal
+        track={contributorRestrictedTrack}
+        isOpen={Boolean(contributorRestrictedTrack)}
+        onClose={() => setContributorRestrictedTrack(null)}
+        onViewSyllabus={(track) => {
+          setContributorRestrictedTrack(null);
+          setSelectedTrack(track);
+        }}
+        onPayEnroll={(track) => {
+          setContributorRestrictedTrack(null);
+          setCheckoutTrack(track);
+          setCheckoutModalOpen(true);
+        }}
       />
 
       <CourseBuilderModal

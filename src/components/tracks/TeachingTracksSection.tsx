@@ -19,9 +19,11 @@ import {
   ArrowRight,
   ShieldCheck,
   Flame,
-  Award
+  Award,
+  Shield,
+  Lock
 } from 'lucide-react';
-import { fetchTracksFromDB, deleteTrackFromDB } from '../../lib/supabaseClient';
+import { fetchTracksFromDB, deleteTrackFromDB, getCourseAccessPermission } from '../../lib/supabaseClient';
 import { getPhpPrice } from '../../lib/philippinePayment';
 import { TESDA_CSS_TRACK } from '../../data/tesdaCssNc2CourseData';
 import { PINOY_DRUM_TRACK } from '../../data/pinoyDrumCourseData';
@@ -35,6 +37,7 @@ interface TeachingTracksSectionProps {
   onOpenAuth: (mode: 'signup' | 'signin') => void;
   onOpenCourseBuilder: () => void;
   refreshTrigger?: number;
+  currentUser?: { email?: string; role?: string } | null;
 }
 
 const CATEGORIES: { id: CategoryType; name: string; icon: React.ComponentType<{ className?: string }> }[] = [
@@ -52,6 +55,7 @@ export const TeachingTracksSection = ({
   onOpenAuth: _onOpenAuth,
   onOpenCourseBuilder,
   refreshTrigger,
+  currentUser,
 }: TeachingTracksSectionProps) => {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -691,7 +695,8 @@ export const TeachingTracksSection = ({
                   const isHighest = levelNum === 9 && !isAnyBundle;
                   
                   // Check if course is free
-                  const isFree = (track.price ?? 49) === 0 || isBundle2 || isBundle3 || isBundle4 || isBundle5 || isBundle6;
+                  const permission = getCourseAccessPermission(track, currentUser?.role, currentUser?.email);
+                  const isFree = permission.isFree;
                   const pricePhp = getPhpPrice(track.price || 49);
                   const origPhp = track.originalPrice ? getPhpPrice(track.originalPrice) : null;
 
@@ -998,8 +1003,14 @@ export const TeachingTracksSection = ({
                               )}
                             </div>
                             {!isFree && (
-                              <span className="text-[11px] text-blue-600 font-bold block">
-                                GCash • GoTyme • Maya
+                              <span className="text-[11px] font-bold block">
+                                {currentUser?.role === 'admin' ? (
+                                  <span className="text-amber-600">🛡️ Admin Access Bypass</span>
+                                ) : currentUser?.role === 'contributor' ? (
+                                  <span className="text-amber-700">🔒 Contributor Restricted</span>
+                                ) : (
+                                  <span className="text-blue-600">GCash • GoTyme • Maya</span>
+                                )}
                               </span>
                             )}
                           </div>
@@ -1040,9 +1051,18 @@ export const TeachingTracksSection = ({
                                   ? 'text-slate-950 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 shadow-amber-500/25'
                                   : isFree
                                   ? 'text-white bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25'
+                                  : currentUser?.role === 'admin'
+                                  ? 'text-white bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 shadow-amber-500/25'
+                                  : currentUser?.role === 'contributor'
+                                  ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30'
                                   : 'text-white bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
                               }`}
                             >
+                              {currentUser?.role === 'admin' && !isFree ? (
+                                <Shield className="w-3.5 h-3.5 text-amber-300" />
+                              ) : currentUser?.role === 'contributor' && !isFree ? (
+                                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                              ) : null}
                               <span>
                                 {isFree 
                                   ? isBundle6
@@ -1055,8 +1075,8 @@ export const TeachingTracksSection = ({
                                     ? 'Enroll in Bundle #3 • FREE' 
                                     : isBundle2 
                                     ? 'Enroll in Bundle #2 • FREE' 
-                                    : 'Enroll • FREE'
-                                  : `Enroll • ₱${pricePhp.toLocaleString()}`}
+                                    : 'Open Course • FREE'
+                                  : permission.buttonText}
                               </span>
                               <ArrowRight className="w-3.5 h-3.5" />
                             </button>
@@ -1079,6 +1099,7 @@ export const TeachingTracksSection = ({
                   onSelectTrack={onSelectTrack}
                   onEnroll={onEnroll}
                   onDeleteTrack={handleDeleteTrack}
+                  currentUser={currentUser}
                 />
               ))}
             </div>

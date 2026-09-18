@@ -18,7 +18,7 @@ import {
   Code2,
   Bot
 } from 'lucide-react';
-import { enrollUserInTrack } from '../../lib/supabaseClient';
+import { enrollUserInTrack, isCourseFree } from '../../lib/supabaseClient';
 import { type PhilippinePaymentMethod, PHILIPPINE_MERCHANT_INFO } from '../../lib/philippinePayment';
 import { OfficialReceiptModal, type OfficialReceiptData } from '../billing/OfficialReceiptModal';
 
@@ -31,6 +31,7 @@ interface CheckoutModalProps {
   onSuccessEnroll: (track: Track) => void;
   userEmail?: string;
   defaultTier?: AcademicTier;
+  currentUserRole?: string;
 }
 
 export const CheckoutModal = ({
@@ -40,16 +41,12 @@ export const CheckoutModal = ({
   onSuccessEnroll,
   userEmail = '',
   defaultTier = 'degree',
+  currentUserRole = 'student',
 }: CheckoutModalProps) => {
   if (!isOpen || !track) return null;
 
   // Check if track is naturally free/sponsored (e.g. TESDA, Pinoy Drum, Pinoy Piano, Pinoy Guitar, Pinoy Lead Guitar, or zero price)
-  const isInherentlyFree = (track.price || 49) === 0 || 
-    track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2 ||
-    track.id === 'track-pinoy-drum-zero-to-hero' || track.bundleNumber === 3 ||
-    track.id === 'track-pinoy-piano-zero-to-hero' || track.bundleNumber === 4 ||
-    track.id === 'track-pinoy-guitar-zero-to-hero' || track.bundleNumber === 5 ||
-    track.id === 'track-pinoy-lead-guitar-zero-to-hero' || track.bundleNumber === 6;
+  const isInherentlyFree = isCourseFree(track);
 
   const [selectedTier, setSelectedTier] = useState<AcademicTier>(isInherentlyFree ? 'degree' : defaultTier);
   const [email, setEmail] = useState(userEmail || '');
@@ -186,7 +183,11 @@ export const CheckoutModal = ({
             </div>
             <div>
               <span className="text-[10px] font-black uppercase tracking-wider text-amber-400">
-                Official Tuition &amp; Academic Enrollment
+                {currentUserRole === 'educator' 
+                  ? '👨‍🏫 Faculty Course Tuition & Enrollment' 
+                  : currentUserRole === 'contributor'
+                  ? '✍️ Contributor Course Purchase'
+                  : 'Official Tuition & Academic Enrollment'}
               </span>
               <h3 className="text-sm font-black text-white truncate max-w-xs sm:max-w-md">
                 {track.title}
@@ -274,6 +275,29 @@ export const CheckoutModal = ({
           /* Enrollment & Tuition Form */
           <form onSubmit={handleCheckoutSubmit} className="p-6 sm:p-7 space-y-6">
             
+            {currentUserRole === 'educator' && !isInherentlyFree && (
+              <div className="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 flex items-start gap-3 text-xs text-amber-950">
+                <span className="text-xl">👨‍🏫</span>
+                <div className="space-y-1">
+                  <p className="font-bold text-amber-950">Faculty Course Enrollment Required</p>
+                  <p className="text-slate-600">
+                    Teachers can freely inspect all course syllabi and learning roadmaps. Opening full interactive classroom modules, sandboxes, and exams requires paying enrollment tuition below.
+                  </p>
+                </div>
+              </div>
+            )}
+            {currentUserRole === 'contributor' && !isInherentlyFree && (
+              <div className="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 flex items-start gap-3 text-xs text-amber-950">
+                <span className="text-xl">✍️</span>
+                <div className="space-y-1">
+                  <p className="font-bold text-amber-950">Contributor Student Access</p>
+                  <p className="text-slate-600">
+                    You are purchasing personal classroom access to this paid course. Once enrolled, you can enter the classroom anytime.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* 1. ACADEMIC TIER SELECTOR */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
