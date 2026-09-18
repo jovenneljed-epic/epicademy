@@ -223,6 +223,11 @@ export const Navbar = ({
 
               {exploreDropdownOpen && (
                 <div className="absolute top-full left-0 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 mt-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150 space-y-1">
+                  {canAccessFaculty && (
+                    <button onClick={() => { setExploreDropdownOpen(false); onOpenTeacherSetup(); }} className="w-full text-left px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5">
+                      <span>👨‍🏫 Faculty Portal</span>
+                    </button>
+                  )}
                   <a href="#community" onClick={() => setExploreDropdownOpen(false)} className="block px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors">
                     🌐 Community Hub
                   </a>
@@ -260,10 +265,10 @@ export const Navbar = ({
             
             {/* Perspective Switcher (Educators & Admins) */}
             {canAccessFaculty && (
-              <div className="bg-slate-100 p-0.5 rounded-xl flex items-center text-xs font-medium border border-slate-200 shrink-0">
+              <div className="bg-slate-100 p-0.5 rounded-xl flex items-center text-[11px] xl:text-xs font-medium border border-slate-200 shrink-0">
                 <button
                   onClick={() => onTogglePerspective('educator')}
-                  className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
+                  className={`px-2 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
                     currentPerspective === 'educator'
                       ? 'bg-white text-blue-600 shadow-xs font-bold'
                       : 'text-slate-600 hover:text-slate-900'
@@ -274,7 +279,7 @@ export const Navbar = ({
                 </button>
                 <button
                   onClick={() => onTogglePerspective('student')}
-                  className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
+                  className={`px-2 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
                     currentPerspective === 'student'
                       ? 'bg-white text-blue-600 shadow-xs font-bold'
                       : 'text-slate-600 hover:text-slate-900'
@@ -286,11 +291,11 @@ export const Navbar = ({
               </div>
             )}
 
-            {/* Faculty Portal Button */}
+            {/* Faculty Portal Button (Direct on wide 2xl displays; in Explore on laptops) */}
             {canAccessFaculty && (
               <button
                 onClick={onOpenTeacherSetup}
-                className="hidden xl:flex px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl border border-blue-200 transition-colors items-center gap-1 cursor-pointer shrink-0"
+                className="hidden 2xl:flex px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl border border-blue-200 transition-colors items-center gap-1 cursor-pointer shrink-0"
                 title="Faculty &amp; Mentorship Portal"
               >
                 <User className="w-3.5 h-3.5 text-blue-600" />
@@ -318,8 +323,8 @@ export const Navbar = ({
                 title="Create New Course"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span className="hidden xl:inline">+ Create Course</span>
-                <span className="xl:hidden">+ Course</span>
+                <span className="hidden 2xl:inline">+ Create Course</span>
+                <span className="2xl:hidden">+ Course</span>
               </button>
             )}
 
@@ -455,6 +460,25 @@ export const Navbar = ({
                         {isStudent && <span>✓</span>}
                       </button>
                     </div>
+
+                    {/* Direct Admin Control Center shortcut */}
+                    {isAdmin && onOpenAccountSettings && (
+                      <div className="pt-1.5 mt-1 border-t border-slate-800">
+                        <button
+                          onClick={() => {
+                            setRoleSwitcherOpen(false);
+                            onOpenAccountSettings();
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-blue-600 to-purple-600 text-white flex items-center justify-between shadow-xs hover:from-blue-500 hover:to-purple-500 transition-all cursor-pointer"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <Shield className="w-3.5 h-3.5" />
+                            <span>⚙️ Open Account Settings</span>
+                          </span>
+                          <span>→</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 

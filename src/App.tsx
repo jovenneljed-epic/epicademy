@@ -1031,18 +1031,6 @@ export function App() {
         onSwitchToAdmin={() => handleSwitchRole('admin')}
       />
 
-      {/* Floating Quick-Access Account Settings Button - STRICTLY ADMIN ONLY */}
-      {!isClassroomOpen && currentUser?.role === 'admin' && (
-        <button
-          onClick={() => setIsAccountSettingsOpen(true)}
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black text-xs sm:text-sm rounded-2xl shadow-2xl flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 transition-all border border-white/20 animate-in fade-in max-w-[calc(100vw-2rem)]"
-          title="Account Settings &amp; User Management (Admin Only)"
-        >
-          <Settings className="w-4 h-4 shrink-0" />
-          <span>⚙️ Account Settings</span>
-        </button>
-      )}
-
     </div>
   );
 }
