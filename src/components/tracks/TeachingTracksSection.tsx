@@ -440,7 +440,7 @@ export const TeachingTracksSection = ({
                         <button
                           type="button"
                           onClick={() => {
-                            const tesdaTrack = filteredTracks.find(t => t.id === 'track-tesda-css-nc2' || t.isBundle) || TESDA_CSS_TRACK;
+                            const tesdaTrack = filteredTracks.find(t => t.id === 'track-tesda-css-nc2' || t.bundleNumber === 2) || TESDA_CSS_TRACK;
                             onEnroll(tesdaTrack);
                           }}
                           className="w-full mt-3 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs sm:text-sm rounded-xl shadow-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 hover:scale-[1.02]"

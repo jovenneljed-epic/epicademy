@@ -159,11 +159,325 @@ export async function fetchTeachersFromDB(): Promise<{ teachers: TeacherProfile[
   }
 }
 
+// ==========================================
+// Account Management & Status Helpers
+// ==========================================
+export interface UserProfileItem {
+  id: string;
+  email: string;
+  fullName: string;
+  role: 'educator' | 'student';
+  specialty?: string;
+  credentials?: string;
+  bio?: string;
+  avatarUrl?: string;
+  isVerified?: boolean;
+  isDisabled?: boolean;
+  createdAt?: string;
+}
+
+const DISABLED_ACCOUNTS_KEY = 'epicademy_disabled_emails';
+const LOCAL_ACCOUNTS_KEY = 'epicademy_local_profiles';
+
+export function getDisabledEmails(): Set<string> {
+  try {
+    const raw = localStorage.getItem(DISABLED_ACCOUNTS_KEY);
+    if (!raw) return new Set();
+    return new Set(JSON.parse(raw).map((e: string) => e.toLowerCase()));
+  } catch {
+    return new Set();
+  }
+}
+
+export function isAccountDisabled(email: string): boolean {
+  if (!email) return false;
+  const disabledSet = getDisabledEmails();
+  return disabledSet.has(email.toLowerCase().trim());
+}
+
+export function setAccountDisabledLocally(email: string, disabled: boolean): void {
+  try {
+    const disabledSet = getDisabledEmails();
+    const cleanEmail = email.toLowerCase().trim();
+    if (disabled) {
+      disabledSet.add(cleanEmail);
+    } else {
+      disabledSet.delete(cleanEmail);
+    }
+    localStorage.setItem(DISABLED_ACCOUNTS_KEY, JSON.stringify(Array.from(disabledSet)));
+  } catch (e) {
+    console.error('Error saving disabled emails:', e);
+  }
+}
+
+export function getLocalProfiles(): UserProfileItem[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_ACCOUNTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveLocalProfiles(profiles: UserProfileItem[]): void {
+  try {
+    localStorage.setItem(LOCAL_ACCOUNTS_KEY, JSON.stringify(profiles));
+  } catch (e) {
+    console.error('Error saving local profiles:', e);
+  }
+}
+
+export async function fetchAllUserProfiles(): Promise<{ profiles: UserProfileItem[]; error: any }> {
+  try {
+    const disabledSet = getDisabledEmails();
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.warn('Supabase profiles fetch note:', error);
+    }
+
+    const localProfiles = getLocalProfiles();
+    const profileMap = new Map<string, UserProfileItem>();
+
+    // Add local profiles first
+    localProfiles.forEach(p => {
+      const isDis = Boolean(p.isDisabled || disabledSet.has(p.email.toLowerCase()));
+      profileMap.set(p.email.toLowerCase(), {
+        ...p,
+        isDisabled: isDis,
+        isVerified: !isDis,
+      });
+    });
+
+    if (data && data.length > 0) {
+      data.forEach((row: any) => {
+        const email = (row.email || '').toLowerCase().trim();
+        const isDbDisabled = row.is_verified === false;
+        const isDisabled = isDbDisabled || disabledSet.has(email);
+
+        if (isDbDisabled && email && !disabledSet.has(email)) {
+          setAccountDisabledLocally(email, true);
+        }
+
+        const item: UserProfileItem = {
+          id: row.id,
+          email: row.email,
+          fullName: row.full_name || row.email?.split('@')[0] || 'User',
+          role: row.role === 'educator' ? 'educator' : 'student',
+          specialty: row.specialty || '',
+          credentials: row.credentials || '',
+          bio: row.bio || '',
+          avatarUrl: row.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+          isVerified: !isDisabled,
+          isDisabled,
+          createdAt: row.created_at,
+        };
+
+        profileMap.set(email || row.id, item);
+      });
+    }
+
+    const result = Array.from(profileMap.values()).sort((a, b) => {
+      return (new Date(b.createdAt || 0).getTime()) - (new Date(a.createdAt || 0).getTime());
+    });
+
+    return { profiles: result, error: null };
+  } catch (err) {
+    const disabledSet = getDisabledEmails();
+    const localProfiles = getLocalProfiles().map(p => ({
+      ...p,
+      isDisabled: Boolean(p.isDisabled || disabledSet.has(p.email.toLowerCase())),
+    }));
+    return { profiles: localProfiles, error: err };
+  }
+}
+
+export async function createUserAccount(input: {
+  fullName: string;
+  email: string;
+  password: string;
+  role: 'student' | 'educator';
+  specialty?: string;
+}): Promise<{ profile: UserProfileItem | null; error: any }> {
+  try {
+    const cleanEmail = input.email.toLowerCase().trim();
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: cleanEmail,
+      password: input.password,
+      options: {
+        data: {
+          role: input.role,
+          full_name: input.fullName,
+          specialty: input.specialty || (input.role === 'educator' ? 'General Disciplines' : 'Student Learner'),
+        },
+      },
+    });
+
+    if (authError) {
+      return { profile: null, error: authError };
+    }
+
+    const userId = authData.user?.id || `user-local-${Date.now()}`;
+    const newProfile: UserProfileItem = {
+      id: userId,
+      email: cleanEmail,
+      fullName: input.fullName || cleanEmail.split('@')[0],
+      role: input.role,
+      specialty: input.specialty || (input.role === 'educator' ? 'General Disciplines' : 'Student Learner'),
+      isVerified: true,
+      isDisabled: false,
+      createdAt: new Date().toISOString(),
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    };
+
+    try {
+      await supabase.from('profiles').upsert([
+        {
+          id: userId,
+          email: cleanEmail,
+          full_name: newProfile.fullName,
+          role: newProfile.role,
+          specialty: newProfile.specialty,
+          is_verified: true,
+        }
+      ], { onConflict: 'id' });
+    } catch (e) {
+      console.warn('Could not insert profile into database table:', e);
+    }
+
+    const local = getLocalProfiles().filter(p => p.email.toLowerCase() !== cleanEmail);
+    local.unshift(newProfile);
+    saveLocalProfiles(local);
+
+    setAccountDisabledLocally(cleanEmail, false);
+
+    return { profile: newProfile, error: null };
+  } catch (err: any) {
+    return { profile: null, error: err };
+  }
+}
+
+export async function deleteUserAccount(userId: string, email: string): Promise<{ success: boolean; error: any }> {
+  try {
+    const cleanEmail = email.toLowerCase().trim();
+
+    if (userId) {
+      const { error } = await supabase.from('profiles').delete().eq('id', userId);
+      if (error) {
+        console.warn('Supabase profile deletion warning:', error);
+      }
+    }
+
+    const local = getLocalProfiles().filter(p => p.id !== userId && p.email.toLowerCase() !== cleanEmail);
+    saveLocalProfiles(local);
+
+    setAccountDisabledLocally(cleanEmail, false);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user && (user.id === userId || user.email?.toLowerCase() === cleanEmail)) {
+      await supabase.auth.signOut();
+    }
+
+    return { success: true, error: null };
+  } catch (err: any) {
+    return { success: false, error: err };
+  }
+}
+
+export async function toggleUserAccountStatus(
+  userId: string,
+  email: string,
+  disable: boolean
+): Promise<{ success: boolean; error: any }> {
+  try {
+    const cleanEmail = email.toLowerCase().trim();
+
+    if (userId) {
+      await supabase.from('profiles').update({ is_verified: !disable }).eq('id', userId);
+    }
+
+    setAccountDisabledLocally(cleanEmail, disable);
+
+    const local = getLocalProfiles().map(p => {
+      if (p.id === userId || p.email.toLowerCase() === cleanEmail) {
+        return { ...p, isDisabled: disable, isVerified: !disable };
+      }
+      return p;
+    });
+    saveLocalProfiles(local);
+
+    if (disable) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && (user.id === userId || user.email?.toLowerCase() === cleanEmail)) {
+        await supabase.auth.signOut();
+      }
+    }
+
+    return { success: true, error: null };
+  } catch (err: any) {
+    return { success: false, error: err };
+  }
+}
+
+export async function updateUserRole(
+  userId: string,
+  email: string,
+  newRole: 'student' | 'educator'
+): Promise<{ success: boolean; error: any }> {
+  try {
+    if (userId) {
+      await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
+    }
+    const local = getLocalProfiles().map(p => {
+      if (p.id === userId || p.email.toLowerCase() === email.toLowerCase()) {
+        return { ...p, role: newRole };
+      }
+      return p;
+    });
+    saveLocalProfiles(local);
+    return { success: true, error: null };
+  } catch (err: any) {
+    return { success: false, error: err };
+  }
+}
+
 export async function signInUser(email: string, password: string) {
+  if (isAccountDisabled(email)) {
+    return {
+      data: { user: null, session: null },
+      error: new Error('This account has been disabled by the administrator. Please contact support.'),
+    };
+  }
+
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
+
+  if (!error && data?.user) {
+    try {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('is_verified')
+        .eq('id', data.user.id)
+        .maybeSingle();
+
+      if (prof && prof.is_verified === false) {
+        await supabase.auth.signOut();
+        setAccountDisabledLocally(email, true);
+        return {
+          data: { user: null, session: null },
+          error: new Error('This account has been disabled by the administrator. Access denied.'),
+        };
+      }
+    } catch {
+      // Ignore if table unavailable
+    }
+  }
+
   return { data, error };
 }
 
@@ -189,7 +503,7 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
 
     if (error || !data || data.length === 0) {
       const localTeacherTracks = getLocalTeacherTracks();
-      return { tracks: [...localTeacherTracks, ...ZERO_TO_HERO_TRACKS, PINOY_DRUM_TRACK, PINOY_PIANO_TRACK, PINOY_GUITAR_TRACK, PINOY_LEAD_GUITAR_TRACK], error: null };
+      return { tracks: [...localTeacherTracks, ...ZERO_TO_HERO_TRACKS, TESDA_CSS_TRACK, PINOY_DRUM_TRACK, PINOY_PIANO_TRACK, PINOY_GUITAR_TRACK, PINOY_LEAD_GUITAR_TRACK], error: null };
     }
 
     const dbTracks: Track[] = data.map((row: any) => {
@@ -198,6 +512,7 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
       const isPiano = row.id === 'track-pinoy-piano-zero-to-hero';
       const isGuitar = row.id === 'track-pinoy-guitar-zero-to-hero';
       const isLeadGuitar = row.id === 'track-pinoy-lead-guitar-zero-to-hero';
+      const isStandardCourse = isTesda || isDrum || isPiano || isGuitar || isLeadGuitar || ZERO_TO_HERO_TRACKS.some(z => z.id === row.id);
       const isBundle = Boolean(row.is_bundle ?? (isTesda || isDrum || isPiano || isGuitar || isLeadGuitar));
       const bundleNumber = row.bundle_number || (isTesda ? 2 : isDrum ? 3 : isPiano ? 4 : isGuitar ? 5 : isLeadGuitar ? 6 : undefined);
       const bundleLabel = row.bundle_label || (
@@ -269,8 +584,8 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
         colorTheme: row.color_theme || 'from-blue-600 to-indigo-700',
         popular: Boolean(row.popular),
         published: Boolean(row.published ?? true),
-        isCustomCourse: true,
-        isTeacherCreated: Boolean(row.is_teacher_created ?? true),
+        isCustomCourse: !isStandardCourse,
+        isTeacherCreated: Boolean(row.is_teacher_created ?? !isStandardCourse),
         authorEmail: row.author_email || undefined,
       };
     });
@@ -287,20 +602,23 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
     });
 
     const existingIds = new Set(mergedTeacherAndDb.map(t => t.id));
-    const missingStandardTracks = [...ZERO_TO_HERO_TRACKS, PINOY_DRUM_TRACK, PINOY_PIANO_TRACK, PINOY_GUITAR_TRACK, PINOY_LEAD_GUITAR_TRACK].filter(t => !existingIds.has(t.id));
+    const missingStandardTracks = [...ZERO_TO_HERO_TRACKS, TESDA_CSS_TRACK, PINOY_DRUM_TRACK, PINOY_PIANO_TRACK, PINOY_GUITAR_TRACK, PINOY_LEAD_GUITAR_TRACK].filter(t => !existingIds.has(t.id));
 
     const combined = [...mergedTeacherAndDb, ...missingStandardTracks].sort((a, b) => {
       if (a.isTeacherCreated && !b.isTeacherCreated) return -1;
       if (!a.isTeacherCreated && b.isTeacherCreated) return 1;
       if (a.isBundle && !b.isBundle) return 1;
       if (!a.isBundle && b.isBundle) return -1;
+      if (a.isBundle && b.isBundle) {
+        return (a.bundleNumber || 99) - (b.bundleNumber || 99);
+      }
       return (a.levelIndex || 99) - (b.levelIndex || 99);
     });
 
     return { tracks: combined, error: null };
   } catch (err) {
     const localTeacherTracks = getLocalTeacherTracks();
-    return { tracks: [...localTeacherTracks, ...ZERO_TO_HERO_TRACKS, PINOY_DRUM_TRACK, PINOY_PIANO_TRACK, PINOY_GUITAR_TRACK, PINOY_LEAD_GUITAR_TRACK], error: err };
+    return { tracks: [...localTeacherTracks, ...ZERO_TO_HERO_TRACKS, TESDA_CSS_TRACK, PINOY_DRUM_TRACK, PINOY_PIANO_TRACK, PINOY_GUITAR_TRACK, PINOY_LEAD_GUITAR_TRACK], error: err };
   }
 }
 

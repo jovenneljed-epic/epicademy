@@ -26,8 +26,8 @@ import { LessonViewer } from './components/classroom/LessonViewer';
 import { AcademicCredentialsModal } from './components/credentials/AcademicCredentialsModal';
 import { TesdaTrbModal } from './components/classroom/TesdaTrbModal';
 import { StudentDossierModal } from './components/profile/StudentDossierModal';
+import { AccountSettingsModal } from './components/modals/AccountSettingsModal';
 import { ZERO_TO_HERO_TRACKS } from './data/zeroToHeroCoursesData';
-import { TESDA_CSS_TRACK } from './data/tesdaCssNc2CourseData';
 import { PINOY_DRUM_TRACK } from './data/pinoyDrumCourseData';
 import { PINOY_PIANO_TRACK } from './data/pinoyPianoCourseData';
 import { PINOY_GUITAR_TRACK } from './data/pinoyGuitarCourseData';
@@ -140,6 +140,7 @@ export function App() {
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [showTesdaTrbModal, setShowTesdaTrbModal] = useState(false);
   const [showDossierModal, setShowDossierModal] = useState(false);
+  const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
 
   // Dynamic Teacher / Custom Tracks state in Classroom
   const [activeTrackModules, setActiveTrackModules] = useState<ModuleItem[]>([]);
@@ -185,12 +186,17 @@ export function App() {
   const openTrackClassroom = async (track: Track) => {
     setSelectedActiveTrack(track);
 
+    const isTesda = track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2 || track.id.includes('tesda');
+    if (isTesda) {
+      setActiveTrackModules([]);
+      setActiveCoc('coc1');
+      setActiveLessonIndex(0);
+      setIsClassroomOpen(true);
+      return;
+    }
+
     let mods: ModuleItem[] = [];
-    if (track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2) {
-      mods = (TESDA_CSS_TRACK.modules && TESDA_CSS_TRACK.modules.length > 0)
-        ? TESDA_CSS_TRACK.modules
-        : await fetchTrackModulesAndLessons(track.id);
-    } else if (track.id === 'track-pinoy-drum-zero-to-hero' || track.bundleNumber === 3) {
+    if (track.id === 'track-pinoy-drum-zero-to-hero' || track.bundleNumber === 3) {
       mods = (PINOY_DRUM_TRACK.modules && PINOY_DRUM_TRACK.modules.length > 0)
         ? PINOY_DRUM_TRACK.modules
         : await fetchTrackModulesAndLessons(track.id);
@@ -349,6 +355,7 @@ export function App() {
           setCheckoutTrack(ZERO_TO_HERO_TRACKS[0]);
           setCheckoutModalOpen(true);
         }}
+        onOpenAccountSettings={() => setIsAccountSettingsOpen(true)}
         currentUser={currentUser}
         onSignOut={() => setCurrentUser(null)}
       />
@@ -478,7 +485,7 @@ export function App() {
               <h2 className="text-base sm:text-lg font-black mt-0.5">{selectedActiveTrack.title}</h2>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              {(selectedActiveTrack.id === 'track-tesda-css-nc2' || selectedActiveTrack.id.includes('tesda')) && (
+              {(selectedActiveTrack.id === 'track-tesda-css-nc2' || selectedActiveTrack.bundleNumber === 2 || selectedActiveTrack.id.includes('tesda')) && (
                 <button
                   onClick={() => setShowTesdaTrbModal(true)}
                   className="px-3 py-1.5 bg-blue-900/60 hover:bg-blue-800 border border-blue-500/40 text-blue-200 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
@@ -537,7 +544,7 @@ export function App() {
 
           <div className="flex-1 bg-slate-950 overflow-y-auto p-6 text-white flex flex-col items-center">
             <div className="max-w-6xl w-full space-y-6">
-              {activeTrackModules.length > 0 ? (
+              {(!selectedActiveTrack.id.includes('tesda') && selectedActiveTrack.bundleNumber !== 2 && selectedActiveTrack.id !== 'track-tesda-css-nc2' && activeTrackModules.length > 0) ? (
                 /* ======================================================== */
                 /* TEACHER / CUSTOM AUTHOR SUITE LMS CLASSROOM               */
                 /* ======================================================== */
@@ -928,6 +935,13 @@ export function App() {
         isOpen={showDossierModal}
         onClose={() => setShowDossierModal(false)}
         studentEmail={currentUser?.email}
+      />
+
+      {/* Account Settings & User Management Modal */}
+      <AccountSettingsModal
+        isOpen={isAccountSettingsOpen}
+        onClose={() => setIsAccountSettingsOpen(false)}
+        currentUserEmail={currentUser?.email}
       />
 
     </div>

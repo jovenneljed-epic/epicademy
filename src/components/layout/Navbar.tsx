@@ -10,7 +10,8 @@ import {
   Layers,
   Plus,
   User,
-  LogOut
+  LogOut,
+  Settings
 } from 'lucide-react';
 import { signOutUser } from '../../lib/supabaseClient';
 
@@ -24,6 +25,7 @@ interface NavbarProps {
   onOpenCredentials?: () => void;
   onOpenDossier?: () => void;
   onOpenTuition?: () => void;
+  onOpenAccountSettings?: () => void;
   currentUser?: { email?: string; role?: string } | null;
   onSignOut?: () => void;
 }
@@ -38,6 +40,7 @@ export const Navbar = ({
   onOpenCredentials,
   onOpenDossier,
   onOpenTuition,
+  onOpenAccountSettings,
   currentUser,
   onSignOut,
 }: NavbarProps) => {
@@ -230,6 +233,18 @@ export const Navbar = ({
               <span>👨‍🏫 Faculty Portal</span>
             </button>
 
+            {/* Account Settings Button */}
+            {onOpenAccountSettings && (
+              <button
+                onClick={onOpenAccountSettings}
+                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+                title="Manage User Accounts & Settings"
+              >
+                <Settings className="w-3.5 h-3.5 text-slate-600" />
+                <span>⚙️ Accounts</span>
+              </button>
+            )}
+
             {/* Course Studio Button */}
             <button
               onClick={onOpenCourseBuilder}
@@ -254,10 +269,15 @@ export const Navbar = ({
             {/* User Session or Auth Buttons */}
             {currentUser ? (
               <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-blue-50/70 border border-blue-100 px-3 py-1.5 rounded-xl">
+                <button
+                  onClick={onOpenAccountSettings}
+                  className="flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-blue-50/70 hover:bg-blue-100/80 border border-blue-100 px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
+                  title="Open Account Settings"
+                >
                   <User className="w-3.5 h-3.5 text-blue-600" />
                   <span className="max-w-[140px] truncate">Hello, {currentUser.email?.split('@')[0]}!</span>
-                </div>
+                  <Settings className="w-3 h-3 text-slate-400 ml-0.5" />
+                </button>
                 <button
                   onClick={handleLogout}
                   className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
@@ -337,6 +357,18 @@ export const Navbar = ({
               <User className="w-4 h-4" />
               <span>👨‍🏫 Faculty Accounts</span>
             </button>
+            {onOpenAccountSettings && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenAccountSettings();
+                }}
+                className="w-full text-left px-3 py-2 text-base font-bold text-slate-700 hover:bg-slate-100 rounded-lg flex items-center gap-2 cursor-pointer"
+              >
+                <Settings className="w-4 h-4 text-slate-600" />
+                <span>⚙️ Account Settings &amp; Access</span>
+              </button>
+            )}
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
