@@ -13,13 +13,14 @@ import { TestimonialsSection } from './components/social-proof/TestimonialsSecti
 import { FAQSection } from './components/faq/FAQSection';
 import { FinalCTA } from './components/cta/FinalCTA';
 import { AuthModal } from './components/modals/AuthModal';
+import { LoginPage } from './components/auth/LoginPage';
 import { TrackDetailModal } from './components/modals/TrackDetailModal';
 import { CourseBuilderModal } from './components/studio/CourseBuilderModal';
 import { TeacherSetupModal } from './components/teachers/TeacherSetupModal';
 import { CheckoutModal } from './components/modals/CheckoutModal';
 import { DeveloperProfileModal } from './components/modals/DeveloperProfileModal';
 import { ApplyTenantModal } from './components/modals/ApplyTenantModal';
-import { getCurrentUser, supabase, fetchTrackModulesAndLessons, getUserRoleByEmail } from './lib/supabaseClient';
+import { getCurrentUser, supabase, fetchTrackModulesAndLessons, getUserRoleByEmail, signOutUser } from './lib/supabaseClient';
 import type { Track, CommunityDeveloper, ModuleItem, UserRole } from './types';
 import { CreateCommunityModal } from './components/modals/CreateCommunityModal';
 import { LessonViewer } from './components/classroom/LessonViewer';
@@ -149,11 +150,44 @@ export function App() {
   const [activeModuleIndex, setActiveModuleIndex] = useState(0);
   const [completedLessonIds, setCompletedLessonIds] = useState<Record<string, boolean>>({});
 
-  // Active Supabase user state
-  const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string } | null>({
-    email: 'admin@epicademy.com',
-    role: 'admin',
+  // Active Supabase user state with localStorage persistence
+  const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string } | null>(() => {
+    try {
+      const stored = localStorage.getItem('epicademy_active_user');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
   });
+
+  const handleAuthSuccess = (email: string, role: string) => {
+    const userObj = { email, role };
+    setCurrentUser(userObj);
+    try {
+      localStorage.setItem('epicademy_active_user', JSON.stringify(userObj));
+    } catch (e) {
+      console.error('Failed to save session:', e);
+    }
+
+    if (role === 'student') {
+      setPerspective('student');
+    } else {
+      setPerspective('educator');
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      localStorage.removeItem('epicademy_active_user');
+      await signOutUser();
+    } catch (e) {
+      console.error('Sign out error:', e);
+    }
+    setCurrentUser(null);
+  };
 
   const handleSwitchRole = (newRole: UserRole) => {
     let email = 'admin@epicademy.com';
@@ -161,34 +195,46 @@ export function App() {
     else if (newRole === 'contributor') email = 'contributor@epicademy.com';
     else if (newRole === 'student') email = 'student@epicademy.com';
 
-    setCurrentUser({
-      email,
-      role: newRole,
-    });
+    const userObj = { email, role: newRole };
+    setCurrentUser(userObj);
+    try {
+      localStorage.setItem('epicademy_active_user', JSON.stringify(userObj));
+    } catch (e) {
+      console.error('Failed to save active user:', e);
+    }
 
     if (newRole === 'student') {
       setPerspective('student');
+    } else {
+      setPerspective('educator');
     }
   };
 
   useEffect(() => {
+    // Check existing Supabase session if not in localStorage
     getCurrentUser().then((user) => {
       if (user && user.email) {
-        const detectedRole = getUserRoleByEmail(user.email) || user.user_metadata?.role || 'admin';
-        setCurrentUser({
-          email: user.email,
-          role: detectedRole,
-        });
+        const detectedRole = getUserRoleByEmail(user.email) || user.user_metadata?.role || 'student';
+        const userObj = { email: user.email, role: detectedRole };
+        setCurrentUser(userObj);
+        try {
+          localStorage.setItem('epicademy_active_user', JSON.stringify(userObj));
+        } catch {
+          // ignore
+        }
       }
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user?.email) {
         const detectedRole = getUserRoleByEmail(session.user.email) || session.user.user_metadata?.role || 'student';
-        setCurrentUser({
-          email: session.user.email,
-          role: detectedRole,
-        });
+        const userObj = { email: session.user.email, role: detectedRole };
+        setCurrentUser(userObj);
+        try {
+          localStorage.setItem('epicademy_active_user', JSON.stringify(userObj));
+        } catch {
+          // ignore
+        }
       }
     });
 
@@ -352,6 +398,18 @@ export function App() {
   const dynamicCourseProgress = totalDynamicLessons > 0 ? Math.min(100, Math.round((completedDynamicCount / totalDynamicLessons) * 100)) : 0;
   const effectiveOverallProgress = activeTrackModules.length > 0 ? dynamicCourseProgress : overallCourseProgress;
 
+  // =========================================================================
+  // AUTHENTICATION GATE: Before main page unlocks, require sign-in or sign-up
+  // =========================================================================
+  if (!currentUser) {
+    return (
+      <LoginPage 
+        onAuthSuccess={handleAuthSuccess}
+        onExploreAsGuest={() => handleAuthSuccess('guest@epicademy.com', 'student')}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col selection:bg-blue-600 selection:text-white">
       {/* Top Banner */}
@@ -373,7 +431,7 @@ export function App() {
         }}
         onOpenAccountSettings={() => setIsAccountSettingsOpen(true)}
         currentUser={currentUser}
-        onSignOut={() => setCurrentUser(null)}
+        onSignOut={handleSignOut}
         onSwitchRole={handleSwitchRole}
       />
 
@@ -430,7 +488,7 @@ export function App() {
         initialEmail={initialEmail}
         selectedPlanId={selectedPlanId}
         onClose={() => setAuthModalOpen(false)}
-        onAuthSuccess={(email, role) => setCurrentUser({ email, role })}
+        onAuthSuccess={(email, role) => handleAuthSuccess(email, role)}
       />
 
       <TrackDetailModal
