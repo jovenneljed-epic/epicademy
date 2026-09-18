@@ -27,7 +27,9 @@ import { AcademicCredentialsModal } from './components/credentials/AcademicCrede
 import { TesdaTrbModal } from './components/classroom/TesdaTrbModal';
 import { StudentDossierModal } from './components/profile/StudentDossierModal';
 import { AccountSettingsModal } from './components/modals/AccountSettingsModal';
+import { Settings } from 'lucide-react';
 import { ZERO_TO_HERO_TRACKS } from './data/zeroToHeroCoursesData';
+import { TESDA_CSS_TRACK } from './data/tesdaCssNc2CourseData';
 import { PINOY_DRUM_TRACK } from './data/pinoyDrumCourseData';
 import { PINOY_PIANO_TRACK } from './data/pinoyPianoCourseData';
 import { PINOY_GUITAR_TRACK } from './data/pinoyGuitarCourseData';
@@ -186,17 +188,12 @@ export function App() {
   const openTrackClassroom = async (track: Track) => {
     setSelectedActiveTrack(track);
 
-    const isTesda = track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2 || track.id.includes('tesda');
-    if (isTesda) {
-      setActiveTrackModules([]);
-      setActiveCoc('coc1');
-      setActiveLessonIndex(0);
-      setIsClassroomOpen(true);
-      return;
-    }
-
     let mods: ModuleItem[] = [];
-    if (track.id === 'track-pinoy-drum-zero-to-hero' || track.bundleNumber === 3) {
+    if (track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2 || track.id.includes('tesda')) {
+      mods = (TESDA_CSS_TRACK.modules && TESDA_CSS_TRACK.modules.length > 0)
+        ? TESDA_CSS_TRACK.modules
+        : await fetchTrackModulesAndLessons(track.id);
+    } else if (track.id === 'track-pinoy-drum-zero-to-hero' || track.bundleNumber === 3) {
       mods = (PINOY_DRUM_TRACK.modules && PINOY_DRUM_TRACK.modules.length > 0)
         ? PINOY_DRUM_TRACK.modules
         : await fetchTrackModulesAndLessons(track.id);
@@ -530,6 +527,14 @@ export function App() {
                 <span>🏆 {effectiveOverallProgress === 100 ? 'Claim Certificate ↗' : 'Credentials & Transcript'}</span>
               </button>
               <button
+                onClick={() => setIsAccountSettingsOpen(true)}
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+                title="Manage User Accounts & Permissions"
+              >
+                <Settings className="w-3.5 h-3.5 text-blue-400" />
+                <span>⚙️ Accounts</span>
+              </button>
+              <button
                 onClick={() => {
                   setIsClassroomOpen(false);
                   setSelectedActiveTrack(null);
@@ -544,7 +549,7 @@ export function App() {
 
           <div className="flex-1 bg-slate-950 overflow-y-auto p-6 text-white flex flex-col items-center">
             <div className="max-w-6xl w-full space-y-6">
-              {(!selectedActiveTrack.id.includes('tesda') && selectedActiveTrack.bundleNumber !== 2 && selectedActiveTrack.id !== 'track-tesda-css-nc2' && activeTrackModules.length > 0) ? (
+              {activeTrackModules.length > 0 ? (
                 /* ======================================================== */
                 /* TEACHER / CUSTOM AUTHOR SUITE LMS CLASSROOM               */
                 /* ======================================================== */
@@ -943,6 +948,18 @@ export function App() {
         onClose={() => setIsAccountSettingsOpen(false)}
         currentUserEmail={currentUser?.email}
       />
+
+      {/* Floating Quick-Access Account Settings Button */}
+      {!isClassroomOpen && (
+        <button
+          onClick={() => setIsAccountSettingsOpen(true)}
+          className="fixed bottom-6 right-6 z-40 px-4 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black text-xs sm:text-sm rounded-2xl shadow-2xl flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 transition-all border border-white/20"
+          title="Account Settings & User Management"
+        >
+          <Settings className="w-4 h-4" />
+          <span>⚙️ Account Settings</span>
+        </button>
+      )}
 
     </div>
   );
