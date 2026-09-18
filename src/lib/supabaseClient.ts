@@ -46,13 +46,15 @@ let isSeedingInProgress = false;
 // Authentication & Teacher Profile Helpers
 // ==========================================
 export async function signUpUser(email: string, password: string, role: UserRole) {
+  const cleanEmail = email.toLowerCase().trim();
+  unmarkAccountAsDeleted(cleanEmail);
   const { data, error } = await supabase.auth.signUp({
-    email,
+    email: cleanEmail,
     password,
     options: {
       data: {
         role,
-        full_name: email.split('@')[0],
+        full_name: cleanEmail.split('@')[0],
       },
     },
   });
@@ -64,7 +66,7 @@ export async function signUpUser(email: string, password: string, role: UserRole
           {
             id: data.user.id,
             email: data.user.email,
-            full_name: email.split('@')[0],
+            full_name: cleanEmail.split('@')[0],
             role,
           },
         ],
@@ -233,6 +235,45 @@ export const SEED_USER_PROFILES: UserProfileItem[] = [
 
 const DISABLED_ACCOUNTS_KEY = 'epicademy_disabled_emails';
 const LOCAL_ACCOUNTS_KEY = 'epicademy_local_profiles';
+const DELETED_ACCOUNTS_KEY = 'epicademy_deleted_accounts';
+
+export function getDeletedAccountKeys(): Set<string> {
+  try {
+    const raw = localStorage.getItem(DELETED_ACCOUNTS_KEY);
+    if (!raw) return new Set();
+    return new Set(JSON.parse(raw).map((e: string) => e.toLowerCase()));
+  } catch {
+    return new Set();
+  }
+}
+
+export function isAccountDeleted(identifier?: string | null): boolean {
+  if (!identifier) return false;
+  const deletedSet = getDeletedAccountKeys();
+  return deletedSet.has(identifier.toLowerCase().trim());
+}
+
+export function markAccountAsDeleted(email?: string | null, id?: string | null): void {
+  try {
+    const deletedSet = getDeletedAccountKeys();
+    if (email) deletedSet.add(email.toLowerCase().trim());
+    if (id) deletedSet.add(id.toLowerCase().trim());
+    localStorage.setItem(DELETED_ACCOUNTS_KEY, JSON.stringify(Array.from(deletedSet)));
+  } catch (e) {
+    console.error('Error saving deleted accounts:', e);
+  }
+}
+
+export function unmarkAccountAsDeleted(identifier?: string | null): void {
+  if (!identifier) return;
+  try {
+    const deletedSet = getDeletedAccountKeys();
+    deletedSet.delete(identifier.toLowerCase().trim());
+    localStorage.setItem(DELETED_ACCOUNTS_KEY, JSON.stringify(Array.from(deletedSet)));
+  } catch (e) {
+    console.error('Error unmarking deleted account:', e);
+  }
+}
 
 export function getDisabledEmails(): Set<string> {
   try {
@@ -267,12 +308,19 @@ export function setAccountDisabledLocally(email: string, disabled: boolean): voi
 
 export function getLocalProfiles(): UserProfileItem[] {
   try {
+    const deletedSet = getDeletedAccountKeys();
     const raw = localStorage.getItem(LOCAL_ACCOUNTS_KEY);
     let list: UserProfileItem[] = raw ? JSON.parse(raw) : [];
 
-    // Ensure all 4 seed accounts exist in the list
+    // Filter out any previously deleted accounts
+    list = list.filter(p => !deletedSet.has(p.email.toLowerCase()) && !deletedSet.has(p.id.toLowerCase()));
+
+    // Ensure seed accounts exist in the list ONLY IF they have not been deleted!
     let modified = false;
     for (const seed of SEED_USER_PROFILES) {
+      if (deletedSet.has(seed.email.toLowerCase()) || deletedSet.has(seed.id.toLowerCase())) {
+        continue; // DO NOT RE-SEED DELETED ACCOUNTS!
+      }
       const idx = list.findIndex(p => p.email.toLowerCase() === seed.email.toLowerCase());
       if (idx === -1) {
         list.push(seed);
@@ -317,6 +365,7 @@ export function saveLocalProfiles(profiles: UserProfileItem[]): void {
 export async function fetchAllUserProfiles(): Promise<{ profiles: UserProfileItem[]; error: any }> {
   try {
     const disabledSet = getDisabledEmails();
+    const deletedSet = getDeletedAccountKeys();
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -329,10 +378,15 @@ export async function fetchAllUserProfiles(): Promise<{ profiles: UserProfileIte
     const localProfiles = getLocalProfiles();
     const profileMap = new Map<string, UserProfileItem>();
 
-    // Add local profiles first
+    // Add local profiles first (filtering out any deleted accounts)
     localProfiles.forEach(p => {
-      const isDis = Boolean(p.isDisabled || disabledSet.has(p.email.toLowerCase()));
-      profileMap.set(p.email.toLowerCase(), {
+      const emailLower = p.email.toLowerCase().trim();
+      const idLower = p.id.toLowerCase().trim();
+      if (deletedSet.has(emailLower) || deletedSet.has(idLower)) {
+        return; // SKIP DELETED
+      }
+      const isDis = Boolean(p.isDisabled || disabledSet.has(emailLower));
+      profileMap.set(emailLower, {
         ...p,
         isDisabled: isDis,
         isVerified: !isDis,
@@ -342,6 +396,13 @@ export async function fetchAllUserProfiles(): Promise<{ profiles: UserProfileIte
     if (data && data.length > 0) {
       data.forEach((row: any) => {
         const email = (row.email || '').toLowerCase().trim();
+        const rowId = (row.id || '').toLowerCase().trim();
+
+        // Check tombstone! NEVER restore accounts that an admin deleted
+        if (deletedSet.has(email) || deletedSet.has(rowId)) {
+          return;
+        }
+
         const isDbDisabled = row.is_verified === false;
         const isDisabled = isDbDisabled || disabledSet.has(email);
 
@@ -380,10 +441,13 @@ export async function fetchAllUserProfiles(): Promise<{ profiles: UserProfileIte
     return { profiles: result, error: null };
   } catch (err) {
     const disabledSet = getDisabledEmails();
-    const localProfiles = getLocalProfiles().map(p => ({
-      ...p,
-      isDisabled: Boolean(p.isDisabled || disabledSet.has(p.email.toLowerCase())),
-    }));
+    const deletedSet = getDeletedAccountKeys();
+    const localProfiles = getLocalProfiles()
+      .filter(p => !deletedSet.has(p.email.toLowerCase().trim()) && !deletedSet.has(p.id.toLowerCase().trim()))
+      .map(p => ({
+        ...p,
+        isDisabled: Boolean(p.isDisabled || disabledSet.has(p.email.toLowerCase())),
+      }));
     return { profiles: localProfiles, error: err };
   }
 }
@@ -397,6 +461,9 @@ export async function createUserAccount(input: {
 }): Promise<{ profile: UserProfileItem | null; error: any }> {
   try {
     const cleanEmail = input.email.toLowerCase().trim();
+    // If account was previously deleted, unmark it so it can be re-created fresh
+    unmarkAccountAsDeleted(cleanEmail);
+
     const defaultSpecialty = input.specialty || (
       input.role === 'admin' ? 'Platform Security & Systems Administration' :
       input.role === 'educator' ? 'Academic Disciplines & Instruction' :
@@ -464,18 +531,31 @@ export async function deleteUserAccount(userId: string, email: string): Promise<
   try {
     const cleanEmail = email.toLowerCase().trim();
 
+    // 1. Mark in persistent tombstone store so re-seeding or DB sync NEVER resurrects this user
+    markAccountAsDeleted(cleanEmail, userId);
+
+    // 2. Attempt Supabase profile deletion by ID and by Email
     if (userId) {
-      const { error } = await supabase.from('profiles').delete().eq('id', userId);
-      if (error) {
-        console.warn('Supabase profile deletion warning:', error);
+      const { error: idErr } = await supabase.from('profiles').delete().eq('id', userId);
+      if (idErr) {
+        console.warn('Supabase profile deletion warning (by id):', idErr);
+      }
+    }
+    if (cleanEmail) {
+      const { error: emailErr } = await supabase.from('profiles').delete().eq('email', cleanEmail);
+      if (emailErr) {
+        console.warn('Supabase profile deletion warning (by email):', emailErr);
       }
     }
 
+    // 3. Remove immediately from local profile cache
     const local = getLocalProfiles().filter(p => p.id !== userId && p.email.toLowerCase() !== cleanEmail);
     saveLocalProfiles(local);
 
+    // 4. Remove from disabled accounts if present
     setAccountDisabledLocally(cleanEmail, false);
 
+    // 5. If the deleted user is currently signed in, sign out immediately
     const { data: { user } } = await supabase.auth.getUser();
     if (user && (user.id === userId || user.email?.toLowerCase() === cleanEmail)) {
       await supabase.auth.signOut();
@@ -546,6 +626,13 @@ export async function updateUserRole(
 
 export async function signInUser(email: string, password: string) {
   const cleanEmail = email.toLowerCase().trim();
+  if (isAccountDeleted(cleanEmail)) {
+    return {
+      data: { user: null, session: null },
+      error: new Error('This account has been permanently deleted by an administrator.'),
+    };
+  }
+
   if (isAccountDisabled(cleanEmail)) {
     return {
       data: { user: null, session: null },
@@ -563,6 +650,14 @@ export async function signInUser(email: string, password: string) {
     });
 
     if (!error && data?.user) {
+      if (isAccountDeleted(data.user.email) || isAccountDeleted(data.user.id)) {
+        await supabase.auth.signOut();
+        return {
+          data: { user: null, session: null },
+          error: new Error('This account has been permanently deleted by an administrator.'),
+        };
+      }
+
       try {
         const { data: prof } = await supabase
           .from('profiles')
@@ -630,6 +725,10 @@ export async function signOutUser() {
 
 export async function getCurrentUser() {
   const { data: { user } } = await supabase.auth.getUser();
+  if (user && (isAccountDeleted(user.email) || isAccountDeleted(user.id))) {
+    await supabase.auth.signOut();
+    return null;
+  }
   return user;
 }
 

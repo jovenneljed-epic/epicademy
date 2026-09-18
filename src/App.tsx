@@ -20,7 +20,7 @@ import { TeacherSetupModal } from './components/teachers/TeacherSetupModal';
 import { CheckoutModal } from './components/modals/CheckoutModal';
 import { DeveloperProfileModal } from './components/modals/DeveloperProfileModal';
 import { ApplyTenantModal } from './components/modals/ApplyTenantModal';
-import { getCurrentUser, supabase, fetchTrackModulesAndLessons, getUserRoleByEmail, signOutUser } from './lib/supabaseClient';
+import { getCurrentUser, supabase, fetchTrackModulesAndLessons, getUserRoleByEmail, signOutUser, isAccountDeleted } from './lib/supabaseClient';
 import type { Track, CommunityDeveloper, ModuleItem, UserRole } from './types';
 import { CreateCommunityModal } from './components/modals/CreateCommunityModal';
 import { LessonViewer } from './components/classroom/LessonViewer';
@@ -157,6 +157,10 @@ export function App() {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed?.email) {
+          if (isAccountDeleted(parsed.email)) {
+            localStorage.removeItem('epicademy_active_user');
+            return null;
+          }
           const autoRole = getUserRoleByEmail(parsed.email);
           if (autoRole === 'admin') {
             parsed.role = 'admin';
@@ -217,6 +221,12 @@ export function App() {
     // Check existing Supabase session if not in localStorage
     getCurrentUser().then((user) => {
       if (user && user.email) {
+        if (isAccountDeleted(user.email) || isAccountDeleted(user.id)) {
+          signOutUser();
+          setCurrentUser(null);
+          localStorage.removeItem('epicademy_active_user');
+          return;
+        }
         const detectedRole = getUserRoleByEmail(user.email) || user.user_metadata?.role || 'student';
         const userObj = { email: user.email, role: detectedRole };
         setCurrentUser(userObj);
@@ -230,6 +240,12 @@ export function App() {
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user?.email) {
+        if (isAccountDeleted(session.user.email) || isAccountDeleted(session.user.id)) {
+          signOutUser();
+          setCurrentUser(null);
+          localStorage.removeItem('epicademy_active_user');
+          return;
+        }
         const detectedRole = getUserRoleByEmail(session.user.email) || session.user.user_metadata?.role || 'student';
         const userObj = { email: session.user.email, role: detectedRole };
         setCurrentUser(userObj);
