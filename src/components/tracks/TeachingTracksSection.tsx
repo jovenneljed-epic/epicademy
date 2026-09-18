@@ -27,6 +27,7 @@ import { TESDA_CSS_TRACK } from '../../data/tesdaCssNc2CourseData';
 import { PINOY_DRUM_TRACK } from '../../data/pinoyDrumCourseData';
 import { PINOY_PIANO_TRACK } from '../../data/pinoyPianoCourseData';
 import { PINOY_GUITAR_TRACK } from '../../data/pinoyGuitarCourseData';
+import { PINOY_LEAD_GUITAR_TRACK } from '../../data/pinoyLeadGuitarCourseData';
 
 interface TeachingTracksSectionProps {
   onSelectTrack: (track: Track) => void;
@@ -58,7 +59,7 @@ export const TeachingTracksSection = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'roadmap' | 'grid'>('roadmap');
-  const [activeBundleTab, setActiveBundleTab] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [activeBundleTab, setActiveBundleTab] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
 
   const loadTracks = useCallback(async () => {
     setIsLoading(true);
@@ -315,6 +316,18 @@ export const TeachingTracksSection = ({
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>★ Bundle #5: Pinoy Rhythm Guitar (6 Modules)</span>
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveBundleTab(6)}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                        activeBundleTab === 6 
+                          ? 'bg-gradient-to-r from-rose-600 via-red-600 to-amber-500 text-white shadow-sm' 
+                          : 'text-rose-700 bg-rose-50 hover:bg-rose-100'
+                      }`}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>★ Bundle #6: Pinoy Lead Guitar (6 Modules)</span>
+                    </button>
                   </div>
                 </div>
 
@@ -550,7 +563,7 @@ export const TeachingTracksSection = ({
                       </div>
                     </div>
                   </div>
-                ) : (
+                ) : activeBundleTab === 5 ? (
                   /* BUNDLE #5 BANNER (PINOY RHYTHM GUITAR MASTERCLASS - ZERO TO HERO) - 100% FREE */
                   <div className="bg-gradient-to-r from-slate-950 via-emerald-950 to-teal-950 rounded-3xl p-6 sm:p-8 text-white border-2 border-emerald-500/70 shadow-2xl relative overflow-hidden ring-4 ring-emerald-500/20">
                     <div className="absolute -right-12 -top-12 w-64 h-64 bg-teal-500/20 rounded-full blur-3xl pointer-events-none" />
@@ -606,22 +619,79 @@ export const TeachingTracksSection = ({
                       </div>
                     </div>
                   </div>
+                ) : (
+                  /* BUNDLE #6 BANNER (PINOY LEAD GUITAR MASTERCLASS - ZERO TO HERO) - 100% FREE */
+                  <div className="bg-gradient-to-r from-slate-950 via-rose-950 to-amber-950 rounded-3xl p-6 sm:p-8 text-white border-2 border-rose-500/70 shadow-2xl relative overflow-hidden ring-4 ring-rose-500/20">
+                    <div className="absolute -right-12 -top-12 w-64 h-64 bg-rose-500/20 rounded-full blur-3xl pointer-events-none" />
+                    <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
+                      <div className="space-y-2 text-center lg:text-left">
+                        <div className="flex items-center justify-center lg:justify-start gap-2 flex-wrap">
+                          <span className="text-xs font-black uppercase tracking-widest text-white bg-gradient-to-r from-rose-600 via-red-600 to-amber-500 px-3.5 py-1 rounded-full shadow-md flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-yellow-300" /> ★ 6TH OFFICIAL COURSE BUNDLE
+                          </span>
+                          <span className="text-xs font-bold text-rose-300 bg-rose-950/80 px-2.5 py-0.5 rounded-full border border-rose-400/40">
+                            Tagalog Lead Guitar Instruction • Zero to Hero
+                          </span>
+                        </div>
+                        <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                          Pinoy Lead Guitar Masterclass: Zero to Hero Lead Guitarist
+                        </h3>
+                        <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                          Pure Lead Guitar soloing, articulations, and melodic improvisation tailored for Pinoy guitarists, rock shredders, and church worship team soloists. Street-smart Tagalog instruction (alternate picking, pitch bending, vocal vibrato, pentatonic boxes 1-5, speed drills, tapping, pinch harmonics, sweeps, CAGED soloing, modes, ambient worship volume swells, dotted 8th delay, ear training &quot;sipra sa tenga&quot;, and classic Pinoy rock solos including Rivermaya &quot;214&quot; capstone), 24 verified video lessons, ASCII tab charts, and Google Sheets solo practice log rubrics accredited by Ronnel M. Aviguetero, CEO and FOUNDER of KEZJED SOLUTIONS.
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 text-xs">
+                          <div className="bg-white/10 rounded-lg p-2 border border-white/10">
+                            <span className="font-bold text-rose-400 block">Tier 1: Foundation</span>
+                            <span className="text-[11px] text-slate-300">Alternate Picking, Bends, Vibrato, Pentatonic Box 1</span>
+                          </div>
+                          <div className="bg-white/10 rounded-lg p-2 border border-white/10">
+                            <span className="font-bold text-rose-400 block">Tier 2: Shred &amp; Modes</span>
+                            <span className="text-[11px] text-slate-300">Speed Drills, Tapping, Sweeps, CAGED &amp; Modes</span>
+                          </div>
+                          <div className="bg-white/10 rounded-lg p-2 border border-white/10">
+                            <span className="font-bold text-rose-400 block">Tier 3: Pro Hero</span>
+                            <span className="text-[11px] text-slate-300">Worship Swells, Dotted 8th Delay, Phrasing, Sipra &amp; 214 Solo</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-rose-400/40 text-center shrink-0 w-full sm:w-auto ring-2 ring-rose-400/20">
+                        <span className="text-xs text-rose-300 uppercase tracking-wide block font-black">Bundle #6 Tuition</span>
+                        <div className="flex items-baseline justify-center gap-2 mt-1">
+                          <span className="text-4xl font-black text-emerald-400">FREE</span>
+                        </div>
+                        <p className="text-[11px] text-emerald-300 font-bold mt-0.5">100% Free Lifetime Access</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const leadGuitarTrack = filteredTracks.find(t => t.id === 'track-pinoy-lead-guitar-zero-to-hero' || t.bundleNumber === 6) || PINOY_LEAD_GUITAR_TRACK;
+                            onEnroll(leadGuitarTrack);
+                          }}
+                          className="w-full mt-3 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-xs sm:text-sm rounded-xl shadow-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 hover:scale-[1.02]"
+                        >
+                          <span>Enroll in Bundle #6 • FREE</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
 
               {/* Step by Step Progression Ladder */}
               <div className="relative pl-6 sm:pl-10 space-y-6 before:absolute before:left-3 sm:before:left-5 before:top-4 before:bottom-4 before:w-0.5 before:bg-gradient-to-b before:from-blue-600 before:via-indigo-500 before:to-emerald-500">
                 {filteredTracks.map((track, idx) => {
+                  const isBundle6 = Boolean(track.id === 'track-pinoy-lead-guitar-zero-to-hero' || track.bundleNumber === 6);
                   const isBundle5 = Boolean(track.id === 'track-pinoy-guitar-zero-to-hero' || track.bundleNumber === 5);
                   const isBundle4 = Boolean(track.id === 'track-pinoy-piano-zero-to-hero' || track.bundleNumber === 4);
                   const isBundle3 = Boolean(track.id === 'track-pinoy-drum-zero-to-hero' || track.bundleNumber === 3);
                   const isBundle2 = Boolean(track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2);
-                  const isAnyBundle = isBundle2 || isBundle3 || isBundle4 || isBundle5 || Boolean(track.isBundle);
+                  const isAnyBundle = isBundle2 || isBundle3 || isBundle4 || isBundle5 || isBundle6 || Boolean(track.isBundle);
                   const levelNum = track.levelIndex || (idx + 1);
                   const isHighest = levelNum === 9 && !isAnyBundle;
                   
                   // Check if course is free
-                  const isFree = (track.price ?? 49) === 0 || isBundle2 || isBundle3 || isBundle4 || isBundle5;
+                  const isFree = (track.price ?? 49) === 0 || isBundle2 || isBundle3 || isBundle4 || isBundle5 || isBundle6;
                   const pricePhp = getPhpPrice(track.price || 49);
                   const origPhp = track.originalPrice ? getPhpPrice(track.originalPrice) : null;
 
@@ -629,7 +699,9 @@ export const TeachingTracksSection = ({
                     <div key={track.id} className="relative group">
                       {/* Connected Timeline Node */}
                       <div className={`absolute -left-6 sm:-left-10 top-6 w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-black text-xs sm:text-sm shadow-md transition-transform group-hover:scale-110 ${
-                        isBundle5
+                        isBundle6
+                          ? 'bg-gradient-to-tr from-rose-600 via-red-600 to-amber-400 text-white ring-4 ring-rose-400/80 shadow-lg shadow-rose-500/30 animate-pulse'
+                          : isBundle5
                           ? 'bg-gradient-to-tr from-emerald-600 via-teal-600 to-amber-400 text-white ring-4 ring-emerald-400/80 shadow-lg shadow-emerald-500/30 animate-pulse'
                           : isBundle4
                           ? 'bg-gradient-to-tr from-purple-600 via-indigo-600 to-amber-400 text-white ring-4 ring-purple-400/80 shadow-lg shadow-purple-500/30 animate-pulse'
@@ -641,12 +713,14 @@ export const TeachingTracksSection = ({
                           ? 'bg-amber-400 text-slate-950 ring-4 ring-amber-300/40 animate-pulse'
                           : 'bg-blue-600 text-white ring-4 ring-blue-100'
                       }`}>
-                        {isBundle5 ? '#5' : isBundle4 ? '#4' : isBundle3 ? '#3' : isBundle2 ? '#2' : levelNum}
+                        {isBundle6 ? '#6' : isBundle5 ? '#5' : isBundle4 ? '#4' : isBundle3 ? '#3' : isBundle2 ? '#2' : levelNum}
                       </div>
 
                       {/* Course Row Card */}
                       <div className={`rounded-2xl border p-5 sm:p-6 transition-all duration-300 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative overflow-hidden ${
-                        isBundle5
+                        isBundle6
+                          ? 'bg-gradient-to-r from-rose-50/90 via-white to-amber-50/30 border-2 border-rose-500 shadow-xl shadow-rose-500/10 hover:shadow-2xl ring-4 ring-rose-300/30'
+                          : isBundle5
                           ? 'bg-gradient-to-r from-emerald-50/90 via-white to-teal-50/30 border-2 border-emerald-500 shadow-xl shadow-emerald-500/10 hover:shadow-2xl ring-4 ring-emerald-300/30'
                           : isBundle4
                           ? 'bg-gradient-to-r from-purple-50/90 via-white to-indigo-50/30 border-2 border-purple-500 shadow-xl shadow-purple-500/10 hover:shadow-2xl ring-4 ring-purple-300/30'
@@ -658,7 +732,9 @@ export const TeachingTracksSection = ({
                           ? 'border-amber-300 bg-gradient-to-r from-white via-amber-50/20 to-emerald-50/20 shadow-sm hover:shadow-xl' 
                           : 'bg-white border-slate-200/90 hover:border-blue-300 shadow-sm hover:shadow-xl'
                       }`}>
-                        {isBundle5 ? (
+                        {isBundle6 ? (
+                          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-rose-600 via-red-600 to-amber-400" />
+                        ) : isBundle5 ? (
                           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-amber-400" />
                         ) : isBundle4 ? (
                           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-400" />
@@ -670,7 +746,20 @@ export const TeachingTracksSection = ({
 
                         <div className="space-y-2 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            {isBundle5 ? (
+                            {isBundle6 ? (
+                              <>
+                                <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full bg-gradient-to-r from-rose-600 via-red-600 to-amber-500 text-white shadow-sm flex items-center gap-1.5">
+                                  <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+                                  ★ 6TH OFFICIAL COURSE BUNDLE
+                                </span>
+                                <span className="text-xs font-bold text-rose-950 bg-rose-100 border border-rose-300 px-2.5 py-0.5 rounded-full">
+                                  PINOY LEAD GUITAR • ZERO TO HERO
+                                </span>
+                                <span className="text-xs font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full">
+                                  Tagalog Lead Guitar • 24 Video Lessons
+                                </span>
+                              </>
+                            ) : isBundle5 ? (
                               <>
                                 <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-amber-500 text-white shadow-sm flex items-center gap-1.5">
                                   <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
@@ -747,7 +836,9 @@ export const TeachingTracksSection = ({
                           <h3 
                             onClick={() => onSelectTrack(track)}
                             className={`text-lg sm:text-xl font-bold transition-colors cursor-pointer flex items-center gap-2 flex-wrap ${
-                              isBundle5
+                              isBundle6
+                                ? 'text-slate-900 hover:text-rose-600 font-black'
+                                : isBundle5
                                 ? 'text-slate-900 hover:text-emerald-600 font-black'
                                 : isBundle4
                                 ? 'text-slate-900 hover:text-purple-600 font-black'
@@ -759,7 +850,11 @@ export const TeachingTracksSection = ({
                             }`}
                           >
                             <span>{track.title}</span>
-                            {isBundle5 ? (
+                            {isBundle6 ? (
+                              <span className="text-[11px] font-black uppercase bg-gradient-to-r from-rose-600 via-red-600 to-amber-500 text-white px-2 py-0.5 rounded-md shadow-xs">
+                                OFFICIAL BUNDLE #6
+                              </span>
+                            ) : isBundle5 ? (
                               <span className="text-[11px] font-black uppercase bg-gradient-to-r from-emerald-600 via-teal-600 to-amber-500 text-white px-2 py-0.5 rounded-md shadow-xs">
                                 OFFICIAL BUNDLE #5
                               </span>
@@ -781,6 +876,24 @@ export const TeachingTracksSection = ({
                           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-3xl">
                             {track.description}
                           </p>
+
+                          {/* 3 Tiers Mini Grid if Bundle 6 */}
+                          {isBundle6 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 pb-1">
+                              <div className="flex items-center gap-2 text-xs bg-white/90 p-2 rounded-lg border border-rose-200">
+                                <span className="font-extrabold text-rose-900 shrink-0">Tier 1:</span>
+                                <span className="text-slate-800 truncate font-medium">Foundation (Picking, Bends, Vibrato, Pentatonic Box 1)</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs bg-white/90 p-2 rounded-lg border border-rose-200">
+                                <span className="font-extrabold text-rose-900 shrink-0">Tier 2:</span>
+                                <span className="text-slate-800 truncate font-medium">Shred &amp; Modes (Speed Drills, Tapping, Sweeps, CAGED &amp; Modes)</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs bg-white/90 p-2 rounded-lg border border-rose-200">
+                                <span className="font-extrabold text-rose-900 shrink-0">Tier 3:</span>
+                                <span className="text-slate-800 truncate font-medium">Pro Hero (Worship Swells, Dotted 8th Delay, Phrasing, 214 Solo)</span>
+                              </div>
+                            </div>
+                          )}
 
                           {/* 3 Tiers Mini Grid if Bundle 5 */}
                           {isBundle5 && (
@@ -896,7 +1009,9 @@ export const TeachingTracksSection = ({
                               type="button"
                               onClick={() => onSelectTrack(track)}
                               className={`px-3 py-2 text-xs font-bold rounded-xl transition-colors cursor-pointer ${
-                                isBundle5
+                                isBundle6
+                                  ? 'text-rose-950 bg-rose-100 hover:bg-rose-200 border border-rose-300'
+                                  : isBundle5
                                   ? 'text-emerald-950 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300'
                                   : isBundle4
                                   ? 'text-purple-950 bg-purple-100 hover:bg-purple-200 border border-purple-300'
@@ -907,13 +1022,15 @@ export const TeachingTracksSection = ({
                                   : 'text-slate-600 hover:text-blue-600 bg-slate-100 hover:bg-slate-200/80'
                               }`}
                             >
-                              {isBundle5 ? 'View Guitar Syllabus' : isBundle4 ? 'View Piano Syllabus' : isBundle3 ? 'View Drum Syllabus' : isBundle2 ? 'View TESDA Syllabus' : 'View Syllabus'}
+                              {isBundle6 ? 'View Lead Guitar Syllabus' : isBundle5 ? 'View Guitar Syllabus' : isBundle4 ? 'View Piano Syllabus' : isBundle3 ? 'View Drum Syllabus' : isBundle2 ? 'View TESDA Syllabus' : 'View Syllabus'}
                             </button>
                             <button
                               type="button"
                               onClick={() => onEnroll(track)}
                               className={`px-4 py-2 text-xs font-black active:scale-95 rounded-xl shadow-md flex items-center gap-1.5 transition-all cursor-pointer ${
-                                isBundle5
+                                isBundle6
+                                  ? 'text-white bg-gradient-to-r from-rose-600 via-red-600 to-amber-500 hover:from-rose-500 hover:to-amber-400 shadow-rose-500/25'
+                                  : isBundle5
                                   ? 'text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-amber-500 hover:from-emerald-500 hover:to-amber-400 shadow-emerald-500/25'
                                   : isBundle4
                                   ? 'text-white bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 shadow-purple-500/25'
@@ -928,7 +1045,9 @@ export const TeachingTracksSection = ({
                             >
                               <span>
                                 {isFree 
-                                  ? isBundle5
+                                  ? isBundle6
+                                    ? 'Enroll in Bundle #6 • FREE'
+                                    : isBundle5
                                     ? 'Enroll in Bundle #5 • FREE'
                                     : isBundle4
                                     ? 'Enroll in Bundle #4 • FREE'

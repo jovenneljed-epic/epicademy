@@ -5,6 +5,7 @@ import { TESDA_CSS_TRACK } from '../data/tesdaCssNc2CourseData';
 import { PINOY_DRUM_TRACK } from '../data/pinoyDrumCourseData';
 import { PINOY_PIANO_TRACK } from '../data/pinoyPianoCourseData';
 import { PINOY_GUITAR_TRACK } from '../data/pinoyGuitarCourseData';
+import { PINOY_LEAD_GUITAR_TRACK } from '../data/pinoyLeadGuitarCourseData';
 import { getTenantCourseDetailedModules } from '../data/tenantCoursesDetailedData';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ukhmrgbkrfawgszltzsr.supabase.co';
@@ -188,7 +189,7 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
 
     if (error || !data || data.length === 0) {
       const localTeacherTracks = getLocalTeacherTracks();
-      return { tracks: [...localTeacherTracks, ...ZERO_TO_HERO_TRACKS, PINOY_DRUM_TRACK, PINOY_PIANO_TRACK, PINOY_GUITAR_TRACK], error: null };
+      return { tracks: [...localTeacherTracks, ...ZERO_TO_HERO_TRACKS, PINOY_DRUM_TRACK, PINOY_PIANO_TRACK, PINOY_GUITAR_TRACK, PINOY_LEAD_GUITAR_TRACK], error: null };
     }
 
     const dbTracks: Track[] = data.map((row: any) => {
@@ -196,8 +197,9 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
       const isDrum = row.id === 'track-pinoy-drum-zero-to-hero';
       const isPiano = row.id === 'track-pinoy-piano-zero-to-hero';
       const isGuitar = row.id === 'track-pinoy-guitar-zero-to-hero';
-      const isBundle = Boolean(row.is_bundle ?? (isTesda || isDrum || isPiano || isGuitar));
-      const bundleNumber = row.bundle_number || (isTesda ? 2 : isDrum ? 3 : isPiano ? 4 : isGuitar ? 5 : undefined);
+      const isLeadGuitar = row.id === 'track-pinoy-lead-guitar-zero-to-hero';
+      const isBundle = Boolean(row.is_bundle ?? (isTesda || isDrum || isPiano || isGuitar || isLeadGuitar));
+      const bundleNumber = row.bundle_number || (isTesda ? 2 : isDrum ? 3 : isPiano ? 4 : isGuitar ? 5 : isLeadGuitar ? 6 : undefined);
       const bundleLabel = row.bundle_label || (
         isTesda 
           ? '★ 2ND OFFICIAL COURSE BUNDLE: TESDA VOCATIONAL MASTERCLASS' 
@@ -207,6 +209,8 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
           ? '★ 4TH OFFICIAL COURSE BUNDLE: PINOY PIANO & CHURCH KEYBOARD MASTERCLASS'
           : isGuitar
           ? '★ 5TH OFFICIAL COURSE BUNDLE: PINOY RHYTHM GUITAR MASTERCLASS'
+          : isLeadGuitar
+          ? '★ 6TH OFFICIAL COURSE BUNDLE: PINOY LEAD GUITAR MASTERCLASS'
           : undefined
       );
 
@@ -224,6 +228,8 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
           ? '★ 4TH COURSE BUNDLE • PINOY PIANO MASTERCLASS'
           : isGuitar
           ? '★ 5TH COURSE BUNDLE • RHYTHM GUITAR'
+          : isLeadGuitar
+          ? '★ 6TH COURSE BUNDLE • LEAD GUITAR'
           : (row.badge || 'New Course'),
         level: row.level || 'Beginner',
         levelIndex: row.level_index !== null && row.level_index !== undefined ? Number(row.level_index) : undefined,
@@ -241,6 +247,8 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
             ? 'Stage-Ready Church Keyboardist & Worship Hero'
             : isGuitar
             ? 'Stage-Ready Pro Rhythm Guitarist & Worship Accompanist'
+            : isLeadGuitar
+            ? 'Stage-Ready Pro Lead Guitarist & Church Soloist'
             : 'Certified Web Developer'
         ),
         isPaid: Boolean(row.is_paid ?? true),
@@ -279,7 +287,7 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
     });
 
     const existingIds = new Set(mergedTeacherAndDb.map(t => t.id));
-    const missingStandardTracks = [...ZERO_TO_HERO_TRACKS, PINOY_DRUM_TRACK, PINOY_PIANO_TRACK, PINOY_GUITAR_TRACK].filter(t => !existingIds.has(t.id));
+    const missingStandardTracks = [...ZERO_TO_HERO_TRACKS, PINOY_DRUM_TRACK, PINOY_PIANO_TRACK, PINOY_GUITAR_TRACK, PINOY_LEAD_GUITAR_TRACK].filter(t => !existingIds.has(t.id));
 
     const combined = [...mergedTeacherAndDb, ...missingStandardTracks].sort((a, b) => {
       if (a.isTeacherCreated && !b.isTeacherCreated) return -1;
@@ -292,7 +300,7 @@ export async function fetchTracksFromDB(): Promise<{ tracks: Track[] | null; err
     return { tracks: combined, error: null };
   } catch (err) {
     const localTeacherTracks = getLocalTeacherTracks();
-    return { tracks: [...localTeacherTracks, ...ZERO_TO_HERO_TRACKS, PINOY_DRUM_TRACK, PINOY_PIANO_TRACK, PINOY_GUITAR_TRACK], error: err };
+    return { tracks: [...localTeacherTracks, ...ZERO_TO_HERO_TRACKS, PINOY_DRUM_TRACK, PINOY_PIANO_TRACK, PINOY_GUITAR_TRACK, PINOY_LEAD_GUITAR_TRACK], error: err };
   }
 }
 
@@ -549,6 +557,11 @@ export async function updateTrackInDB(trackId: string, input: CreateTrackInput):
 }
 
 export async function fetchTrackModulesAndLessons(trackId: string): Promise<ModuleItem[]> {
+  // 00. Check if it's the Lead Guitar track
+  if (trackId === 'track-pinoy-lead-guitar-zero-to-hero' || trackId === PINOY_LEAD_GUITAR_TRACK.id) {
+    return PINOY_LEAD_GUITAR_TRACK.modules || [];
+  }
+
   // 0a. Check if it's the Guitar track
   if (trackId === 'track-pinoy-guitar-zero-to-hero' || trackId === PINOY_GUITAR_TRACK.id) {
     return PINOY_GUITAR_TRACK.modules || [];

@@ -142,6 +142,39 @@ export const TrackDetailModal = ({
       }
     }
 
+    if (modules && modules.length > 0) {
+      for (const mod of modules) {
+        for (const les of mod.lessonItems || []) {
+          if (les.title.toLowerCase() === lessonTitle.toLowerCase() || les.title.includes(lessonTitle) || lessonTitle.includes(les.title)) {
+            setActiveLessonPlan({
+              title: les.title,
+              duration: les.duration || '25 mins',
+              videoUrl: les.video_url || 'https://www.youtube.com/watch?v=kUMe1FH4CHE',
+              videoTitle: les.title,
+              objective: les.objective || 'Master the concepts of this lesson through video instruction and practice.',
+              theoryContent: les.content || '',
+              codeSnippet: les.code_snippet || '',
+              handsOnActivity: les.activity ? {
+                title: les.activity.title || 'Practical Challenge',
+                instructions: Array.isArray(les.activity.instructions) ? les.activity.instructions : [les.activity.instructions || 'Practice the exercises'],
+                starterCode: les.activity.starterCode || '',
+                expectedOutcome: les.activity.expectedOutcome || 'Complete exercise.',
+              } : undefined,
+              googleSheetsAssignment: les.worksheet ? {
+                title: les.worksheet.title || 'Google Sheets Assignment',
+                sheetName: les.worksheet.sheetName || 'Worksheet',
+                description: les.worksheet.description || '',
+                templateUrl: les.worksheet.templateUrl || '',
+                deliverables: les.worksheet.deliverables || [],
+                rubric: les.worksheet.rubric || [],
+              } : undefined,
+            });
+            return;
+          }
+        }
+      }
+    }
+
     for (const mod of HTML_COURSE_DETAILED_MODULES) {
       for (const les of mod.lessons) {
         if (les.title.toLowerCase() === lessonTitle.toLowerCase() || les.title.includes(lessonTitle)) {
@@ -201,7 +234,8 @@ export const TrackDetailModal = ({
     track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2 ||
     track.id === 'track-pinoy-drum-zero-to-hero' || track.bundleNumber === 3 ||
     track.id === 'track-pinoy-piano-zero-to-hero' || track.bundleNumber === 4 ||
-    track.id === 'track-pinoy-guitar-zero-to-hero' || track.bundleNumber === 5;
+    track.id === 'track-pinoy-guitar-zero-to-hero' || track.bundleNumber === 5 ||
+    track.id === 'track-pinoy-lead-guitar-zero-to-hero' || track.bundleNumber === 6;
   const phpPrice = isFree ? 0 : getPhpPrice(track.price || 49);
   const origPhp = track.originalPrice ? getPhpPrice(track.originalPrice) : null;
 

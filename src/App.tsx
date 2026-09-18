@@ -31,6 +31,7 @@ import { TESDA_CSS_TRACK } from './data/tesdaCssNc2CourseData';
 import { PINOY_DRUM_TRACK } from './data/pinoyDrumCourseData';
 import { PINOY_PIANO_TRACK } from './data/pinoyPianoCourseData';
 import { PINOY_GUITAR_TRACK } from './data/pinoyGuitarCourseData';
+import { PINOY_LEAD_GUITAR_TRACK } from './data/pinoyLeadGuitarCourseData';
 
 // =========================================================================
 // COC 1: INSTALLING AND CONFIGURING COMPUTER SYSTEMS (14 Lessons)
@@ -201,6 +202,10 @@ export function App() {
       mods = (PINOY_GUITAR_TRACK.modules && PINOY_GUITAR_TRACK.modules.length > 0)
         ? PINOY_GUITAR_TRACK.modules
         : await fetchTrackModulesAndLessons(track.id);
+    } else if (track.id === 'track-pinoy-lead-guitar-zero-to-hero' || track.bundleNumber === 6) {
+      mods = (PINOY_LEAD_GUITAR_TRACK.modules && PINOY_LEAD_GUITAR_TRACK.modules.length > 0)
+        ? PINOY_LEAD_GUITAR_TRACK.modules
+        : await fetchTrackModulesAndLessons(track.id);
     } else if (track.modules && track.modules.length > 0) {
       mods = track.modules;
     } else {
@@ -218,7 +223,8 @@ export function App() {
       track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2 ||
       track.id === 'track-pinoy-drum-zero-to-hero' || track.bundleNumber === 3 ||
       track.id === 'track-pinoy-piano-zero-to-hero' || track.bundleNumber === 4 ||
-      track.id === 'track-pinoy-guitar-zero-to-hero' || track.bundleNumber === 5;
+      track.id === 'track-pinoy-guitar-zero-to-hero' || track.bundleNumber === 5 ||
+      track.id === 'track-pinoy-lead-guitar-zero-to-hero' || track.bundleNumber === 6;
     
     if (isFree && !currentUser) {
       handleOpenAuth('signup', '', track.id);
@@ -493,6 +499,11 @@ export function App() {
               {(selectedActiveTrack.id === 'track-pinoy-guitar-zero-to-hero' || selectedActiveTrack.bundleNumber === 5) && (
                 <span className="px-3 py-1.5 bg-gradient-to-r from-emerald-950/80 to-teal-950/80 border border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
                   🎸 Pinoy Rhythm Guitar Academy • Zero to Hero Strumming
+                </span>
+              )}
+              {(selectedActiveTrack.id === 'track-pinoy-lead-guitar-zero-to-hero' || selectedActiveTrack.bundleNumber === 6) && (
+                <span className="px-3 py-1.5 bg-gradient-to-r from-rose-950/80 to-amber-950/80 border border-rose-500/40 text-amber-300 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                  🎸 Pinoy Lead Guitar Academy • Zero to Hero Soloing
                 </span>
               )}
               <button
