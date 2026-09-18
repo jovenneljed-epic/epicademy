@@ -1,10 +1,71 @@
 export type CategoryType = 'all' | 'stem' | 'business' | 'creative' | 'humanities' | 'wellness' | 'other';
 
+export type UserRole = 'admin' | 'educator' | 'contributor' | 'student';
+
+export interface RolePermissions {
+  canAccessAccountSettings: boolean;
+  canManageUsers: boolean;
+  canCreateCourses: boolean;
+  canManageFaculty: boolean;
+  canAccessClassroom: boolean;
+  canUseSandbox: boolean;
+  canUseKezjedAi: boolean;
+  canAccessTrb: boolean;
+  canSwitchPerspectives: boolean;
+}
+
+export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
+  admin: {
+    canAccessAccountSettings: true,
+    canManageUsers: true,
+    canCreateCourses: true,
+    canManageFaculty: true,
+    canAccessClassroom: true,
+    canUseSandbox: true,
+    canUseKezjedAi: true,
+    canAccessTrb: true,
+    canSwitchPerspectives: true,
+  },
+  educator: {
+    canAccessAccountSettings: false,
+    canManageUsers: false,
+    canCreateCourses: true,
+    canManageFaculty: true,
+    canAccessClassroom: true,
+    canUseSandbox: true,
+    canUseKezjedAi: true,
+    canAccessTrb: true,
+    canSwitchPerspectives: true,
+  },
+  contributor: {
+    canAccessAccountSettings: false,
+    canManageUsers: false,
+    canCreateCourses: true,
+    canManageFaculty: false,
+    canAccessClassroom: true,
+    canUseSandbox: true,
+    canUseKezjedAi: true,
+    canAccessTrb: true,
+    canSwitchPerspectives: true,
+  },
+  student: {
+    canAccessAccountSettings: false,
+    canManageUsers: false,
+    canCreateCourses: false,
+    canManageFaculty: false,
+    canAccessClassroom: true,
+    canUseSandbox: true,
+    canUseKezjedAi: true,
+    canAccessTrb: true,
+    canSwitchPerspectives: false,
+  },
+};
+
 export interface TeacherProfile {
   id: string;
   email: string;
   fullName: string;
-  role: 'educator' | 'student' | 'admin';
+  role: UserRole;
   specialty: string;
   credentials: string;
   bio: string;

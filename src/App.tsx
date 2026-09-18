@@ -19,8 +19,8 @@ import { TeacherSetupModal } from './components/teachers/TeacherSetupModal';
 import { CheckoutModal } from './components/modals/CheckoutModal';
 import { DeveloperProfileModal } from './components/modals/DeveloperProfileModal';
 import { ApplyTenantModal } from './components/modals/ApplyTenantModal';
-import { getCurrentUser, supabase, fetchTrackModulesAndLessons } from './lib/supabaseClient';
-import type { Track, CommunityDeveloper, ModuleItem } from './types';
+import { getCurrentUser, supabase, fetchTrackModulesAndLessons, getUserRoleByEmail } from './lib/supabaseClient';
+import type { Track, CommunityDeveloper, ModuleItem, UserRole } from './types';
 import { CreateCommunityModal } from './components/modals/CreateCommunityModal';
 import { LessonViewer } from './components/classroom/LessonViewer';
 import { AcademicCredentialsModal } from './components/credentials/AcademicCredentialsModal';
@@ -150,26 +150,45 @@ export function App() {
   const [completedLessonIds, setCompletedLessonIds] = useState<Record<string, boolean>>({});
 
   // Active Supabase user state
-  const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string } | null>({
+    email: 'admin@epicademy.com',
+    role: 'admin',
+  });
+
+  const handleSwitchRole = (newRole: UserRole) => {
+    let email = 'admin@epicademy.com';
+    if (newRole === 'educator') email = 'educator@epicademy.com';
+    else if (newRole === 'contributor') email = 'contributor@epicademy.com';
+    else if (newRole === 'student') email = 'student@epicademy.com';
+
+    setCurrentUser({
+      email,
+      role: newRole,
+    });
+
+    if (newRole === 'student') {
+      setPerspective('student');
+    }
+  };
 
   useEffect(() => {
     getCurrentUser().then((user) => {
-      if (user) {
+      if (user && user.email) {
+        const detectedRole = getUserRoleByEmail(user.email) || user.user_metadata?.role || 'admin';
         setCurrentUser({
           email: user.email,
-          role: user.user_metadata?.role || 'educator',
+          role: detectedRole,
         });
       }
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
+      if (session?.user?.email) {
+        const detectedRole = getUserRoleByEmail(session.user.email) || session.user.user_metadata?.role || 'student';
         setCurrentUser({
           email: session.user.email,
-          role: session.user.user_metadata?.role || 'educator',
+          role: detectedRole,
         });
-      } else {
-        setCurrentUser(null);
       }
     });
 
@@ -355,6 +374,7 @@ export function App() {
         onOpenAccountSettings={() => setIsAccountSettingsOpen(true)}
         currentUser={currentUser}
         onSignOut={() => setCurrentUser(null)}
+        onSwitchRole={handleSwitchRole}
       />
 
       {/* Main Content Sections */}
@@ -526,14 +546,16 @@ export function App() {
               >
                 <span>🏆 {effectiveOverallProgress === 100 ? 'Claim Certificate ↗' : 'Credentials & Transcript'}</span>
               </button>
-              <button
-                onClick={() => setIsAccountSettingsOpen(true)}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
-                title="Manage User Accounts & Permissions"
-              >
-                <Settings className="w-3.5 h-3.5 text-blue-400" />
-                <span>⚙️ Accounts</span>
-              </button>
+              {currentUser?.role === 'admin' && (
+                <button
+                  onClick={() => setIsAccountSettingsOpen(true)}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm animate-in fade-in"
+                  title="Manage User Accounts &amp; Permissions (Admin Only)"
+                >
+                  <Settings className="w-3.5 h-3.5 text-blue-400" />
+                  <span>⚙️ Accounts</span>
+                </button>
+              )}
               <button
                 onClick={() => {
                   setIsClassroomOpen(false);
@@ -942,19 +964,21 @@ export function App() {
         studentEmail={currentUser?.email}
       />
 
-      {/* Account Settings & User Management Modal */}
+      {/* Account Settings & User Management Modal (Strictly Admin Access) */}
       <AccountSettingsModal
         isOpen={isAccountSettingsOpen}
         onClose={() => setIsAccountSettingsOpen(false)}
         currentUserEmail={currentUser?.email}
+        currentUserRole={currentUser?.role}
+        onSwitchToAdmin={() => handleSwitchRole('admin')}
       />
 
-      {/* Floating Quick-Access Account Settings Button */}
-      {!isClassroomOpen && (
+      {/* Floating Quick-Access Account Settings Button - STRICTLY ADMIN ONLY */}
+      {!isClassroomOpen && currentUser?.role === 'admin' && (
         <button
           onClick={() => setIsAccountSettingsOpen(true)}
-          className="fixed bottom-6 right-6 z-40 px-4 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black text-xs sm:text-sm rounded-2xl shadow-2xl flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 transition-all border border-white/20"
-          title="Account Settings & User Management"
+          className="fixed bottom-6 right-6 z-40 px-4 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black text-xs sm:text-sm rounded-2xl shadow-2xl flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95 transition-all border border-white/20 animate-in fade-in"
+          title="Account Settings &amp; User Management (Admin Only)"
         >
           <Settings className="w-4 h-4" />
           <span>⚙️ Account Settings</span>

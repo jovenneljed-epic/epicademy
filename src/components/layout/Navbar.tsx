@@ -11,9 +11,10 @@ import {
   Plus,
   User,
   LogOut,
-  Settings
+  Shield
 } from 'lucide-react';
 import { signOutUser } from '../../lib/supabaseClient';
+import type { UserRole } from '../../types';
 
 interface NavbarProps {
   currentPerspective: 'educator' | 'student';
@@ -28,6 +29,7 @@ interface NavbarProps {
   onOpenAccountSettings?: () => void;
   currentUser?: { email?: string; role?: string } | null;
   onSignOut?: () => void;
+  onSwitchRole?: (role: UserRole) => void;
 }
 
 export const Navbar = ({
@@ -43,10 +45,21 @@ export const Navbar = ({
   onOpenAccountSettings,
   currentUser,
   onSignOut,
+  onSwitchRole,
 }: NavbarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [tracksDropdownOpen, setTracksDropdownOpen] = useState(false);
+  const [roleSwitcherOpen, setRoleSwitcherOpen] = useState(false);
+
+  const role = (currentUser?.role || '').toLowerCase();
+  const isAdmin = role === 'admin';
+  const isEducator = role === 'educator';
+  const isContributor = role === 'contributor';
+  const isStudent = role === 'student';
+
+  const canBuildCourse = !currentUser || isAdmin || isEducator || isContributor;
+  const canAccessFaculty = isAdmin || isEducator;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -216,36 +229,40 @@ export const Navbar = ({
               </button>
             </div>
 
-            {/* Setup Teachers Button */}
-            <button
-              onClick={onOpenTeacherSetup}
-              className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl border border-blue-200 transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
-              title="Faculty & Mentorship Portal"
-            >
-              <User className="w-3.5 h-3.5 text-blue-600" />
-              <span>Faculty</span>
-            </button>
+            {/* Setup Teachers Button (Admins & Educators only) */}
+            {canAccessFaculty && (
+              <button
+                onClick={onOpenTeacherSetup}
+                className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl border border-blue-200 transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+                title="Faculty &amp; Mentorship Portal"
+              >
+                <User className="w-3.5 h-3.5 text-blue-600" />
+                <span>Faculty</span>
+              </button>
+            )}
 
-            {/* Account Settings Button */}
-            {onOpenAccountSettings && (
+            {/* Account Settings Button - STRICTLY ADMIN ONLY */}
+            {isAdmin && onOpenAccountSettings && (
               <button
                 onClick={onOpenAccountSettings}
-                className="px-3.5 py-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer hover:scale-105 shrink-0 border border-white/20"
-                title="Manage User Accounts & Permissions"
+                className="px-3.5 py-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer hover:scale-105 shrink-0 border border-white/20 animate-in fade-in"
+                title="Administrator Security &amp; User Accounts"
               >
-                <Settings className="w-3.5 h-3.5" />
+                <Shield className="w-3.5 h-3.5" />
                 <span>⚙️ Accounts</span>
               </button>
             )}
 
-            {/* Course Studio Button */}
-            <button
-              onClick={onOpenCourseBuilder}
-              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>+ Create Course</span>
-            </button>
+            {/* Course Studio Button (Admin, Educator, Contributor only) */}
+            {canBuildCourse && (
+              <button
+                onClick={onOpenCourseBuilder}
+                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Create Course</span>
+              </button>
+            )}
 
             {/* Become Tenant Button */}
             {onOpenApplyTenant && (
@@ -261,16 +278,118 @@ export const Navbar = ({
 
             {/* User Session or Auth Buttons */}
             {currentUser ? (
-              <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-                <button
-                  onClick={onOpenAccountSettings}
-                  className="flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-blue-50/70 hover:bg-blue-100/80 border border-blue-100 px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
-                  title="Open Account Settings"
-                >
-                  <User className="w-3.5 h-3.5 text-blue-600" />
-                  <span className="max-w-[140px] truncate">Hello, {currentUser.email?.split('@')[0]}!</span>
-                  <Settings className="w-3 h-3 text-slate-400 ml-0.5" />
-                </button>
+              <div className="flex items-center gap-2 pl-2 border-l border-slate-200 relative">
+                {/* User Pill with Role Badge */}
+                <div className="flex items-center gap-1 bg-slate-100/90 border border-slate-200/90 pl-2 pr-1.5 py-1 rounded-xl">
+                  <button
+                    onClick={isAdmin && onOpenAccountSettings ? onOpenAccountSettings : () => setRoleSwitcherOpen(!roleSwitcherOpen)}
+                    className="flex items-center gap-1.5 text-xs font-bold text-slate-800 hover:text-blue-600 transition-colors cursor-pointer"
+                    title={isAdmin ? "Open Admin Account Settings" : "Switch Account Role"}
+                  >
+                    <User className="w-3.5 h-3.5 text-blue-600" />
+                    <span className="max-w-[110px] truncate">{currentUser.email?.split('@')[0]}</span>
+                  </button>
+
+                  {/* Colored Role Pill */}
+                  <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 border ${
+                    isAdmin
+                      ? 'bg-indigo-950 text-indigo-200 border-indigo-500/40'
+                      : isEducator
+                      ? 'bg-purple-950 text-purple-200 border-purple-500/40'
+                      : isContributor
+                      ? 'bg-amber-950 text-amber-200 border-amber-500/40'
+                      : 'bg-blue-950 text-blue-200 border-blue-500/40'
+                  }`}>
+                    {isAdmin && '🛡️ Admin'}
+                    {isEducator && '👨‍🏫 Educator'}
+                    {isContributor && '✍️ Contributor'}
+                    {isStudent && '🎓 Student'}
+                    {!isAdmin && !isEducator && !isContributor && !isStudent && (currentUser.role || 'User')}
+                  </span>
+
+                  {/* Switch Role Dropdown Trigger */}
+                  {onSwitchRole && (
+                    <button
+                      onClick={() => setRoleSwitcherOpen(!roleSwitcherOpen)}
+                      className="p-1 hover:bg-slate-200 text-slate-500 hover:text-slate-900 rounded-lg transition-colors cursor-pointer ml-0.5"
+                      title="Quick Switch Account Role"
+                    >
+                      <ChevronDown className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Role Switcher Menu */}
+                {roleSwitcherOpen && onSwitchRole && (
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 text-white">
+                    <div className="px-3 py-1.5 text-[10px] uppercase font-black tracking-wider text-slate-400 border-b border-slate-800">
+                      ⚡ Quick Test Roles
+                    </div>
+                    <div className="space-y-1 mt-1">
+                      <button
+                        onClick={() => {
+                          onSwitchRole('admin');
+                          setRoleSwitcherOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
+                          isAdmin ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>🛡️</span>
+                          <span>Admin (Full Control)</span>
+                        </span>
+                        {isAdmin && <span>✓</span>}
+                      </button>
+                      <button
+                        onClick={() => {
+                          onSwitchRole('educator');
+                          setRoleSwitcherOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
+                          isEducator ? 'bg-purple-600 text-white' : 'hover:bg-slate-800 text-slate-300'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>👨‍🏫</span>
+                          <span>Educator</span>
+                        </span>
+                        {isEducator && <span>✓</span>}
+                      </button>
+                      <button
+                        onClick={() => {
+                          onSwitchRole('contributor');
+                          setRoleSwitcherOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
+                          isContributor ? 'bg-amber-600 text-white' : 'hover:bg-slate-800 text-slate-300'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>✍️</span>
+                          <span>Contributor</span>
+                        </span>
+                        {isContributor && <span>✓</span>}
+                      </button>
+                      <button
+                        onClick={() => {
+                          onSwitchRole('student');
+                          setRoleSwitcherOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
+                          isStudent ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 text-slate-300'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>🎓</span>
+                          <span>Student</span>
+                        </span>
+                        {isStudent && <span>✓</span>}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <button
                   onClick={handleLogout}
                   className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
@@ -299,22 +418,25 @@ export const Navbar = ({
 
           {/* Mobile Menu & Quick Actions */}
           <div className="flex items-center gap-1.5 lg:hidden">
-            {onOpenAccountSettings && (
+            {/* Mobile Accounts button - STRICTLY ADMIN ONLY */}
+            {isAdmin && onOpenAccountSettings && (
               <button
                 onClick={onOpenAccountSettings}
                 className="px-2.5 py-1.5 text-xs font-black text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-lg flex items-center gap-1 shadow-sm cursor-pointer border border-white/20 shrink-0"
-                title="Account Settings & Permissions"
+                title="Admin Account Settings"
               >
-                <Settings className="w-3 h-3" />
+                <Shield className="w-3 h-3" />
                 <span>⚙️ Accounts</span>
               </button>
             )}
-            <button
-              onClick={onOpenCourseBuilder}
-              className="px-2.5 py-1.5 text-xs font-bold text-white bg-emerald-600 rounded-lg flex items-center gap-1 shrink-0"
-            >
-              <Plus className="w-3 h-3" /> Course
-            </button>
+            {canBuildCourse && (
+              <button
+                onClick={onOpenCourseBuilder}
+                className="px-2.5 py-1.5 text-xs font-bold text-white bg-emerald-600 rounded-lg flex items-center gap-1 shrink-0"
+              >
+                <Plus className="w-3 h-3" /> Course
+              </button>
+            )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
@@ -350,38 +472,43 @@ export const Navbar = ({
           </div>
 
           <div className="space-y-1">
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenTeacherSetup();
-              }}
-              className="w-full text-left px-3 py-2 text-base font-bold text-blue-700 hover:bg-blue-50 rounded-lg flex items-center gap-2"
-            >
-              <User className="w-4 h-4" />
-              <span>👨‍🏫 Faculty Accounts</span>
-            </button>
-            {onOpenAccountSettings && (
+            {canAccessFaculty && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenTeacherSetup();
+                }}
+                className="w-full text-left px-3 py-2 text-base font-bold text-blue-700 hover:bg-blue-50 rounded-lg flex items-center gap-2 cursor-pointer"
+              >
+                <User className="w-4 h-4" />
+                <span>👨‍🏫 Faculty Accounts</span>
+              </button>
+            )}
+            {/* Mobile Drawer Account Settings - STRICTLY ADMIN ONLY */}
+            {isAdmin && onOpenAccountSettings && (
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
                   onOpenAccountSettings();
                 }}
-                className="w-full text-left px-3 py-2 text-base font-bold text-slate-700 hover:bg-slate-100 rounded-lg flex items-center gap-2 cursor-pointer"
+                className="w-full text-left px-3 py-2 text-base font-bold text-purple-700 hover:bg-purple-50 rounded-lg flex items-center gap-2 cursor-pointer"
               >
-                <Settings className="w-4 h-4 text-slate-600" />
-                <span>⚙️ Account Settings &amp; Access</span>
+                <Shield className="w-4 h-4 text-purple-600" />
+                <span>⚙️ Account Settings (Admin)</span>
               </button>
             )}
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenCourseBuilder();
-              }}
-              className="w-full text-left px-3 py-2 text-base font-bold text-emerald-600 hover:bg-emerald-50 rounded-lg flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>+ Build New Course</span>
-            </button>
+            {canBuildCourse && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenCourseBuilder();
+                }}
+                className="w-full text-left px-3 py-2 text-base font-bold text-emerald-600 hover:bg-emerald-50 rounded-lg flex items-center gap-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Build New Course</span>
+              </button>
+            )}
             {onOpenTuition && (
               <button
                 onClick={() => {
@@ -426,14 +553,75 @@ export const Navbar = ({
 
           <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
             {currentUser ? (
-              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                <span className="text-xs font-bold text-slate-800">{currentUser.email}</span>
-                <button
-                  onClick={handleLogout}
-                  className="text-xs font-bold text-red-600"
-                >
-                  Sign Out
-                </button>
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <User className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span className="text-xs font-bold text-slate-800 truncate">{currentUser.email}</span>
+                  </div>
+                  <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-full border ${
+                    isAdmin
+                      ? 'bg-indigo-950 text-indigo-200 border-indigo-500/40'
+                      : isEducator
+                      ? 'bg-purple-950 text-purple-200 border-purple-500/40'
+                      : isContributor
+                      ? 'bg-amber-950 text-amber-200 border-amber-500/40'
+                      : 'bg-blue-950 text-blue-200 border-blue-500/40'
+                  }`}>
+                    {isAdmin ? '🛡️ Admin' : isEducator ? '👨‍🏫 Educator' : isContributor ? '✍️ Contributor' : '🎓 Student'}
+                  </span>
+                </div>
+
+                {/* Mobile Quick Role Switcher */}
+                {onSwitchRole && (
+                  <div className="pt-1.5 border-t border-slate-200 grid grid-cols-2 gap-1 text-[11px] font-bold">
+                    <button
+                      onClick={() => {
+                        onSwitchRole('admin');
+                        setMobileMenuOpen(false);
+                      }}
+                      className="px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-left cursor-pointer"
+                    >
+                      🛡️ Test Admin
+                    </button>
+                    <button
+                      onClick={() => {
+                        onSwitchRole('educator');
+                        setMobileMenuOpen(false);
+                      }}
+                      className="px-2 py-1 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 text-left cursor-pointer"
+                    >
+                      👨‍🏫 Test Educator
+                    </button>
+                    <button
+                      onClick={() => {
+                        onSwitchRole('contributor');
+                        setMobileMenuOpen(false);
+                      }}
+                      className="px-2 py-1 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 text-left cursor-pointer"
+                    >
+                      ✍️ Test Contributor
+                    </button>
+                    <button
+                      onClick={() => {
+                        onSwitchRole('student');
+                        setMobileMenuOpen(false);
+                      }}
+                      className="px-2 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-left cursor-pointer"
+                    >
+                      🎓 Test Student
+                    </button>
+                  </div>
+                )}
+
+                <div className="pt-1 flex justify-end">
+                  <button
+                    onClick={handleLogout}
+                    className="text-xs font-bold text-red-600 hover:text-red-700 cursor-pointer"
+                  >
+                    Sign Out
+                  </button>
+                </div>
               </div>
             ) : (
               <>

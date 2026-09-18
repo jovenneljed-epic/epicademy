@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { X, CheckCircle2, GraduationCap, ArrowRight, ShieldCheck, Sparkles, AlertCircle, Database } from 'lucide-react';
-import { signUpUser, signInUser } from '../../lib/supabaseClient';
+import { signUpUser, signInUser, getUserRoleByEmail } from '../../lib/supabaseClient';
+import type { UserRole } from '../../types';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -23,7 +24,7 @@ export const AuthModal = ({
   const [mode, setMode] = useState<'signup' | 'signin'>(initialMode);
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'educator' | 'student'>('educator');
+  const [role, setRole] = useState<UserRole>('student');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -45,7 +46,7 @@ export const AuthModal = ({
           setIsSuccess(true);
           const msg = data.user?.identities && data.user.identities.length === 0
             ? 'An account with this email already exists. Try signing in!'
-            : `Account created in Supabase! Role: ${role === 'educator' ? 'Educator' : 'Student'}. Check your email if verification is required.`;
+            : `Account created successfully! Role: ${role.toUpperCase()}. Welcome to Epicademy.`;
           setSuccessMessage(msg);
           if (onAuthSuccess) onAuthSuccess(email, role);
         }
@@ -54,9 +55,10 @@ export const AuthModal = ({
         if (error) {
           setErrorMessage(error.message);
         } else {
+          const userRole = getUserRoleByEmail(email) || data.user?.user_metadata?.role || 'student';
           setIsSuccess(true);
-          setSuccessMessage(`Welcome back! Signed in to your live Supabase account (${data.user?.email}).`);
-          if (onAuthSuccess) onAuthSuccess(email, data.user?.user_metadata?.role || 'student');
+          setSuccessMessage(`Welcome back! Signed in with role: ${userRole.toUpperCase()}.`);
+          if (onAuthSuccess) onAuthSuccess(email, userRole);
         }
       }
     } catch (err: any) {
@@ -141,27 +143,108 @@ export const AuthModal = ({
               </div>
             )}
 
+            {/* Quick Demo Test Accounts Bar */}
+            <div className="mb-4 p-3 bg-slate-900 border border-slate-800 rounded-2xl text-white">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase font-black tracking-wider text-slate-400">
+                  ⚡ 1-Click Test Accounts
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono">Instant Fill</span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 text-xs font-bold">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('admin@epicademy.com');
+                    setPassword('password123');
+                    setRole('admin');
+                  }}
+                  className="px-2 py-1.5 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-500/40 text-indigo-200 flex items-center justify-between cursor-pointer transition-colors"
+                >
+                  <span>🛡️ Admin</span>
+                  <span className="text-[9px] text-indigo-400 font-mono">Full</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('educator@epicademy.com');
+                    setPassword('password123');
+                    setRole('educator');
+                  }}
+                  className="px-2 py-1.5 rounded-xl bg-purple-950/80 hover:bg-purple-900 border border-purple-500/40 text-purple-200 flex items-center justify-between cursor-pointer transition-colors"
+                >
+                  <span>👨‍🏫 Educator</span>
+                  <span className="text-[9px] text-purple-400 font-mono">Teach</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('contributor@epicademy.com');
+                    setPassword('password123');
+                    setRole('contributor');
+                  }}
+                  className="px-2 py-1.5 rounded-xl bg-amber-950/80 hover:bg-amber-900 border border-amber-500/40 text-amber-200 flex items-center justify-between cursor-pointer transition-colors"
+                >
+                  <span>✍️ Contributor</span>
+                  <span className="text-[9px] text-amber-400 font-mono">Author</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('student@epicademy.com');
+                    setPassword('password123');
+                    setRole('student');
+                  }}
+                  className="px-2 py-1.5 rounded-xl bg-blue-950/80 hover:bg-blue-900 border border-blue-500/40 text-blue-200 flex items-center justify-between cursor-pointer transition-colors"
+                >
+                  <span>🎓 Student</span>
+                  <span className="text-[9px] text-blue-400 font-mono">Learn</span>
+                </button>
+              </div>
+            </div>
+
             {/* Role Selection (Signup only) */}
             {mode === 'signup' && (
-              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl mb-4 text-xs font-semibold">
-                <button
-                  type="button"
-                  onClick={() => setRole('educator')}
-                  className={`py-2 rounded-lg transition-all cursor-pointer ${
-                    role === 'educator' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600'
-                  }`}
-                >
-                  👨‍🏫 I Want to Teach
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole('student')}
-                  className={`py-2 rounded-lg transition-all cursor-pointer ${
-                    role === 'student' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600'
-                  }`}
-                >
-                  🎓 I Want to Learn
-                </button>
+              <div className="mb-4">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Select Account Role</label>
+                <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setRole('student')}
+                    className={`py-2 px-2.5 rounded-lg transition-all cursor-pointer text-left flex items-center gap-1.5 ${
+                      role === 'student' ? 'bg-white text-blue-700 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>🎓 Student</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole('contributor')}
+                    className={`py-2 px-2.5 rounded-lg transition-all cursor-pointer text-left flex items-center gap-1.5 ${
+                      role === 'contributor' ? 'bg-white text-amber-700 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>✍️ Contributor</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole('educator')}
+                    className={`py-2 px-2.5 rounded-lg transition-all cursor-pointer text-left flex items-center gap-1.5 ${
+                      role === 'educator' ? 'bg-white text-purple-700 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>👨‍🏫 Educator</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole('admin')}
+                    className={`py-2 px-2.5 rounded-lg transition-all cursor-pointer text-left flex items-center gap-1.5 ${
+                      role === 'admin' ? 'bg-white text-indigo-700 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>🛡️ Administrator</span>
+                  </button>
+                </div>
               </div>
             )}
 

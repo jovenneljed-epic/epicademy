@@ -25,29 +25,34 @@ import {
   updateUserRole,
   type UserProfileItem 
 } from '../../lib/supabaseClient';
+import type { UserRole } from '../../types';
 
 interface AccountSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUserEmail?: string | null;
+  currentUserRole?: string | null;
+  onSwitchToAdmin?: () => void;
 }
 
 export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   isOpen,
   onClose,
   currentUserEmail,
+  currentUserRole,
+  onSwitchToAdmin,
 }) => {
   const [profiles, setProfiles] = useState<UserProfileItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'disabled' | 'student' | 'educator'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'admin' | 'educator' | 'contributor' | 'student' | 'active' | 'disabled'>('all');
   
   // Add Account Form State
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
   const [newFullName, setNewFullName] = useState<string>('');
   const [newEmail, setNewEmail] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
-  const [newRole, setNewRole] = useState<'student' | 'educator'>('student');
+  const [newRole, setNewRole] = useState<UserRole>('student');
   const [newSpecialty, setNewSpecialty] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -84,9 +89,11 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     const total = profiles.length;
     const active = profiles.filter(p => !p.isDisabled).length;
     const disabled = profiles.filter(p => p.isDisabled).length;
+    const admins = profiles.filter(p => p.role === 'admin').length;
     const educators = profiles.filter(p => p.role === 'educator').length;
+    const contributors = profiles.filter(p => p.role === 'contributor').length;
     const students = profiles.filter(p => p.role === 'student').length;
-    return { total, active, disabled, educators, students };
+    return { total, active, disabled, admins, educators, contributors, students };
   }, [profiles]);
 
   // Filtered profiles
@@ -102,8 +109,10 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
 
       if (statusFilter === 'active') return !p.isDisabled;
       if (statusFilter === 'disabled') return p.isDisabled;
-      if (statusFilter === 'student') return p.role === 'student';
+      if (statusFilter === 'admin') return p.role === 'admin';
       if (statusFilter === 'educator') return p.role === 'educator';
+      if (statusFilter === 'contributor') return p.role === 'contributor';
+      if (statusFilter === 'student') return p.role === 'student';
       return true;
     });
   }, [profiles, searchQuery, statusFilter]);
@@ -200,7 +209,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     }
   };
 
-  const handleRoleChange = async (user: UserProfileItem, newRole: 'student' | 'educator') => {
+  const handleRoleChange = async (user: UserProfileItem, newRole: UserRole) => {
     setActionLoadingId(user.id);
     try {
       const { success } = await updateUserRole(user.id, user.email, newRole);
@@ -218,6 +227,70 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   };
 
   if (!isOpen) return null;
+
+  const isAdmin = currentUserRole === 'admin';
+
+  // SECURITY GUARD: Only Admin can access Account Settings
+  if (!isAdmin) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="relative w-full max-w-md bg-slate-900 border border-rose-500/40 rounded-3xl shadow-2xl p-6 sm:p-8 text-center space-y-5 text-white">
+          <button
+            onClick={onClose}
+            className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          <div className="w-16 h-16 rounded-3xl bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center mx-auto shadow-lg shadow-rose-500/10">
+            <Lock className="w-8 h-8" />
+          </div>
+
+          <div>
+            <span className="text-[10px] uppercase tracking-widest font-black text-rose-400 bg-rose-950/80 border border-rose-500/30 px-3 py-1 rounded-full">
+              Access Restricted
+            </span>
+            <h3 className="text-xl font-black text-white mt-3">Administrator Privileges Required</h3>
+            <p className="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed">
+              Only platform administrators are authorized to access the Account Settings and Security Center.
+            </p>
+            <div className="mt-3 p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-xs text-left space-y-1">
+              <div className="text-slate-500 text-[11px] font-bold uppercase">Current Session:</div>
+              <div className="text-slate-200 font-mono font-bold truncate">
+                {currentUserEmail || 'Anonymous Guest'}
+              </div>
+              <div className="text-amber-400 text-xs font-semibold">
+                Role: <span className="uppercase font-bold">{currentUserRole || 'Guest'}</span> (Requires: ADMIN)
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+            {onSwitchToAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  onSwitchToAdmin();
+                  loadProfiles();
+                }}
+                className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-xs font-black rounded-xl shadow-lg cursor-pointer transition-all flex items-center justify-center gap-2"
+              >
+                <Shield className="w-4 h-4" />
+                <span>Switch to Admin Account</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full sm:w-auto px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl cursor-pointer transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -250,34 +323,46 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
         </div>
 
         {/* Metrics Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 p-5 bg-slate-950/40 border-b border-slate-800/80 shrink-0">
-          <div className="bg-slate-800/50 border border-slate-800 rounded-2xl p-3 flex flex-col">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Accounts</span>
-            <span className="text-2xl font-black text-white mt-1">{metrics.total}</span>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 p-4 bg-slate-950/40 border-b border-slate-800/80 shrink-0">
+          <div className="bg-slate-800/50 border border-slate-800 rounded-2xl p-2.5 flex flex-col">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total</span>
+            <span className="text-xl font-black text-white mt-0.5">{metrics.total}</span>
           </div>
-          <div className="bg-emerald-950/30 border border-emerald-500/30 rounded-2xl p-3 flex flex-col">
-            <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+          <div className="bg-emerald-950/30 border border-emerald-500/30 rounded-2xl p-2.5 flex flex-col">
+            <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" /> Active
             </span>
-            <span className="text-2xl font-black text-emerald-400 mt-1">{metrics.active}</span>
+            <span className="text-xl font-black text-emerald-400 mt-0.5">{metrics.active}</span>
           </div>
-          <div className="bg-rose-950/30 border border-rose-500/30 rounded-2xl p-3 flex flex-col">
-            <span className="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1">
+          <div className="bg-rose-950/30 border border-rose-500/30 rounded-2xl p-2.5 flex flex-col">
+            <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1">
               <UserX className="w-3 h-3" /> Disabled
             </span>
-            <span className="text-2xl font-black text-rose-400 mt-1">{metrics.disabled}</span>
+            <span className="text-xl font-black text-rose-400 mt-0.5">{metrics.disabled}</span>
           </div>
-          <div className="bg-purple-950/30 border border-purple-500/30 rounded-2xl p-3 flex flex-col">
-            <span className="text-[11px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1">
+          <div className="bg-indigo-950/30 border border-indigo-500/30 rounded-2xl p-2.5 flex flex-col">
+            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1">
+              <Shield className="w-3 h-3" /> Admins
+            </span>
+            <span className="text-xl font-black text-indigo-300 mt-0.5">{metrics.admins}</span>
+          </div>
+          <div className="bg-purple-950/30 border border-purple-500/30 rounded-2xl p-2.5 flex flex-col">
+            <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1">
               <GraduationCap className="w-3 h-3" /> Educators
             </span>
-            <span className="text-2xl font-black text-purple-300 mt-1">{metrics.educators}</span>
+            <span className="text-xl font-black text-purple-300 mt-0.5">{metrics.educators}</span>
           </div>
-          <div className="bg-blue-950/30 border border-blue-500/30 rounded-2xl p-3 flex flex-col col-span-2 sm:col-span-1">
-            <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
+          <div className="bg-amber-950/30 border border-amber-500/30 rounded-2xl p-2.5 flex flex-col">
+            <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> Contributors
+            </span>
+            <span className="text-xl font-black text-amber-300 mt-0.5">{metrics.contributors}</span>
+          </div>
+          <div className="bg-blue-950/30 border border-blue-500/30 rounded-2xl p-2.5 flex flex-col col-span-2 sm:col-span-1">
+            <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
               <UserIcon className="w-3 h-3" /> Students
             </span>
-            <span className="text-2xl font-black text-blue-300 mt-1">{metrics.students}</span>
+            <span className="text-xl font-black text-blue-300 mt-0.5">{metrics.students}</span>
           </div>
         </div>
 
@@ -329,6 +414,38 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 All ({profiles.length})
               </button>
               <button
+                onClick={() => setStatusFilter('admin')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 ${
+                  statusFilter === 'admin' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                Admins ({metrics.admins})
+              </button>
+              <button
+                onClick={() => setStatusFilter('educator')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 ${
+                  statusFilter === 'educator' ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                Educators ({metrics.educators})
+              </button>
+              <button
+                onClick={() => setStatusFilter('contributor')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 ${
+                  statusFilter === 'contributor' ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                Contributors ({metrics.contributors})
+              </button>
+              <button
+                onClick={() => setStatusFilter('student')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 ${
+                  statusFilter === 'student' ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                Students ({metrics.students})
+              </button>
+              <button
                 onClick={() => setStatusFilter('active')}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 ${
                   statusFilter === 'active' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
@@ -343,22 +460,6 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 }`}
               >
                 Disabled ({metrics.disabled})
-              </button>
-              <button
-                onClick={() => setStatusFilter('educator')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 ${
-                  statusFilter === 'educator' ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
-                }`}
-              >
-                Educators ({metrics.educators})
-              </button>
-              <button
-                onClick={() => setStatusFilter('student')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 ${
-                  statusFilter === 'student' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
-                }`}
-              >
-                Students ({metrics.students})
               </button>
 
               <button
@@ -440,11 +541,13 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                   <label className="block text-xs font-bold text-slate-300 mb-1">Account Role</label>
                   <select
                     value={newRole}
-                    onChange={e => setNewRole(e.target.value as 'student' | 'educator')}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
+                    onChange={e => setNewRole(e.target.value as UserRole)}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500 cursor-pointer"
                   >
-                    <option value="student">🎓 Student (Learner)</option>
-                    <option value="educator">👨‍🏫 Educator / Faculty Member</option>
+                    <option value="student">🎓 Student (Learner / Trainee)</option>
+                    <option value="contributor">✍️ Contributor (Course &amp; Lesson Author)</option>
+                    <option value="educator">👨‍🏫 Educator (Faculty &amp; Instructor)</option>
+                    <option value="admin">🛡️ Admin (System Administrator - Full Access)</option>
                   </select>
                 </div>
 
@@ -542,16 +645,22 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                             <div className="relative inline-block">
                               <select
                                 value={user.role}
-                                onChange={e => handleRoleChange(user, e.target.value as 'student' | 'educator')}
+                                onChange={e => handleRoleChange(user, e.target.value as UserRole)}
                                 disabled={isBusy}
                                 className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border cursor-pointer focus:outline-none appearance-none pr-4 ${
-                                  user.role === 'educator'
-                                    ? 'bg-purple-950 text-purple-300 border-purple-500/30'
-                                    : 'bg-blue-950 text-blue-300 border-blue-500/30'
+                                  user.role === 'admin'
+                                    ? 'bg-indigo-950 text-indigo-300 border-indigo-500/40 font-black'
+                                    : user.role === 'educator'
+                                    ? 'bg-purple-950 text-purple-300 border-purple-500/40'
+                                    : user.role === 'contributor'
+                                    ? 'bg-amber-950 text-amber-300 border-amber-500/40'
+                                    : 'bg-blue-950 text-blue-300 border-blue-500/40'
                                 }`}
                               >
-                                <option value="student">Student</option>
-                                <option value="educator">Educator</option>
+                                <option value="admin">🛡️ Admin</option>
+                                <option value="educator">👨‍🏫 Educator</option>
+                                <option value="contributor">✍️ Contributor</option>
+                                <option value="student">🎓 Student</option>
                               </select>
                               <ChevronDown className="w-2.5 h-2.5 absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                             </div>
