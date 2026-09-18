@@ -155,7 +155,14 @@ export function App() {
     try {
       const stored = localStorage.getItem('epicademy_active_user');
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (parsed?.email) {
+          const autoRole = getUserRoleByEmail(parsed.email);
+          if (autoRole === 'admin') {
+            parsed.role = 'admin';
+          }
+        }
+        return parsed;
       }
     } catch {
       // Fallback
@@ -190,11 +197,7 @@ export function App() {
   };
 
   const handleSwitchRole = (newRole: UserRole) => {
-    let email = 'admin@epicademy.com';
-    if (newRole === 'educator') email = 'educator@epicademy.com';
-    else if (newRole === 'contributor') email = 'contributor@epicademy.com';
-    else if (newRole === 'student') email = 'student@epicademy.com';
-
+    const email = currentUser?.email || `${newRole}@epicademy.com`;
     const userObj = { email, role: newRole };
     setCurrentUser(userObj);
     try {

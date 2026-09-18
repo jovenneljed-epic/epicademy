@@ -279,6 +279,14 @@ export function getLocalProfiles(): UserProfileItem[] {
         modified = true;
       }
     }
+
+    for (const p of list) {
+      if (p.email.toLowerCase().includes('jovenneljed') || p.email.toLowerCase().includes('admin')) {
+        p.role = 'admin';
+        modified = true;
+      }
+    }
+
     if (modified || !raw) {
       localStorage.setItem(LOCAL_ACCOUNTS_KEY, JSON.stringify(list));
     }
@@ -291,6 +299,7 @@ export function getLocalProfiles(): UserProfileItem[] {
 export function getUserRoleByEmail(email?: string | null): UserRole {
   if (!email) return 'student';
   const clean = email.toLowerCase().trim();
+  if (clean.includes('admin') || clean.includes('jovenneljed')) return 'admin';
   const profiles = getLocalProfiles();
   const found = profiles.find(p => p.email.toLowerCase() === clean);
   if (found) return found.role;
