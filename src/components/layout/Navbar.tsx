@@ -27,6 +27,7 @@ interface NavbarProps {
   onOpenDossier?: () => void;
   onOpenTuition?: () => void;
   onOpenAccountSettings?: () => void;
+  onOpenGradebook?: () => void;
   currentUser?: { email?: string; role?: string } | null;
   onSignOut?: () => void;
   onSwitchRole?: (role: UserRole) => void;
@@ -43,6 +44,7 @@ export const Navbar = ({
   onOpenDossier,
   onOpenTuition,
   onOpenAccountSettings,
+  onOpenGradebook,
   currentUser,
   onSignOut,
   onSwitchRole,
@@ -202,6 +204,15 @@ export const Navbar = ({
                 </button>
               )}
 
+              {canAccessFaculty && onOpenGradebook && (
+                <button
+                  onClick={onOpenGradebook}
+                  className="px-2.5 py-2 font-bold text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                >
+                  📊 Gradebook
+                </button>
+              )}
+
               <a href="#pricing" className="px-2.5 py-2 text-slate-700 hover:text-blue-600 rounded-lg transition-colors">
                 Pricing
               </a>
@@ -226,6 +237,11 @@ export const Navbar = ({
                   {canAccessFaculty && (
                     <button onClick={() => { setExploreDropdownOpen(false); onOpenTeacherSetup(); }} className="w-full text-left px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5">
                       <span>👨‍🏫 Faculty Portal</span>
+                    </button>
+                  )}
+                  {canAccessFaculty && onOpenGradebook && (
+                    <button onClick={() => { setExploreDropdownOpen(false); onOpenGradebook(); }} className="w-full text-left px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5">
+                      <span>📊 Student Gradebook</span>
                     </button>
                   )}
                   <a href="#community" onClick={() => setExploreDropdownOpen(false)} className="block px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors">
@@ -714,6 +730,20 @@ export const Navbar = ({
               >
                 <User className="w-4 h-4" />
                 <span>👨‍🏫 Faculty Portal</span>
+              </button>
+            )}
+
+            {/* Student Gradebook */}
+            {canAccessFaculty && onOpenGradebook && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenGradebook();
+                }}
+                className="w-full text-left px-3 py-2 text-indigo-700 hover:bg-indigo-50 rounded-xl flex items-center gap-2 cursor-pointer font-bold"
+              >
+                <GraduationCap className="w-4 h-4" />
+                <span>📊 Student Gradebook &amp; Roster</span>
               </button>
             )}
 

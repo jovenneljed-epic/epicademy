@@ -29,6 +29,7 @@ import { TesdaTrbModal } from './components/classroom/TesdaTrbModal';
 import { StudentDossierModal } from './components/profile/StudentDossierModal';
 import { AccountSettingsModal } from './components/modals/AccountSettingsModal';
 import { ContributorAccessModal } from './components/modals/ContributorAccessModal';
+import { GradebookModal } from './components/gradebook/GradebookModal';
 import { Settings } from 'lucide-react';
 import { ZERO_TO_HERO_TRACKS } from './data/zeroToHeroCoursesData';
 import { TESDA_CSS_TRACK } from './data/tesdaCssNc2CourseData';
@@ -146,6 +147,9 @@ export function App() {
   const [showTesdaTrbModal, setShowTesdaTrbModal] = useState(false);
   const [showDossierModal, setShowDossierModal] = useState(false);
   const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
+  const [isGradebookOpen, setIsGradebookOpen] = useState(false);
+  const [dossierStudent, setDossierStudent] = useState<{ name: string; email: string } | null>(null);
+  const [certStudent, setCertStudent] = useState<{ trackId?: string; name?: string; email?: string } | null>(null);
 
   // Dynamic Teacher / Custom Tracks state in Classroom
   const [activeTrackModules, setActiveTrackModules] = useState<ModuleItem[]>([]);
@@ -494,6 +498,7 @@ export function App() {
           setCheckoutModalOpen(true);
         }}
         onOpenAccountSettings={() => setIsAccountSettingsOpen(true)}
+        onOpenGradebook={() => setIsGradebookOpen(true)}
         currentUser={currentUser}
         onSignOut={handleSignOut}
         onSwitchRole={handleSwitchRole}
@@ -1085,9 +1090,13 @@ export function App() {
       {/* Official Academic Credentials & Verification Suite */}
       <AcademicCredentialsModal
         isOpen={showCertificateModal}
-        onClose={() => setShowCertificateModal(false)}
-        track={selectedActiveTrack}
-        studentEmail={currentUser?.email}
+        onClose={() => {
+          setShowCertificateModal(false);
+          setCertStudent(null);
+        }}
+        track={certStudent?.trackId ? ({ id: certStudent.trackId, title: certStudent.trackId } as any) : selectedActiveTrack}
+        studentName={certStudent?.name}
+        studentEmail={certStudent?.email || currentUser?.email}
       />
 
       {/* TESDA Trainee's Record Book (TRB) */}
@@ -1100,8 +1109,12 @@ export function App() {
       {/* Student Academic Dossier & Career Portfolio */}
       <StudentDossierModal
         isOpen={showDossierModal}
-        onClose={() => setShowDossierModal(false)}
-        studentEmail={currentUser?.email}
+        onClose={() => {
+          setShowDossierModal(false);
+          setDossierStudent(null);
+        }}
+        studentName={dossierStudent?.name}
+        studentEmail={dossierStudent?.email || currentUser?.email}
       />
 
       {/* Account Settings & User Management Modal (Strictly Admin Access) */}
@@ -1111,6 +1124,21 @@ export function App() {
         currentUserEmail={currentUser?.email}
         currentUserRole={currentUser?.role}
         onSwitchToAdmin={() => handleSwitchRole('admin')}
+      />
+
+      {/* Student Gradebook & Official Roster Management Modal */}
+      <GradebookModal
+        isOpen={isGradebookOpen}
+        onClose={() => setIsGradebookOpen(false)}
+        currentUser={currentUser}
+        onOpenDossier={(name, email) => {
+          setDossierStudent({ name, email });
+          setShowDossierModal(true);
+        }}
+        onOpenCredentials={(trackId, name, email) => {
+          setCertStudent({ trackId, name, email });
+          setShowCertificateModal(true);
+        }}
       />
 
     </div>

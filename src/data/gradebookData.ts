@@ -223,3 +223,89 @@ export function computeWeightedGrade(
 
   return { finalNumericGrade, letterGrade, gpa };
 }
+
+export function computeAcademicStanding(
+  finalNumericGrade: number
+): StudentGradeRecord['academicStanding'] {
+  if (finalNumericGrade >= 97) return 'Summa Cum Laude';
+  if (finalNumericGrade >= 94) return 'Magna Cum Laude';
+  if (finalNumericGrade >= 90) return 'Cum Laude';
+  if (finalNumericGrade >= 75) return 'Good Standing';
+  return 'Academic Probation';
+}
+
+export function computePhilippineGrade(finalNumericGrade: number): {
+  phGrade: string;
+  description: string;
+} {
+  if (finalNumericGrade >= 97) return { phGrade: '1.00', description: 'Excellent' };
+  if (finalNumericGrade >= 94) return { phGrade: '1.25', description: 'Superior' };
+  if (finalNumericGrade >= 91) return { phGrade: '1.50', description: 'Very Good' };
+  if (finalNumericGrade >= 88) return { phGrade: '1.75', description: 'Good' };
+  if (finalNumericGrade >= 85) return { phGrade: '2.00', description: 'Above Average' };
+  if (finalNumericGrade >= 82) return { phGrade: '2.25', description: 'Average' };
+  if (finalNumericGrade >= 79) return { phGrade: '2.50', description: 'Fair' };
+  if (finalNumericGrade >= 76) return { phGrade: '2.75', description: 'Passing' };
+  if (finalNumericGrade >= 75) return { phGrade: '3.00', description: 'Passed' };
+  return { phGrade: '5.00', description: 'Failed / Incomplete' };
+}
+
+export function exportRosterToCSV(roster: StudentGradeRecord[], cohortName: string = 'All_Cohorts') {
+  const headers = [
+    'Student ID',
+    'Student Name',
+    'Email',
+    'Cohort',
+    'Track Title',
+    'Progress (%)',
+    'Activities Score',
+    'Exams Score (30%)',
+    'Worksheets Score (20%)',
+    'Attendance (%) (10%)',
+    'Final Grade (%)',
+    'Letter Grade',
+    'US GPA (4.0)',
+    'PH Grade (1.00-5.00)',
+    'Academic Standing',
+    'Certificate Issued',
+    'Certificate ID',
+    'Last Active'
+  ];
+
+  const rows = roster.map(s => {
+    const ph = computePhilippineGrade(s.finalNumericGrade);
+    return [
+      `"${s.id}"`,
+      `"${s.studentName.replace(/"/g, '""')}"`,
+      `"${s.email}"`,
+      `"${s.cohortId}"`,
+      `"${s.trackTitle.replace(/"/g, '""')}"`,
+      s.progressPercent,
+      s.completedActivities,
+      s.examAverage,
+      s.worksheetsScore,
+      s.attendancePercent,
+      s.finalNumericGrade,
+      s.letterGrade,
+      s.gpa,
+      ph.phGrade,
+      `"${s.academicStanding}"`,
+      s.certificateIssued ? 'YES' : 'NO',
+      `"${s.certificateId || 'N/A'}"`,
+      `"${s.lastActive}"`
+    ].join(',');
+  });
+
+  const csvContent = [headers.join(','), ...rows].join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const sanitizedCohort = cohortName.replace(/[^a-zA-Z0-9_-]/g, '_');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `epicademy_gradebook_${sanitizedCohort}_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
