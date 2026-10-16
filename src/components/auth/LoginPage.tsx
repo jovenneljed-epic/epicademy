@@ -65,39 +65,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const handleInstantSignIn = async (targetEmail: string, targetRole: UserRole) => {
-    setIsLoading(true);
-    setErrorMessage(null);
-    setEmail(targetEmail);
-    setPassword('password123');
-    setRole(targetRole);
-
-    try {
-      const { data, error } = await signInUser(targetEmail, 'password123');
-      if (error) {
-        setErrorMessage(error.message);
-      } else {
-        const resolvedRole = getUserRoleByEmail(targetEmail) || data.user?.user_metadata?.role || targetRole;
-        if (resolvedRole === 'student') {
-          enrollStudentInRoster({
-            studentName: 'STUDENT SCHOLAR',
-            email: targetEmail,
-            cohortId: selectedCohortId,
-            trackId: selectedTrackId,
-            trackTitle: ENROLLMENT_TRACKS.find(t => t.id === selectedTrackId)?.title || ENROLLMENT_TRACKS[0].title
-          });
-        }
-        setSuccessMessage(`Welcome back! Unlocking platform as ${resolvedRole.toUpperCase()}...`);
-        setTimeout(() => {
-          onAuthSuccess(targetEmail, resolvedRole);
-        }, 300);
-      }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Unexpected login error.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -349,56 +316,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </button>
               </div>
 
-              {/* ⚡ 1-Click Instant Test Accounts */}
-              <div className="mb-5 p-3.5 bg-slate-950/90 border border-slate-800/90 rounded-2xl space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-amber-400" />
-                    <span>⚡ 1-Click Test Roles</span>
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-mono">Instant Unlock</span>
+              {/* Live Authentication Notice */}
+              <div className="mb-4 p-3 bg-slate-900/90 border border-slate-800 rounded-2xl flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                  <Shield className="w-4 h-4" />
                 </div>
-                <div className="grid grid-cols-2 gap-1.5 text-xs font-bold">
-                  <button
-                    type="button"
-                    disabled={isLoading}
-                    onClick={() => handleInstantSignIn('admin@epicademy.com', 'admin')}
-                    className="p-2 rounded-xl bg-indigo-950/70 hover:bg-indigo-900/90 border border-indigo-500/40 text-indigo-200 flex items-center justify-between cursor-pointer transition-all hover:scale-[1.02] active:scale-98 text-left"
-                    title="Sign in as Superadmin (Only role with Account Settings)"
-                  >
-                    <span>🛡️ Admin</span>
-                    <span className="text-[9px] text-indigo-400 font-mono">Full</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isLoading}
-                    onClick={() => handleInstantSignIn('educator@epicademy.com', 'educator')}
-                    className="p-2 rounded-xl bg-purple-950/70 hover:bg-purple-900/90 border border-purple-500/40 text-purple-200 flex items-center justify-between cursor-pointer transition-all hover:scale-[1.02] active:scale-98 text-left"
-                    title="Sign in as Educator (Course Builder & Faculty)"
-                  >
-                    <span>👨‍🏫 Educator</span>
-                    <span className="text-[9px] text-purple-400 font-mono">Teach</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isLoading}
-                    onClick={() => handleInstantSignIn('contributor@epicademy.com', 'contributor')}
-                    className="p-2 rounded-xl bg-amber-950/70 hover:bg-amber-900/90 border border-amber-500/40 text-amber-200 flex items-center justify-between cursor-pointer transition-all hover:scale-[1.02] active:scale-98 text-left"
-                    title="Sign in as Contributor (Course Authoring)"
-                  >
-                    <span>✍️ Contributor</span>
-                    <span className="text-[9px] text-amber-400 font-mono">Author</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isLoading}
-                    onClick={() => handleInstantSignIn('student@epicademy.com', 'student')}
-                    className="p-2 rounded-xl bg-blue-950/70 hover:bg-blue-900/90 border border-blue-500/40 text-blue-200 flex items-center justify-between cursor-pointer transition-all hover:scale-[1.02] active:scale-98 text-left"
-                    title="Sign in as Student (Classroom, Sandbox, AI Mentor)"
-                  >
-                    <span>🎓 Student</span>
-                    <span className="text-[9px] text-blue-400 font-mono">Learn</span>
-                  </button>
+                <div>
+                  <div className="text-[11px] font-bold text-white flex items-center gap-1.5">
+                    <span>Live Supabase Cloud Authentication</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    Accounts are securely verified in real-time across all browsers &amp; devices.
+                  </p>
                 </div>
               </div>
 

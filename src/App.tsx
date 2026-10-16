@@ -163,7 +163,8 @@ export function App() {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed?.email) {
-          if (isAccountDeleted(parsed.email)) {
+          // Immediately purge old demo accounts or deleted accounts
+          if (parsed.email.endsWith('@epicademy.com') || isAccountDeleted(parsed.email)) {
             localStorage.removeItem('epicademy_active_user');
             return null;
           }
@@ -207,7 +208,8 @@ export function App() {
   };
 
   const handleSwitchRole = (newRole: UserRole) => {
-    const email = currentUser?.email || `${newRole}@epicademy.com`;
+    if (!currentUser?.email) return;
+    const email = currentUser.email;
     const userObj = { email, role: newRole };
     setCurrentUser(userObj);
     try {
@@ -224,42 +226,53 @@ export function App() {
   };
 
   useEffect(() => {
-    // Check existing Supabase session if not in localStorage
+    // Check existing Supabase session and validate against live DB
     getCurrentUser().then((user) => {
       if (user && user.email) {
-        if (isAccountDeleted(user.email) || isAccountDeleted(user.id)) {
-          signOutUser();
-          setCurrentUser(null);
-          localStorage.removeItem('epicademy_active_user');
-          return;
-        }
-        const detectedRole = getUserRoleByEmail(user.email) || user.user_metadata?.role || 'student';
+        const detectedRole = user.user_metadata?.role || getUserRoleByEmail(user.email) || 'student';
         const userObj = { email: user.email, role: detectedRole };
         setCurrentUser(userObj);
         try {
           localStorage.setItem('epicademy_active_user', JSON.stringify(userObj));
-        } catch {
-          // ignore
-        }
+        } catch {}
+      } else {
+        setCurrentUser(null);
+        try {
+          localStorage.removeItem('epicademy_active_user');
+        } catch {}
       }
     });
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user?.email) {
-        if (isAccountDeleted(session.user.email) || isAccountDeleted(session.user.id)) {
-          signOutUser();
+        const cleanEmail = session.user.email.toLowerCase().trim();
+        // Cross-browser live check: verify account is still active in Supabase profiles
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('id, email, role, is_verified')
+          .or(`id.eq.${session.user.id},email.eq.${cleanEmail}`)
+          .maybeSingle();
+
+        if (!prof || prof.is_verified === false) {
+          await signOutUser();
           setCurrentUser(null);
-          localStorage.removeItem('epicademy_active_user');
+          try {
+            localStorage.removeItem('epicademy_active_user');
+          } catch {}
           return;
         }
-        const detectedRole = getUserRoleByEmail(session.user.email) || session.user.user_metadata?.role || 'student';
+
+        const detectedRole = prof.role || session.user.user_metadata?.role || getUserRoleByEmail(session.user.email) || 'student';
         const userObj = { email: session.user.email, role: detectedRole };
         setCurrentUser(userObj);
         try {
           localStorage.setItem('epicademy_active_user', JSON.stringify(userObj));
-        } catch {
-          // ignore
-        }
+        } catch {}
+      } else {
+        setCurrentUser(null);
+        try {
+          localStorage.removeItem('epicademy_active_user');
+        } catch {}
       }
     });
 

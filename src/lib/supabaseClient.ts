@@ -179,60 +179,7 @@ export interface UserProfileItem {
   createdAt?: string;
 }
 
-export const SEED_USER_PROFILES: UserProfileItem[] = [
-  {
-    id: 'user-admin-seed',
-    email: 'admin@epicademy.com',
-    fullName: 'System Administrator (Ronnel M. Aviguetero)',
-    role: 'admin',
-    specialty: 'Platform Architecture & Security Governance',
-    credentials: 'CEO & Founder, KEZJED Solutions | Superadmin',
-    bio: 'Oversees all academic platforms, user permissions, teacher certifications, and course curricula.',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    isVerified: true,
-    isDisabled: false,
-    createdAt: '2026-01-01T00:00:00.000Z',
-  },
-  {
-    id: 'user-educator-seed',
-    email: 'educator@epicademy.com',
-    fullName: 'Prof. Maria Santos',
-    role: 'educator',
-    specialty: 'Computer Systems & Software Engineering',
-    credentials: 'TESDA Certified Master Trainer | Senior Faculty',
-    bio: 'Lead lecturer for Computer Systems Servicing NC II and Vocational Hardware/Network Architecture.',
-    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-    isVerified: true,
-    isDisabled: false,
-    createdAt: '2026-01-02T00:00:00.000Z',
-  },
-  {
-    id: 'user-contributor-seed',
-    email: 'contributor@epicademy.com',
-    fullName: 'Alex Rivera',
-    role: 'contributor',
-    specialty: 'Music, Rhythm & Audio Arts',
-    credentials: 'Pinoy Music Theorist & Curriculum Contributor',
-    bio: 'Author of rhythm and lead guitar instructional tracks, practical fretboard diagrams, and ear training exercises.',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    isVerified: true,
-    isDisabled: false,
-    createdAt: '2026-01-03T00:00:00.000Z',
-  },
-  {
-    id: 'user-student-seed',
-    email: 'student@epicademy.com',
-    fullName: 'Jordan Lee',
-    role: 'student',
-    specialty: 'Vocational CSS NC II & Web Development Trainee',
-    credentials: 'Level 1 Trainee | Active Learner',
-    bio: 'Studying vocational computer systems servicing and full-stack software development.',
-    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    isVerified: true,
-    isDisabled: false,
-    createdAt: '2026-01-04T00:00:00.000Z',
-  },
-];
+export const SEED_USER_PROFILES: UserProfileItem[] = [];
 
 const DISABLED_ACCOUNTS_KEY = 'epicademy_disabled_emails';
 const LOCAL_ACCOUNTS_KEY = 'epicademy_local_profiles';
@@ -316,39 +263,35 @@ export function getLocalProfiles(): UserProfileItem[] {
     // Filter out any previously deleted accounts
     list = list.filter(p => !deletedSet.has(p.email.toLowerCase()) && !deletedSet.has(p.id.toLowerCase()));
 
-    // Ensure seed accounts exist in the list ONLY IF they have not been deleted!
-    let modified = false;
-    for (const seed of SEED_USER_PROFILES) {
-      if (deletedSet.has(seed.email.toLowerCase()) || deletedSet.has(seed.id.toLowerCase())) {
-        continue; // DO NOT RE-SEED DELETED ACCOUNTS!
-      }
-      const idx = list.findIndex(p => p.email.toLowerCase() === seed.email.toLowerCase());
-      if (idx === -1) {
-        list.push(seed);
-        modified = true;
-      }
-    }
+    // Purge legacy demo seed accounts so they never resurrect
+    const fakeDemoEmails = new Set([
+      'admin@epicademy.com',
+      'educator@epicademy.com',
+      'contributor@epicademy.com',
+      'student@epicademy.com',
+    ]);
+    const filtered = list.filter(p => !fakeDemoEmails.has(p.email.toLowerCase()));
 
-    for (const p of list) {
-      if (p.email.toLowerCase().includes('jovenneljed') || p.email.toLowerCase().includes('admin')) {
+    let modified = filtered.length !== list.length;
+    for (const p of filtered) {
+      if (p.email.toLowerCase() === 'jovenneljed@gmail.com') {
         p.role = 'admin';
-        modified = true;
       }
     }
 
     if (modified || !raw) {
-      localStorage.setItem(LOCAL_ACCOUNTS_KEY, JSON.stringify(list));
+      localStorage.setItem(LOCAL_ACCOUNTS_KEY, JSON.stringify(filtered));
     }
-    return list;
+    return filtered;
   } catch {
-    return [...SEED_USER_PROFILES];
+    return [];
   }
 }
 
 export function getUserRoleByEmail(email?: string | null): UserRole {
   if (!email) return 'student';
   const clean = email.toLowerCase().trim();
-  if (clean.includes('admin') || clean.includes('jovenneljed')) return 'admin';
+  if (clean === 'jovenneljed@gmail.com') return 'admin';
   const profiles = getLocalProfiles();
   const found = profiles.find(p => p.email.toLowerCase() === clean);
   if (found) return found.role;
@@ -376,23 +319,7 @@ export async function fetchAllUserProfiles(): Promise<{ profiles: UserProfileIte
       console.warn('Supabase profiles fetch note:', error);
     }
 
-    const localProfiles = getLocalProfiles();
     const profileMap = new Map<string, UserProfileItem>();
-
-    // Add local profiles first (filtering out any deleted accounts)
-    localProfiles.forEach(p => {
-      const emailLower = p.email.toLowerCase().trim();
-      const idLower = p.id.toLowerCase().trim();
-      if (deletedSet.has(emailLower) || deletedSet.has(idLower)) {
-        return; // SKIP DELETED
-      }
-      const isDis = Boolean(p.isDisabled || disabledSet.has(emailLower));
-      profileMap.set(emailLower, {
-        ...p,
-        isDisabled: isDis,
-        isVerified: !isDis,
-      });
-    });
 
     if (data && data.length > 0) {
       data.forEach((row: any) => {
@@ -411,10 +338,18 @@ export async function fetchAllUserProfiles(): Promise<{ profiles: UserProfileIte
           setAccountDisabledLocally(email, true);
         }
 
+        // Never display legacy fake demo accounts
+        if (email.endsWith('@epicademy.com')) {
+          return;
+        }
+
         const rawRole = (row.role || '').toLowerCase().trim();
         let role: UserRole = 'student';
         if (rawRole === 'admin' || rawRole === 'educator' || rawRole === 'contributor' || rawRole === 'student') {
           role = rawRole as UserRole;
+        }
+        if (email === 'jovenneljed@gmail.com') {
+          role = 'admin';
         }
 
         const item: UserProfileItem = {
@@ -444,7 +379,7 @@ export async function fetchAllUserProfiles(): Promise<{ profiles: UserProfileIte
     const disabledSet = getDisabledEmails();
     const deletedSet = getDeletedAccountKeys();
     const localProfiles = getLocalProfiles()
-      .filter(p => !deletedSet.has(p.email.toLowerCase().trim()) && !deletedSet.has(p.id.toLowerCase().trim()))
+      .filter(p => !deletedSet.has(p.email.toLowerCase().trim()) && !deletedSet.has(p.id.toLowerCase().trim()) && !p.email.toLowerCase().trim().endsWith('@epicademy.com'))
       .map(p => ({
         ...p,
         isDisabled: Boolean(p.isDisabled || disabledSet.has(p.email.toLowerCase())),
@@ -560,6 +495,9 @@ export async function deleteUserAccount(userId: string, email: string): Promise<
     const { data: { user } } = await supabase.auth.getUser();
     if (user && (user.id === userId || user.email?.toLowerCase() === cleanEmail)) {
       await supabase.auth.signOut();
+      try {
+        localStorage.removeItem('epicademy_active_user');
+      } catch {}
     }
 
     return { success: true, error: null };
@@ -641,80 +579,64 @@ export async function signInUser(email: string, password: string) {
     };
   }
 
-  const localProfiles = getLocalProfiles();
-  const matchedLocal = localProfiles.find(p => p.email.toLowerCase() === cleanEmail);
-
   try {
+    // 1. Authenticate strictly with Supabase Auth (No fake local mock bypass)
     const { data, error } = await supabase.auth.signInWithPassword({
       email: cleanEmail,
       password,
     });
 
-    if (!error && data?.user) {
-      if (isAccountDeleted(data.user.email) || isAccountDeleted(data.user.id)) {
-        await supabase.auth.signOut();
-        return {
-          data: { user: null, session: null },
-          error: new Error('This account has been permanently deleted by an administrator.'),
-        };
-      }
+    if (error || !data?.user) {
+      return {
+        data: { user: null, session: null },
+        error: error || new Error('Invalid email or password. Please verify your credentials.'),
+      };
+    }
 
+    // 2. Cross-browser verification against Supabase profiles table
+    // If account was deleted in Edge or another browser, the profile row is GONE.
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('id, email, role, is_verified, full_name')
+      .or(`id.eq.${data.user.id},email.eq.${cleanEmail}`)
+      .maybeSingle();
+
+    if (!prof) {
+      // Profile does not exist in database (deleted by admin!)
+      await supabase.auth.signOut();
+      markAccountAsDeleted(cleanEmail, data.user.id);
       try {
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('is_verified, role')
-          .eq('id', data.user.id)
-          .maybeSingle();
-
-        if (prof && prof.is_verified === false) {
-          await supabase.auth.signOut();
-          setAccountDisabledLocally(cleanEmail, true);
-          return {
-            data: { user: null, session: null },
-            error: new Error('This account has been disabled by the administrator. Access denied.'),
-          };
-        }
-      } catch {
-        // Ignore if table unavailable
-      }
-
-      return { data, error: null };
-    }
-
-    // Seamless fallback for preconfigured demo accounts and local accounts
-    if (matchedLocal && (password === 'password123' || !password || error?.message?.includes('Invalid login credentials') || error?.message?.includes('Failed to fetch'))) {
-      const mockUser = {
-        id: matchedLocal.id,
-        email: matchedLocal.email,
-        user_metadata: {
-          role: matchedLocal.role,
-          full_name: matchedLocal.fullName,
-          specialty: matchedLocal.specialty,
-        },
-      };
+        localStorage.removeItem('epicademy_active_user');
+      } catch {}
       return {
-        data: { user: mockUser as any, session: { user: mockUser } as any },
-        error: null,
+        data: { user: null, session: null },
+        error: new Error('This account has been deleted by an administrator and no longer exists.'),
       };
     }
 
-    return { data, error };
+    if (prof.is_verified === false) {
+      await supabase.auth.signOut();
+      setAccountDisabledLocally(cleanEmail, true);
+      try {
+        localStorage.removeItem('epicademy_active_user');
+      } catch {}
+      return {
+        data: { user: null, session: null },
+        error: new Error('This account has been disabled by the administrator. Access denied.'),
+      };
+    }
+
+    // Attach real verified role & full name
+    if (prof.role) {
+      data.user.user_metadata = {
+        ...data.user.user_metadata,
+        role: prof.role,
+        full_name: prof.full_name || data.user.user_metadata?.full_name,
+      };
+    }
+
+    return { data, error: null };
   } catch (err: any) {
-    if (matchedLocal) {
-      const mockUser = {
-        id: matchedLocal.id,
-        email: matchedLocal.email,
-        user_metadata: {
-          role: matchedLocal.role,
-          full_name: matchedLocal.fullName,
-          specialty: matchedLocal.specialty,
-        },
-      };
-      return {
-        data: { user: mockUser as any, session: { user: mockUser } as any },
-        error: null,
-      };
-    }
     return { data: { user: null, session: null }, error: err };
   }
 }
@@ -726,10 +648,55 @@ export async function signOutUser() {
 
 export async function getCurrentUser() {
   const { data: { user } } = await supabase.auth.getUser();
-  if (user && (isAccountDeleted(user.email) || isAccountDeleted(user.id))) {
+  if (!user || !user.email) return null;
+
+  const cleanEmail = user.email.toLowerCase().trim();
+
+  if (isAccountDeleted(cleanEmail) || isAccountDeleted(user.id)) {
     await supabase.auth.signOut();
+    try {
+      localStorage.removeItem('epicademy_active_user');
+    } catch {}
     return null;
   }
+
+  // Cross-browser live verification against Supabase profiles table
+  try {
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('id, email, role, is_verified')
+      .or(`id.eq.${user.id},email.eq.${cleanEmail}`)
+      .maybeSingle();
+
+    if (!prof) {
+      // Account was deleted in Supabase (e.g. from Microsoft Edge or admin console)
+      await supabase.auth.signOut();
+      markAccountAsDeleted(cleanEmail, user.id);
+      try {
+        localStorage.removeItem('epicademy_active_user');
+      } catch {}
+      return null;
+    }
+
+    if (prof.is_verified === false) {
+      await supabase.auth.signOut();
+      setAccountDisabledLocally(cleanEmail, true);
+      try {
+        localStorage.removeItem('epicademy_active_user');
+      } catch {}
+      return null;
+    }
+
+    if (prof.role) {
+      user.user_metadata = {
+        ...user.user_metadata,
+        role: prof.role,
+      };
+    }
+  } catch (e) {
+    console.warn('Live profile check note:', e);
+  }
+
   return user;
 }
 

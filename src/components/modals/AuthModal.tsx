@@ -143,65 +143,6 @@ export const AuthModal = ({
               </div>
             )}
 
-            {/* Quick Demo Test Accounts Bar */}
-            <div className="mb-4 p-3 bg-slate-900 border border-slate-800 rounded-2xl text-white">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] uppercase font-black tracking-wider text-slate-400">
-                  ⚡ 1-Click Test Accounts
-                </span>
-                <span className="text-[10px] text-slate-500 font-mono">Instant Fill</span>
-              </div>
-              <div className="grid grid-cols-2 gap-1.5 text-xs font-bold">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('admin@epicademy.com');
-                    setPassword('password123');
-                    setRole('admin');
-                  }}
-                  className="px-2 py-1.5 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-500/40 text-indigo-200 flex items-center justify-between cursor-pointer transition-colors"
-                >
-                  <span>🛡️ Admin</span>
-                  <span className="text-[9px] text-indigo-400 font-mono">Full</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('educator@epicademy.com');
-                    setPassword('password123');
-                    setRole('educator');
-                  }}
-                  className="px-2 py-1.5 rounded-xl bg-purple-950/80 hover:bg-purple-900 border border-purple-500/40 text-purple-200 flex items-center justify-between cursor-pointer transition-colors"
-                >
-                  <span>👨‍🏫 Educator</span>
-                  <span className="text-[9px] text-purple-400 font-mono">Teach</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('contributor@epicademy.com');
-                    setPassword('password123');
-                    setRole('contributor');
-                  }}
-                  className="px-2 py-1.5 rounded-xl bg-amber-950/80 hover:bg-amber-900 border border-amber-500/40 text-amber-200 flex items-center justify-between cursor-pointer transition-colors"
-                >
-                  <span>✍️ Contributor</span>
-                  <span className="text-[9px] text-amber-400 font-mono">Author</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('student@epicademy.com');
-                    setPassword('password123');
-                    setRole('student');
-                  }}
-                  className="px-2 py-1.5 rounded-xl bg-blue-950/80 hover:bg-blue-900 border border-blue-500/40 text-blue-200 flex items-center justify-between cursor-pointer transition-colors"
-                >
-                  <span>🎓 Student</span>
-                  <span className="text-[9px] text-blue-400 font-mono">Learn</span>
-                </button>
-              </div>
-            </div>
 
             {/* Role Selection (Signup only) */}
             {mode === 'signup' && (
