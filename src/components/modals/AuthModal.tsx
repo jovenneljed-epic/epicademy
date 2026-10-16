@@ -24,7 +24,7 @@ export const AuthModal = ({
   const [mode, setMode] = useState<'signup' | 'signin'>(initialMode);
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('student');
+  const role: UserRole = 'student';
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -144,47 +144,12 @@ export const AuthModal = ({
             )}
 
 
-            {/* Role Selection (Signup only) */}
+            {/* Role Notice (Public signups are strictly Student) */}
             {mode === 'signup' && (
-              <div className="mb-4">
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Select Account Role</label>
-                <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-semibold">
-                  <button
-                    type="button"
-                    onClick={() => setRole('student')}
-                    className={`py-2 px-2.5 rounded-lg transition-all cursor-pointer text-left flex items-center gap-1.5 ${
-                      role === 'student' ? 'bg-white text-blue-700 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <span>🎓 Student</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRole('contributor')}
-                    className={`py-2 px-2.5 rounded-lg transition-all cursor-pointer text-left flex items-center gap-1.5 ${
-                      role === 'contributor' ? 'bg-white text-amber-700 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <span>✍️ Contributor</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRole('educator')}
-                    className={`py-2 px-2.5 rounded-lg transition-all cursor-pointer text-left flex items-center gap-1.5 ${
-                      role === 'educator' ? 'bg-white text-purple-700 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <span>👨‍🏫 Educator</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRole('admin')}
-                    className={`py-2 px-2.5 rounded-lg transition-all cursor-pointer text-left flex items-center gap-1.5 ${
-                      role === 'admin' ? 'bg-white text-indigo-700 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <span>🛡️ Administrator</span>
-                  </button>
+              <div className="mb-4 p-3 bg-blue-50/80 rounded-xl border border-blue-200/60 text-[11px] text-blue-900 leading-normal flex items-start gap-2">
+                <GraduationCap className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold">Student Account Registration:</span> You are enrolling as an academy student learner. Staff, educator, and administrator credentials are provisioned exclusively by Academy Administrators.
                 </div>
               </div>
             )}

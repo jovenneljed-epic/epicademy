@@ -21,7 +21,6 @@ import {
 } from 'lucide-react';
 import { signInUser, signUpUser, getUserRoleByEmail } from '../../lib/supabaseClient';
 import { enrollStudentInRoster, INITIAL_COHORTS } from '../../data/gradebookData';
-import type { UserRole } from '../../types';
 
 export const ENROLLMENT_TRACKS = [
   { id: 'track-level-1-html-foundations', title: 'Level 1: Modern HTML5 Fundamentals & Semantic Web Architecture' },
@@ -49,22 +48,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onAuthSuccess,
   onExploreAsGuest,
 }) => {
-  const [mode, setMode] = useState<'signin' | 'enroll' | 'signup'>('signin');
+  const [mode, setMode] = useState<'signin' | 'enroll'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
-  // Sign Up & Enrollment Fields
+  // Student Enrollment Fields
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<UserRole>('student');
-  const [specialty, setSpecialty] = useState('');
   const [selectedTrackId, setSelectedTrackId] = useState(ENROLLMENT_TRACKS[0].id);
   const [selectedCohortId, setSelectedCohortId] = useState(INITIAL_COHORTS[0].id);
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -100,35 +96,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             onAuthSuccess(cleanEmail, 'student');
           }, 400);
         }
-      } else if (mode === 'signup') {
-        const { error } = await signUpUser(cleanEmail, password, role, fullName);
-        if (error) {
-          setErrorMessage(error.message);
-        } else {
-          if (role === 'student') {
-            const selectedTrack = ENROLLMENT_TRACKS.find(t => t.id === selectedTrackId) || ENROLLMENT_TRACKS[0];
-            enrollStudentInRoster({
-              studentName: fullName.trim() || cleanEmail.split('@')[0].toUpperCase(),
-              email: cleanEmail,
-              cohortId: selectedCohortId,
-              trackId: selectedTrack.id,
-              trackTitle: selectedTrack.title
-            });
-          }
-          setSuccessMessage(`Account created successfully! Unlocking as ${role.toUpperCase()}...`);
-          setTimeout(() => {
-            onAuthSuccess(cleanEmail, role);
-          }, 400);
-        }
       } else {
         const { data, error } = await signInUser(cleanEmail, password);
         if (error) {
           setErrorMessage(error.message);
         } else {
-          const resolvedRole = getUserRoleByEmail(cleanEmail) || data.user?.user_metadata?.role || 'student';
+          const resolvedRole = data.user?.user_metadata?.role || getUserRoleByEmail(cleanEmail) || 'student';
           if (resolvedRole === 'student') {
             enrollStudentInRoster({
-              studentName: cleanEmail.split('@')[0].toUpperCase(),
+              studentName: data.user?.user_metadata?.full_name || cleanEmail.split('@')[0].toUpperCase(),
               email: cleanEmail,
               cohortId: selectedCohortId,
               trackId: selectedTrackId,
@@ -267,7 +243,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative">
               
               {/* Mode Switcher Tabs */}
-              <div className="grid grid-cols-3 gap-1 p-1 bg-slate-950/80 rounded-2xl mb-5 border border-slate-800">
+              <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-slate-950/80 rounded-2xl mb-5 border border-slate-800">
                 <button
                   type="button"
                   onClick={() => {
@@ -275,7 +251,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     setErrorMessage(null);
                     setSuccessMessage(null);
                   }}
-                  className={`py-2 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+                  className={`py-2.5 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
                     mode === 'signin'
                       ? 'bg-blue-600 text-white shadow-md'
                       : 'text-slate-400 hover:text-white'
@@ -287,32 +263,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   type="button"
                   onClick={() => {
                     setMode('enroll');
-                    setRole('student');
                     setErrorMessage(null);
                     setSuccessMessage(null);
                   }}
-                  className={`py-2 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                  className={`py-2.5 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                     mode === 'enroll'
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md font-black'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  <span>🎓 Enroll</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode('signup');
-                    setErrorMessage(null);
-                    setSuccessMessage(null);
-                  }}
-                  className={`py-2 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
-                    mode === 'signup'
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Staff Sign Up
+                  <span>🎓 Student Enrollment</span>
                 </button>
               </div>
 
@@ -363,11 +323,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   </div>
                 )}
 
-                {/* Full Name for Sign Up & Enrollment */}
-                {(mode === 'signup' || mode === 'enroll') && (
+                {/* Full Name for Student Enrollment */}
+                {mode === 'enroll' && (
                   <div>
                     <label className="block text-xs font-bold text-slate-300 mb-1">
-                      {mode === 'enroll' ? 'Student Full Name *' : 'Your Full Name *'}
+                      Student Full Name *
                     </label>
                     <div className="relative">
                       <UserIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -393,7 +353,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     <input
                       type="email"
                       required
-                      placeholder="student@example.com"
+                      placeholder={mode === 'enroll' ? 'student@example.com' : 'name@example.com'}
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       className="w-full pl-9 pr-3 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
@@ -425,8 +385,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   </div>
                 </div>
 
-                {/* Course Track & Cohort Selection (For Enroll Mode OR Student Sign Up) */}
-                {(mode === 'enroll' || (mode === 'signup' && role === 'student')) && (
+                {/* Course Track & Cohort Selection (For Enroll Mode) */}
+                {mode === 'enroll' && (
                   <div className="space-y-3 pt-1">
                     <div>
                       <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1">
@@ -466,65 +426,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   </div>
                 )}
 
-                {/* Role Selector for Staff Sign Up */}
-                {mode === 'signup' && (
-                  <div className="space-y-1.5 pt-1">
-                    <label className="block text-xs font-bold text-slate-300">Choose Your Account Role</label>
-                    <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-950 rounded-2xl border border-slate-800 text-xs font-semibold">
-                      <button
-                        type="button"
-                        onClick={() => setRole('student')}
-                        className={`py-2 px-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-1.5 ${
-                          role === 'student' ? 'bg-blue-600 text-white shadow font-bold' : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        <span>🎓 Student</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRole('contributor')}
-                        className={`py-2 px-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-1.5 ${
-                          role === 'contributor' ? 'bg-amber-600 text-white shadow font-bold' : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        <span>✍️ Contributor</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRole('educator')}
-                        className={`py-2 px-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-1.5 ${
-                          role === 'educator' ? 'bg-purple-600 text-white shadow font-bold' : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        <span>👨‍🏫 Educator</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRole('admin')}
-                        className={`py-2 px-2.5 rounded-xl transition-all cursor-pointer text-left flex items-center gap-1.5 ${
-                          role === 'admin' ? 'bg-indigo-600 text-white shadow font-bold' : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        <span>🛡️ Admin</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Specialty / Department for Staff Sign Up */}
-                {mode === 'signup' && role !== 'student' && (
-                  <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1">Specialty / Department (Optional)</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Computer Systems Servicing, Full-Stack, Music"
-                      value={specialty}
-                      onChange={e => setSpecialty(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
-                    />
-                  </div>
-                )}
-
                 {/* Submit Action Button */}
                 <button
                   type="submit"
@@ -540,10 +441,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     <>
                       <span>
                         {mode === 'enroll' 
-                          ? 'Complete Enrollment & Launch Academy' 
-                          : mode === 'signin' 
-                          ? 'Unlock Learning Hub' 
-                          : 'Register & Enter Platform'}
+                          ? 'Complete Enrollment & Enter Academy' 
+                          : 'Unlock Learning Hub'}
                       </span>
                       <ArrowRight className="w-4 h-4" />
                     </>
@@ -552,19 +451,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               </form>
 
               {/* Mode switch helper link */}
-              <div className="mt-4 pt-3 border-t border-slate-800 text-center text-xs text-slate-400">
+              <div className="mt-4 pt-3 border-t border-slate-800 text-center text-xs text-slate-400 space-y-3">
                 {mode === 'signin' ? (
                   <p>
-                    New to Epicademy?{' '}
+                    New student?{' '}
                     <button
                       type="button"
                       onClick={() => {
-                        setMode('signup');
+                        setMode('enroll');
                         setErrorMessage(null);
                       }}
                       className="text-blue-400 font-bold hover:underline cursor-pointer"
                     >
-                      Sign up for a free account
+                      Enroll in a track here
                     </button>
                   </p>
                 ) : (
@@ -582,6 +481,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     </button>
                   </p>
                 )}
+
+                {/* Security and Staff notice */}
+                <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400 leading-relaxed text-left flex items-start gap-2">
+                  <Shield className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-slate-300">Staff &amp; Faculty Notice:</span> Staff, instructor, and administrative accounts are provisioned exclusively by Academy Administrators in the Access Center.
+                  </div>
+                </div>
               </div>
 
             </div>

@@ -195,15 +195,18 @@ export interface UserProfileItem {
 
 export const SEED_USER_PROFILES: UserProfileItem[] = [];
 
-const DISABLED_ACCOUNTS_KEY = 'epicademy_disabled_emails';
-const LOCAL_ACCOUNTS_KEY = 'epicademy_local_profiles';
-const DELETED_ACCOUNTS_KEY = 'epicademy_deleted_accounts';
-
-// Purge legacy deleted accounts tombstone key so real database accounts are never hidden
+// Clean up any legacy localStorage keys so client state is strictly pure Supabase
 try {
-  localStorage.removeItem(DELETED_ACCOUNTS_KEY);
+  localStorage.removeItem('epicademy_local_profiles');
+  localStorage.removeItem('epicademy_disabled_emails');
+  localStorage.removeItem('epicademy_deleted_accounts');
+  localStorage.removeItem('epicademy_active_user');
 } catch {}
 
+// Fast in-memory user role cache populated during DB queries
+const userRoleCache = new Map<string, UserRole>();
+
+// Legacy compatibility stubs (no localStorage mocks)
 export function getDeletedAccountKeys(): Set<string> {
   return new Set();
 }
@@ -212,98 +215,29 @@ export function isAccountDeleted(_identifier?: string | null): boolean {
   return false;
 }
 
-export function markAccountAsDeleted(_email?: string | null, _id?: string | null): void {
-  // Database deletion is the real source of truth; no local suppression
-}
-
+export function markAccountAsDeleted(_email?: string | null, _id?: string | null): void {}
 export function unmarkAccountAsDeleted(_identifier?: string | null): void {}
-
 export function getDisabledEmails(): Set<string> {
-  try {
-    const raw = localStorage.getItem(DISABLED_ACCOUNTS_KEY);
-    if (!raw) return new Set();
-    return new Set(JSON.parse(raw).map((e: string) => e.toLowerCase()));
-  } catch {
-    return new Set();
-  }
+  return new Set();
 }
-
-export function isAccountDisabled(email: string): boolean {
-  if (!email) return false;
-  const disabledSet = getDisabledEmails();
-  return disabledSet.has(email.toLowerCase().trim());
+export function isAccountDisabled(_email: string): boolean {
+  return false;
 }
-
-export function setAccountDisabledLocally(email: string, disabled: boolean): void {
-  try {
-    const disabledSet = getDisabledEmails();
-    const cleanEmail = email.toLowerCase().trim();
-    if (disabled) {
-      disabledSet.add(cleanEmail);
-    } else {
-      disabledSet.delete(cleanEmail);
-    }
-    localStorage.setItem(DISABLED_ACCOUNTS_KEY, JSON.stringify(Array.from(disabledSet)));
-  } catch (e) {
-    console.error('Error saving disabled emails:', e);
-  }
-}
-
+export function setAccountDisabledLocally(_email: string, _disabled: boolean): void {}
 export function getLocalProfiles(): UserProfileItem[] {
-  try {
-    const deletedSet = getDeletedAccountKeys();
-    const raw = localStorage.getItem(LOCAL_ACCOUNTS_KEY);
-    let list: UserProfileItem[] = raw ? JSON.parse(raw) : [];
-
-    // Filter out any previously deleted accounts
-    list = list.filter(p => !deletedSet.has(p.email.toLowerCase()) && !deletedSet.has(p.id.toLowerCase()));
-
-    // Purge legacy demo seed accounts so they never resurrect
-    const fakeDemoEmails = new Set([
-      'admin@epicademy.com',
-      'educator@epicademy.com',
-      'contributor@epicademy.com',
-      'student@epicademy.com',
-    ]);
-    const filtered = list.filter(p => !fakeDemoEmails.has(p.email.toLowerCase()));
-
-    let modified = filtered.length !== list.length;
-    for (const p of filtered) {
-      if (p.email.toLowerCase() === 'jovenneljed@gmail.com') {
-        p.role = 'admin';
-      }
-    }
-
-    if (modified || !raw) {
-      localStorage.setItem(LOCAL_ACCOUNTS_KEY, JSON.stringify(filtered));
-    }
-    return filtered;
-  } catch {
-    return [];
-  }
+  return [];
 }
+export function saveLocalProfiles(_profiles: UserProfileItem[]): void {}
 
 export function getUserRoleByEmail(email?: string | null): UserRole {
   if (!email) return 'student';
   const clean = email.toLowerCase().trim();
   if (clean === 'jovenneljed@gmail.com') return 'admin';
-  const profiles = getLocalProfiles();
-  const found = profiles.find(p => p.email.toLowerCase() === clean);
-  if (found) return found.role;
-  return 'student';
-}
-
-export function saveLocalProfiles(profiles: UserProfileItem[]): void {
-  try {
-    localStorage.setItem(LOCAL_ACCOUNTS_KEY, JSON.stringify(profiles));
-  } catch (e) {
-    console.error('Error saving local profiles:', e);
-  }
+  return userRoleCache.get(clean) || 'student';
 }
 
 export async function fetchAllUserProfiles(): Promise<{ profiles: UserProfileItem[]; error: any }> {
   try {
-    const disabledSet = getDisabledEmails();
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -311,24 +245,22 @@ export async function fetchAllUserProfiles(): Promise<{ profiles: UserProfileIte
 
     if (error) {
       console.warn('Supabase profiles fetch note:', error);
+      return { profiles: [], error };
     }
 
-    const profileMap = new Map<string, UserProfileItem>();
+    const list: UserProfileItem[] = [];
 
     if (data && data.length > 0) {
       data.forEach((row: any) => {
         const email = (row.email || '').toLowerCase().trim();
 
-
-        const isDbDisabled = row.is_verified === false;
-        const isDisabled = isDbDisabled || disabledSet.has(email);
-
-        if (isDbDisabled && email && !disabledSet.has(email)) {
-          setAccountDisabledLocally(email, true);
-        }
-
-        // Never display legacy fake demo accounts
-        if (email.endsWith('@epicademy.com')) {
+        // Filter out deleted tombstones or legacy demo accounts
+        if (
+          row.bio === 'DELETED' ||
+          email.includes('@epicademy.deleted') ||
+          email.includes('@deleted.local') ||
+          email.endsWith('@epicademy.com')
+        ) {
           return;
         }
 
@@ -340,6 +272,10 @@ export async function fetchAllUserProfiles(): Promise<{ profiles: UserProfileIte
         if (email === 'jovenneljed@gmail.com') {
           role = 'admin';
         }
+
+        userRoleCache.set(email, role);
+
+        const isDisabled = row.is_verified === false;
 
         const item: UserProfileItem = {
           id: row.id,
@@ -355,25 +291,14 @@ export async function fetchAllUserProfiles(): Promise<{ profiles: UserProfileIte
           createdAt: row.created_at,
         };
 
-        profileMap.set(email || row.id, item);
+        list.push(item);
       });
     }
 
-    const result = Array.from(profileMap.values()).sort((a, b) => {
-      return (new Date(b.createdAt || 0).getTime()) - (new Date(a.createdAt || 0).getTime());
-    });
-
-    return { profiles: result, error: null };
+    return { profiles: list, error: null };
   } catch (err) {
-    const disabledSet = getDisabledEmails();
-    const deletedSet = getDeletedAccountKeys();
-    const localProfiles = getLocalProfiles()
-      .filter(p => !deletedSet.has(p.email.toLowerCase().trim()) && !deletedSet.has(p.id.toLowerCase().trim()) && !p.email.toLowerCase().trim().endsWith('@epicademy.com'))
-      .map(p => ({
-        ...p,
-        isDisabled: Boolean(p.isDisabled || disabledSet.has(p.email.toLowerCase())),
-      }));
-    return { profiles: localProfiles, error: err };
+    console.error('Fatal profiles fetch error:', err);
+    return { profiles: [], error: err };
   }
 }
 
@@ -386,9 +311,6 @@ export async function createUserAccount(input: {
 }): Promise<{ profile: UserProfileItem | null; error: any }> {
   try {
     const cleanEmail = input.email.toLowerCase().trim();
-    // If account was previously deleted, unmark it so it can be re-created fresh
-    unmarkAccountAsDeleted(cleanEmail);
-
     const defaultSpecialty = input.specialty || (
       input.role === 'admin' ? 'Platform Security & Systems Administration' :
       input.role === 'educator' ? 'Academic Disciplines & Instruction' :
@@ -396,7 +318,16 @@ export async function createUserAccount(input: {
       'Vocational Student Learner'
     );
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // Ephemeral Supabase client so admin's active session is never overwritten
+    const ephemeralClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    });
+
+    const { data: authData, error: authError } = await ephemeralClient.auth.signUp({
       email: cleanEmail,
       password: input.password,
       options: {
@@ -409,10 +340,42 @@ export async function createUserAccount(input: {
     });
 
     if (authError) {
-      console.warn('Supabase Auth note during createUserAccount:', authError);
+      return { profile: null, error: authError };
     }
 
-    const userId = authData?.user?.id || `user-local-${Date.now()}`;
+    if (authData?.user && authData.user.identities && authData.user.identities.length === 0) {
+      return {
+        profile: null,
+        error: new Error('An account with this email already exists in Supabase.'),
+      };
+    }
+
+    const userId = authData?.user?.id;
+    if (!userId) {
+      return {
+        profile: null,
+        error: new Error('Unable to establish account identity with Supabase Auth.'),
+      };
+    }
+
+    // Insert directly into Supabase profiles table
+    const { error: profileError } = await supabase.from('profiles').upsert([
+      {
+        id: userId,
+        email: cleanEmail,
+        full_name: input.fullName || cleanEmail.split('@')[0],
+        role: input.role,
+        specialty: defaultSpecialty,
+        is_verified: true,
+      }
+    ], { onConflict: 'id' });
+
+    if (profileError) {
+      console.warn('Profile upsert warning:', profileError);
+    }
+
+    userRoleCache.set(cleanEmail, input.role);
+
     const newProfile: UserProfileItem = {
       id: userId,
       email: cleanEmail,
@@ -425,27 +388,6 @@ export async function createUserAccount(input: {
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     };
 
-    try {
-      await supabase.from('profiles').upsert([
-        {
-          id: userId,
-          email: cleanEmail,
-          full_name: newProfile.fullName,
-          role: newProfile.role,
-          specialty: newProfile.specialty,
-          is_verified: true,
-        }
-      ], { onConflict: 'id' });
-    } catch (e) {
-      console.warn('Could not insert profile into database table:', e);
-    }
-
-    const local = getLocalProfiles().filter(p => p.email.toLowerCase() !== cleanEmail);
-    local.unshift(newProfile);
-    saveLocalProfiles(local);
-
-    setAccountDisabledLocally(cleanEmail, false);
-
     return { profile: newProfile, error: null };
   } catch (err: any) {
     return { profile: null, error: err };
@@ -456,37 +398,29 @@ export async function deleteUserAccount(userId: string, email: string): Promise<
   try {
     const cleanEmail = email.toLowerCase().trim();
 
-    // 1. Mark in persistent tombstone store so re-seeding or DB sync NEVER resurrects this user
-    markAccountAsDeleted(cleanEmail, userId);
-
-    // 2. Attempt Supabase profile deletion by ID and by Email
+    // 1. Delete from Supabase profiles table
     if (userId) {
-      const { error: idErr } = await supabase.from('profiles').delete().eq('id', userId);
-      if (idErr) {
-        console.warn('Supabase profile deletion warning (by id):', idErr);
-      }
+      await supabase.from('profiles').delete().eq('id', userId);
     }
     if (cleanEmail) {
-      const { error: emailErr } = await supabase.from('profiles').delete().eq('email', cleanEmail);
-      if (emailErr) {
-        console.warn('Supabase profile deletion warning (by email):', emailErr);
-      }
+      await supabase.from('profiles').delete().eq('email', cleanEmail);
     }
 
-    // 3. Remove immediately from local profile cache
-    const local = getLocalProfiles().filter(p => p.id !== userId && p.email.toLowerCase() !== cleanEmail);
-    saveLocalProfiles(local);
+    // 2. Mark profile as deleted tombstone in DB to ensure cross-browser sync
+    if (userId) {
+      await supabase.from('profiles').update({
+        email: `deleted_${Date.now()}_${userId.slice(0, 8)}@epicademy.deleted`,
+        is_verified: false,
+        bio: 'DELETED',
+      }).eq('id', userId);
+    }
 
-    // 4. Remove from disabled accounts if present
-    setAccountDisabledLocally(cleanEmail, false);
+    userRoleCache.delete(cleanEmail);
 
-    // 5. If the deleted user is currently signed in, sign out immediately
+    // 3. If currently signed in, sign out immediately
     const { data: { user } } = await supabase.auth.getUser();
     if (user && (user.id === userId || user.email?.toLowerCase() === cleanEmail)) {
       await supabase.auth.signOut();
-      try {
-        localStorage.removeItem('epicademy_active_user');
-      } catch {}
     }
 
     return { success: true, error: null };
@@ -506,16 +440,9 @@ export async function toggleUserAccountStatus(
     if (userId) {
       await supabase.from('profiles').update({ is_verified: !disable }).eq('id', userId);
     }
-
-    setAccountDisabledLocally(cleanEmail, disable);
-
-    const local = getLocalProfiles().map(p => {
-      if (p.id === userId || p.email.toLowerCase() === cleanEmail) {
-        return { ...p, isDisabled: disable, isVerified: !disable };
-      }
-      return p;
-    });
-    saveLocalProfiles(local);
+    if (cleanEmail) {
+      await supabase.from('profiles').update({ is_verified: !disable }).eq('email', cleanEmail);
+    }
 
     if (disable) {
       const { data: { user } } = await supabase.auth.getUser();
@@ -536,16 +463,14 @@ export async function updateUserRole(
   newRole: UserRole
 ): Promise<{ success: boolean; error: any }> {
   try {
+    const cleanEmail = email.toLowerCase().trim();
     if (userId) {
       await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
     }
-    const local = getLocalProfiles().map(p => {
-      if (p.id === userId || p.email.toLowerCase() === email.toLowerCase()) {
-        return { ...p, role: newRole };
-      }
-      return p;
-    });
-    saveLocalProfiles(local);
+    if (cleanEmail) {
+      await supabase.from('profiles').update({ role: newRole }).eq('email', cleanEmail);
+    }
+    userRoleCache.set(cleanEmail, newRole);
     return { success: true, error: null };
   } catch (err: any) {
     return { success: false, error: err };
@@ -554,22 +479,9 @@ export async function updateUserRole(
 
 export async function signInUser(email: string, password: string) {
   const cleanEmail = email.toLowerCase().trim();
-  if (isAccountDeleted(cleanEmail)) {
-    return {
-      data: { user: null, session: null },
-      error: new Error('This account has been permanently deleted by an administrator.'),
-    };
-  }
-
-  if (isAccountDisabled(cleanEmail)) {
-    return {
-      data: { user: null, session: null },
-      error: new Error('This account has been disabled by the administrator. Please contact support.'),
-    };
-  }
 
   try {
-    // 1. Authenticate strictly with Supabase Auth (No fake local mock bypass)
+    // 1. Authenticate with Supabase Auth
     const { data, error } = await supabase.auth.signInWithPassword({
       email: cleanEmail,
       password,
@@ -583,20 +495,14 @@ export async function signInUser(email: string, password: string) {
     }
 
     // 2. Cross-browser verification against Supabase profiles table
-    // If account was deleted in Edge or another browser, the profile row is GONE.
     const { data: prof } = await supabase
       .from('profiles')
-      .select('id, email, role, is_verified, full_name')
+      .select('id, email, role, is_verified, full_name, bio')
       .or(`id.eq.${data.user.id},email.eq.${cleanEmail}`)
       .maybeSingle();
 
-    if (!prof) {
-      // Profile does not exist in database (deleted by admin!)
+    if (!prof || prof.bio === 'DELETED' || prof.email?.includes('@epicademy.deleted')) {
       await supabase.auth.signOut();
-      markAccountAsDeleted(cleanEmail, data.user.id);
-      try {
-        localStorage.removeItem('epicademy_active_user');
-      } catch {}
       return {
         data: { user: null, session: null },
         error: new Error('This account has been deleted by an administrator and no longer exists.'),
@@ -605,10 +511,6 @@ export async function signInUser(email: string, password: string) {
 
     if (prof.is_verified === false) {
       await supabase.auth.signOut();
-      setAccountDisabledLocally(cleanEmail, true);
-      try {
-        localStorage.removeItem('epicademy_active_user');
-      } catch {}
       return {
         data: { user: null, session: null },
         error: new Error('This account has been disabled by the administrator. Access denied.'),
@@ -616,13 +518,14 @@ export async function signInUser(email: string, password: string) {
     }
 
     // Attach real verified role & full name
-    if (prof.role) {
-      data.user.user_metadata = {
-        ...data.user.user_metadata,
-        role: prof.role,
-        full_name: prof.full_name || data.user.user_metadata?.full_name,
-      };
-    }
+    const verifiedRole = prof.role || data.user.user_metadata?.role || 'student';
+    userRoleCache.set(cleanEmail, verifiedRole);
+
+    data.user.user_metadata = {
+      ...data.user.user_metadata,
+      role: verifiedRole,
+      full_name: prof.full_name || data.user.user_metadata?.full_name,
+    };
 
     return { data, error: null };
   } catch (err: any) {
@@ -641,47 +544,31 @@ export async function getCurrentUser() {
 
   const cleanEmail = user.email.toLowerCase().trim();
 
-  if (isAccountDeleted(cleanEmail) || isAccountDeleted(user.id)) {
-    await supabase.auth.signOut();
-    try {
-      localStorage.removeItem('epicademy_active_user');
-    } catch {}
-    return null;
-  }
-
   // Cross-browser live verification against Supabase profiles table
   try {
     const { data: prof } = await supabase
       .from('profiles')
-      .select('id, email, role, is_verified')
+      .select('id, email, role, is_verified, bio')
       .or(`id.eq.${user.id},email.eq.${cleanEmail}`)
       .maybeSingle();
 
-    if (!prof) {
-      // Account was deleted in Supabase (e.g. from Microsoft Edge or admin console)
+    if (!prof || prof.bio === 'DELETED' || prof.email?.includes('@epicademy.deleted')) {
       await supabase.auth.signOut();
-      markAccountAsDeleted(cleanEmail, user.id);
-      try {
-        localStorage.removeItem('epicademy_active_user');
-      } catch {}
       return null;
     }
 
     if (prof.is_verified === false) {
       await supabase.auth.signOut();
-      setAccountDisabledLocally(cleanEmail, true);
-      try {
-        localStorage.removeItem('epicademy_active_user');
-      } catch {}
       return null;
     }
 
-    if (prof.role) {
-      user.user_metadata = {
-        ...user.user_metadata,
-        role: prof.role,
-      };
-    }
+    const verifiedRole = prof.role || user.user_metadata?.role || 'student';
+    userRoleCache.set(cleanEmail, verifiedRole);
+
+    user.user_metadata = {
+      ...user.user_metadata,
+      role: verifiedRole,
+    };
   } catch (e) {
     console.warn('Live profile check note:', e);
   }

@@ -30,7 +30,7 @@ import { StudentDossierModal } from './components/profile/StudentDossierModal';
 import { AccountSettingsModal } from './components/modals/AccountSettingsModal';
 import { ContributorAccessModal } from './components/modals/ContributorAccessModal';
 import { GradebookModal } from './components/gradebook/GradebookModal';
-import { Settings } from 'lucide-react';
+import { Settings, RefreshCw, GraduationCap } from 'lucide-react';
 import { ZERO_TO_HERO_TRACKS } from './data/zeroToHeroCoursesData';
 import { TESDA_CSS_TRACK } from './data/tesdaCssNc2CourseData';
 import { PINOY_DRUM_TRACK } from './data/pinoyDrumCourseData';
@@ -156,39 +156,13 @@ export function App() {
   const [activeModuleIndex, setActiveModuleIndex] = useState(0);
   const [completedLessonIds, setCompletedLessonIds] = useState<Record<string, boolean>>({});
 
-  // Active Supabase user state with localStorage persistence
-  const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string } | null>(() => {
-    try {
-      const stored = localStorage.getItem('epicademy_active_user');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed?.email) {
-          // Immediately purge old demo accounts
-          if (parsed.email.endsWith('@epicademy.com')) {
-            localStorage.removeItem('epicademy_active_user');
-            return null;
-          }
-          const autoRole = getUserRoleByEmail(parsed.email);
-          if (autoRole === 'admin') {
-            parsed.role = 'admin';
-          }
-        }
-        return parsed;
-      }
-    } catch {
-      // Fallback
-    }
-    return null;
-  });
+  // Active Supabase user state (Pure Supabase session management)
+  const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string } | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState<boolean>(true);
 
   const handleAuthSuccess = (email: string, role: string) => {
     const userObj = { email, role };
     setCurrentUser(userObj);
-    try {
-      localStorage.setItem('epicademy_active_user', JSON.stringify(userObj));
-    } catch (e) {
-      console.error('Failed to save session:', e);
-    }
 
     if (role === 'student') {
       setPerspective('student');
@@ -199,7 +173,6 @@ export function App() {
 
   const handleSignOut = async () => {
     try {
-      localStorage.removeItem('epicademy_active_user');
       await signOutUser();
     } catch (e) {
       console.error('Sign out error:', e);
@@ -212,11 +185,6 @@ export function App() {
     const email = currentUser.email;
     const userObj = { email, role: newRole };
     setCurrentUser(userObj);
-    try {
-      localStorage.setItem('epicademy_active_user', JSON.stringify(userObj));
-    } catch (e) {
-      console.error('Failed to save active user:', e);
-    }
 
     if (newRole === 'student') {
       setPerspective('student');
@@ -226,22 +194,37 @@ export function App() {
   };
 
   useEffect(() => {
+    // Purge any legacy localStorage cache on mount
+    try {
+      localStorage.removeItem('epicademy_active_user');
+      localStorage.removeItem('epicademy_local_profiles');
+      localStorage.removeItem('epicademy_disabled_emails');
+      localStorage.removeItem('epicademy_deleted_accounts');
+    } catch {}
+
     // Check existing Supabase session and validate against live DB
-    getCurrentUser().then((user) => {
-      if (user && user.email) {
-        const detectedRole = user.user_metadata?.role || getUserRoleByEmail(user.email) || 'student';
-        const userObj = { email: user.email, role: detectedRole };
-        setCurrentUser(userObj);
-        try {
-          localStorage.setItem('epicademy_active_user', JSON.stringify(userObj));
-        } catch {}
-      } else {
+    getCurrentUser()
+      .then((user) => {
+        if (user && user.email) {
+          const detectedRole = user.user_metadata?.role || getUserRoleByEmail(user.email) || 'student';
+          const userObj = { email: user.email, role: detectedRole };
+          setCurrentUser(userObj);
+          if (detectedRole === 'student') {
+            setPerspective('student');
+          } else {
+            setPerspective('educator');
+          }
+        } else {
+          setCurrentUser(null);
+        }
+      })
+      .catch((err) => {
+        console.warn('Session initialization note:', err);
         setCurrentUser(null);
-        try {
-          localStorage.removeItem('epicademy_active_user');
-        } catch {}
-      }
-    });
+      })
+      .finally(() => {
+        setIsAuthChecking(false);
+      });
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user?.email) {
@@ -249,30 +232,21 @@ export function App() {
         // Cross-browser live check: verify account is still active in Supabase profiles
         const { data: prof } = await supabase
           .from('profiles')
-          .select('id, email, role, is_verified')
+          .select('id, email, role, is_verified, bio')
           .or(`id.eq.${session.user.id},email.eq.${cleanEmail}`)
           .maybeSingle();
 
-        if (!prof || prof.is_verified === false) {
+        if (!prof || prof.is_verified === false || prof.bio === 'DELETED' || prof.email?.includes('@epicademy.deleted')) {
           await signOutUser();
           setCurrentUser(null);
-          try {
-            localStorage.removeItem('epicademy_active_user');
-          } catch {}
           return;
         }
 
         const detectedRole = prof.role || session.user.user_metadata?.role || getUserRoleByEmail(session.user.email) || 'student';
         const userObj = { email: session.user.email, role: detectedRole };
         setCurrentUser(userObj);
-        try {
-          localStorage.setItem('epicademy_active_user', JSON.stringify(userObj));
-        } catch {}
       } else {
         setCurrentUser(null);
-        try {
-          localStorage.removeItem('epicademy_active_user');
-        } catch {}
       }
     });
 
@@ -480,13 +454,28 @@ export function App() {
   const effectiveOverallProgress = activeTrackModules.length > 0 ? dynamicCourseProgress : overallCourseProgress;
 
   // =========================================================================
-  // AUTHENTICATION GATE: Before main page unlocks, require sign-in or sign-up
+  // AUTHENTICATION GATE: Before main page unlocks, require verified Supabase auth
   // =========================================================================
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4">
+        <div className="w-14 h-14 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-xl shadow-blue-500/20 mb-4 animate-pulse">
+          <GraduationCap className="w-8 h-8" />
+        </div>
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-300 font-bold uppercase tracking-wider">
+          <RefreshCw className="w-4 h-4 animate-spin text-blue-400" />
+          <span>Verifying Live Supabase Cloud Authentication...</span>
+        </div>
+        <p className="text-[11px] text-slate-500 mt-2 font-mono">Epicademy Hub Security Gateway</p>
+      </div>
+    );
+  }
+
   if (!currentUser) {
     return (
       <LoginPage 
         onAuthSuccess={handleAuthSuccess}
-        onExploreAsGuest={() => handleAuthSuccess('guest@epicademy.com', 'student')}
+        onExploreAsGuest={() => handleAuthSuccess('guest@epicademy.ph', 'student')}
       />
     );
   }
