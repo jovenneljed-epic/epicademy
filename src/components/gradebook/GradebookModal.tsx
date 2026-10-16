@@ -23,11 +23,14 @@ import {
 } from 'lucide-react';
 import { 
   INITIAL_COHORTS, 
-  INITIAL_STUDENT_ROSTER, 
   computeWeightedGrade, 
   computeAcademicStanding, 
   computePhilippineGrade, 
-  exportRosterToCSV 
+  exportRosterToCSV,
+  STORAGE_KEY_ROSTER,
+  STORAGE_KEY_COHORTS,
+  getStoredRoster,
+  saveStoredRoster
 } from '../../data/gradebookData';
 import type { CohortItem, StudentGradeRecord } from '../../data/gradebookData';
 
@@ -46,9 +49,6 @@ interface GradebookModalProps {
   onOpenCredentials?: (trackId?: string, studentName?: string, studentEmail?: string) => void;
 }
 
-const STORAGE_KEY_ROSTER = 'epicademy_gradebook_roster_v2';
-const STORAGE_KEY_COHORTS = 'epicademy_gradebook_cohorts_v2';
-
 export const GradebookModal = ({
   isOpen,
   onClose,
@@ -60,7 +60,7 @@ export const GradebookModal = ({
   const [activeTab, setActiveTab] = useState<'roster' | 'analytics' | 'printable' | 'reportCard'>('roster');
 
   // Cohort & Roster state
-  const [cohorts, setCohorts] = useState<CohortItem[]>(() => {
+  const [cohorts] = useState<CohortItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_COHORTS);
       return saved ? JSON.parse(saved) : INITIAL_COHORTS;
@@ -70,13 +70,20 @@ export const GradebookModal = ({
   });
 
   const [roster, setRoster] = useState<StudentGradeRecord[]>(() => {
+    // Purge old demo storage keys from previous versions
     try {
-      const saved = localStorage.getItem(STORAGE_KEY_ROSTER);
-      return saved ? JSON.parse(saved) : INITIAL_STUDENT_ROSTER;
-    } catch {
-      return INITIAL_STUDENT_ROSTER;
-    }
+      localStorage.removeItem('epicademy_gradebook_roster_v1');
+      localStorage.removeItem('epicademy_gradebook_roster_v2');
+    } catch {}
+    return getStoredRoster();
   });
+
+  // Reload stored roster whenever modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setRoster(getStoredRoster());
+    }
+  }, [isOpen]);
 
   // Filter & Search state
   const [selectedCohortId, setSelectedCohortId] = useState<string>('all');
@@ -289,12 +296,11 @@ export const GradebookModal = ({
     setSelectedStudentId(newStudentId);
   };
 
-  const handleResetToDefault = () => {
-    if (window.confirm('Reset student roster to default factory data? Any custom entries will be reverted.')) {
-      setRoster(INITIAL_STUDENT_ROSTER);
-      setCohorts(INITIAL_COHORTS);
-      localStorage.removeItem(STORAGE_KEY_ROSTER);
-      localStorage.removeItem(STORAGE_KEY_COHORTS);
+  const handleClearRoster = () => {
+    if (window.confirm('Clear all student entries from the roster? This cannot be undone.')) {
+      setRoster([]);
+      saveStoredRoster([]);
+      setSelectedStudentId(null);
     }
   };
 
@@ -415,12 +421,12 @@ export const GradebookModal = ({
           </div>
 
           <button
-            onClick={handleResetToDefault}
-            className="text-[11px] text-slate-500 hover:text-slate-300 flex items-center gap-1 cursor-pointer transition"
-            title="Reset to initial factory sample data"
+            onClick={handleClearRoster}
+            className="text-[11px] text-slate-500 hover:text-rose-400 flex items-center gap-1 cursor-pointer transition"
+            title="Clear all student records from roster"
           >
             <RotateCcw className="w-3 h-3" />
-            <span>Reset Sample Data</span>
+            <span>Clear Roster</span>
           </button>
         </div>
 
@@ -574,10 +580,23 @@ export const GradebookModal = ({
                     <tbody className="divide-y divide-slate-800/60 text-xs text-slate-300">
                       {filteredRoster.length === 0 ? (
                         <tr>
-                          <td colSpan={10} className="py-12 text-center text-slate-500">
-                            <Users className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                            <p className="text-sm font-semibold">No students found matching your filters.</p>
-                            <p className="text-xs text-slate-600 mt-1">Try clearing your search query or changing filters.</p>
+                          <td colSpan={10} className="py-16 text-center text-slate-500">
+                            <div className="max-w-md mx-auto space-y-3">
+                              <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto text-slate-400">
+                                <Users className="w-6 h-6" />
+                              </div>
+                              <p className="text-base font-bold text-white">No scholars enrolled yet</p>
+                              <p className="text-xs text-slate-400 leading-relaxed">
+                                Students will automatically appear here when they register or enroll via the Login page. You can also manually enroll a student right now.
+                              </p>
+                              <button
+                                onClick={() => setIsAddModalOpen(true)}
+                                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs transition inline-flex items-center gap-1.5 shadow-md cursor-pointer mt-2"
+                              >
+                                <Plus className="w-4 h-4" />
+                                <span>Enroll New Student</span>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ) : (

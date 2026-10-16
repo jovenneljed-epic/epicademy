@@ -38,7 +38,7 @@ export const INITIAL_COHORTS: CohortItem[] = [
     startDate: 'Feb 1, 2026',
     endDate: 'May 30, 2026',
     leadInstructor: 'Ronnel M. Aviguetero, CEO and FOUNDER of KEZJED SOLUTIONS',
-    totalStudents: 48,
+    totalStudents: 0,
   },
   {
     id: 'cohort-2026-b',
@@ -47,7 +47,7 @@ export const INITIAL_COHORTS: CohortItem[] = [
     startDate: 'Jun 1, 2026',
     endDate: 'Sep 30, 2026',
     leadInstructor: 'Ronnel M. Aviguetero, CEO and FOUNDER of KEZJED SOLUTIONS',
-    totalStudents: 36,
+    totalStudents: 0,
   },
   {
     id: 'cohort-tesda-css-08',
@@ -56,136 +56,94 @@ export const INITIAL_COHORTS: CohortItem[] = [
     startDate: 'Jan 15, 2026',
     endDate: 'Apr 30, 2026',
     leadInstructor: 'Ronnel M. Aviguetero, CEO and FOUNDER of KEZJED SOLUTIONS',
-    totalStudents: 52,
+    totalStudents: 0,
   },
 ];
 
-export const INITIAL_STUDENT_ROSTER: StudentGradeRecord[] = [
-  {
-    id: 'stu-101',
-    studentName: 'Alexander Dela Cruz',
-    email: 'alex.delacruz@kezjed.edu.ph',
-    cohortId: 'cohort-2026-a',
-    trackId: 'track-level-1-html-foundations',
-    trackTitle: 'Level 1: Modern HTML5 Fundamentals & Semantic Web Architecture',
-    progressPercent: 100,
-    completedActivities: 12,
+export const INITIAL_STUDENT_ROSTER: StudentGradeRecord[] = [];
+
+export const STORAGE_KEY_ROSTER = 'epicademy_gradebook_roster_v3';
+export const STORAGE_KEY_COHORTS = 'epicademy_gradebook_cohorts_v3';
+
+export function getStoredRoster(): StudentGradeRecord[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_ROSTER);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Filter out old demo ids if any carried over
+    return parsed.filter(s => !s.id?.startsWith('stu-10'));
+  } catch {
+    return [];
+  }
+}
+
+export function saveStoredRoster(roster: StudentGradeRecord[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_ROSTER, JSON.stringify(roster));
+  } catch (e) {
+    console.error('Failed to save roster to localStorage:', e);
+  }
+}
+
+export function enrollStudentInRoster(params: {
+  studentName: string;
+  email: string;
+  cohortId?: string;
+  trackId?: string;
+  trackTitle?: string;
+}): StudentGradeRecord {
+  const currentRoster = getStoredRoster();
+  const cleanEmail = params.email.trim().toLowerCase();
+
+  // Check if student is already enrolled
+  const existingIndex = currentRoster.findIndex(s => s.email.toLowerCase() === cleanEmail);
+  if (existingIndex >= 0) {
+    // If track or name provided, update it
+    const existing = currentRoster[existingIndex];
+    const updated = {
+      ...existing,
+      studentName: params.studentName || existing.studentName,
+      trackId: params.trackId || existing.trackId,
+      trackTitle: params.trackTitle || existing.trackTitle,
+      cohortId: params.cohortId || existing.cohortId,
+      lastActive: 'Just now'
+    };
+    currentRoster[existingIndex] = updated;
+    saveStoredRoster(currentRoster);
+    return updated;
+  }
+
+  const defaultCohort = params.cohortId || INITIAL_COHORTS[0].id;
+  const defaultTrackId = params.trackId || 'track-level-1-html-foundations';
+  const defaultTrackTitle = params.trackTitle || 'Level 1: Modern HTML5 Fundamentals & Semantic Web Architecture';
+
+  const newStudent: StudentGradeRecord = {
+    id: `stu-${Date.now().toString().slice(-6)}`,
+    studentName: params.studentName || cleanEmail.split('@')[0].toUpperCase(),
+    email: cleanEmail,
+    cohortId: defaultCohort,
+    trackId: defaultTrackId,
+    trackTitle: defaultTrackTitle,
+    progressPercent: 0,
+    completedActivities: 0,
     totalActivities: 12,
-    examAverage: 98,
-    worksheetsScore: 97,
+    examAverage: 0,
+    worksheetsScore: 0,
     attendancePercent: 100,
-    finalNumericGrade: 97.8,
-    letterGrade: 'A+',
-    gpa: 4.0,
-    academicStanding: 'Summa Cum Laude',
-    certificateIssued: true,
-    certificateId: 'EPIC-CERT-2026-HTML5-84920',
-    lastActive: '10 mins ago',
-  },
-  {
-    id: 'stu-102',
-    studentName: 'Clarisse Anne Reyes',
-    email: 'clarisse.reyes@gmail.com',
-    cohortId: 'cohort-2026-a',
-    trackId: 'track-level-2-css-mastery',
-    trackTitle: 'Level 2: Modern CSS3 Mastery, Flexbox, Grid & Responsive Architecture',
-    progressPercent: 92,
-    completedActivities: 11,
-    totalActivities: 12,
-    examAverage: 94,
-    worksheetsScore: 95,
-    attendancePercent: 96,
-    finalNumericGrade: 94.2,
-    letterGrade: 'A',
-    gpa: 3.85,
-    academicStanding: 'Magna Cum Laude',
-    certificateIssued: true,
-    certificateId: 'EPIC-CERT-2026-CSS3-51829',
-    lastActive: '2 hours ago',
-  },
-  {
-    id: 'stu-103',
-    studentName: 'Joshua Miguel Santos',
-    email: 'joshua.santos@dev.ph',
-    cohortId: 'cohort-2026-b',
-    trackId: 'track-level-9-fullstack-ai-hero',
-    trackTitle: 'Level 9: Full-Stack AI SaaS Capstone: Autonomous AI Agents & Cloud Scale',
-    progressPercent: 85,
-    completedActivities: 10,
-    totalActivities: 12,
-    examAverage: 91,
-    worksheetsScore: 89,
-    attendancePercent: 94,
-    finalNumericGrade: 90.6,
-    letterGrade: 'A',
-    gpa: 3.75,
-    academicStanding: 'Cum Laude',
-    certificateIssued: false,
-    lastActive: 'Yesterday',
-  },
-  {
-    id: 'stu-104',
-    studentName: 'Bernadette Lim',
-    email: 'bernadette.lim@outlook.com',
-    cohortId: 'cohort-tesda-css-08',
-    trackId: 'track-tesda-css-nc2',
-    trackTitle: 'Computer Systems Servicing (CSS) NC II: TESDA Vocational Masterclass',
-    progressPercent: 100,
-    completedActivities: 16,
-    totalActivities: 16,
-    examAverage: 99,
-    worksheetsScore: 98,
-    attendancePercent: 100,
-    finalNumericGrade: 98.6,
-    letterGrade: 'A+',
-    gpa: 4.0,
-    academicStanding: 'Summa Cum Laude',
-    certificateIssued: true,
-    certificateId: 'EPIC-CERT-2026-TESDA-99412',
-    lastActive: '5 mins ago',
-  },
-  {
-    id: 'stu-105',
-    studentName: 'Mark Lester Tolentino',
-    email: 'mark.tolentino@yahoo.com',
-    cohortId: 'cohort-tesda-css-08',
-    trackId: 'track-tesda-css-nc2',
-    trackTitle: 'Computer Systems Servicing (CSS) NC II: TESDA Vocational Masterclass',
-    progressPercent: 75,
-    completedActivities: 12,
-    totalActivities: 16,
-    examAverage: 84,
-    worksheetsScore: 82,
-    attendancePercent: 90,
-    finalNumericGrade: 83.5,
-    letterGrade: 'B',
-    gpa: 3.0,
+    finalNumericGrade: 10, // 10% attendance initially
+    letterGrade: 'F',
+    gpa: 0.0,
     academicStanding: 'Good Standing',
     certificateIssued: false,
-    lastActive: '3 days ago',
-  },
-  {
-    id: 'stu-106',
-    studentName: 'Patricia Joy Gonzales',
-    email: 'patricia.gonzales@techcorp.ph',
-    cohortId: 'cohort-2026-a',
-    trackId: 'track-level-5-react-ts',
-    trackTitle: 'Level 5: Modern React 18, TypeScript & Enterprise Component Architecture',
-    progressPercent: 100,
-    completedActivities: 12,
-    totalActivities: 12,
-    examAverage: 96,
-    worksheetsScore: 94,
-    attendancePercent: 98,
-    finalNumericGrade: 95.8,
-    letterGrade: 'A+',
-    gpa: 3.95,
-    academicStanding: 'Summa Cum Laude',
-    certificateIssued: true,
-    certificateId: 'EPIC-CERT-2026-REACT-44109',
-    lastActive: '1 hour ago',
-  }
-];
+    lastActive: 'Just now'
+  };
+
+  const updatedRoster = [newStudent, ...currentRoster];
+  saveStoredRoster(updatedRoster);
+
+  return newStudent;
+}
 
 export function computeWeightedGrade(
   activityScore: number,

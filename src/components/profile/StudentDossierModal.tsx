@@ -29,8 +29,8 @@ export const StudentDossierModal = ({
 
   if (!isOpen) return null;
 
-  const resolvedName = studentName || (studentEmail ? studentEmail.split('@')[0].toUpperCase() : 'ALEXANDER DELA CRUZ');
-  const resolvedEmail = studentEmail || 'alex.delacruz@kezjed.edu.ph';
+  const resolvedName = studentName || (studentEmail ? studentEmail.split('@')[0].toUpperCase() : 'VALUED SCHOLAR');
+  const resolvedEmail = studentEmail || 'student@epicademy.ph';
 
   const verifiedBadges = [
     'HTML5 Semantic Architecture',

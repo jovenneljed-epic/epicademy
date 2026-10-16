@@ -15,10 +15,30 @@ import {
   Code2, 
   RefreshCw,
   Eye,
-  EyeOff
+  EyeOff,
+  BookOpen,
+  Users
 } from 'lucide-react';
 import { signInUser, signUpUser, getUserRoleByEmail } from '../../lib/supabaseClient';
+import { enrollStudentInRoster, INITIAL_COHORTS } from '../../data/gradebookData';
 import type { UserRole } from '../../types';
+
+export const ENROLLMENT_TRACKS = [
+  { id: 'track-level-1-html-foundations', title: 'Level 1: Modern HTML5 Fundamentals & Semantic Web Architecture' },
+  { id: 'track-level-2-css-mastery', title: 'Level 2: Modern CSS3 Mastery, Flexbox, Grid & Responsive Architecture' },
+  { id: 'track-level-3-javascript', title: 'Level 3: Modern JavaScript (ES6+), DOM Manipulation & Algorithms' },
+  { id: 'track-level-4-async-js', title: 'Level 4: Asynchronous JavaScript, REST APIs & HTTP Protocol' },
+  { id: 'track-level-5-react-ts', title: 'Level 5: Modern React 19, TypeScript & Enterprise Architecture' },
+  { id: 'track-level-6-nodejs-backend', title: 'Level 6: Backend Development with Node.js, Express & Serverless' },
+  { id: 'track-level-7-postgres-supabase', title: 'Level 7: Relational Database Mastery: PostgreSQL & Supabase' },
+  { id: 'track-level-8-security-devops', title: 'Level 8: Web Security, Authentication & Production Cloud DevOps' },
+  { id: 'track-level-9-fullstack-ai-hero', title: 'Level 9: Full-Stack AI SaaS: Autonomous AI Agents & Cloud Scale' },
+  { id: 'track-tesda-css-nc2', title: 'Computer Systems Servicing (CSS) NC II: TESDA Vocational Masterclass' },
+  { id: 'track-pinoy-drum-zero-to-hero', title: 'Pinoy Drum Masterclass Zero-to-Hero' },
+  { id: 'track-pinoy-piano-zero-to-hero', title: 'Pinoy Piano Masterclass Zero-to-Hero' },
+  { id: 'track-pinoy-guitar-zero-to-hero', title: 'Pinoy Guitar Masterclass Zero-to-Hero' },
+  { id: 'track-pinoy-lead-guitar-zero-to-hero', title: 'Pinoy Lead Guitar Masterclass Zero-to-Hero' },
+];
 
 interface LoginPageProps {
   onAuthSuccess: (email: string, role: string) => void;
@@ -29,15 +49,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onAuthSuccess,
   onExploreAsGuest,
 }) => {
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [mode, setMode] = useState<'signin' | 'enroll' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
-  // Sign Up Extra Fields
+  // Sign Up & Enrollment Fields
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<UserRole>('student');
   const [specialty, setSpecialty] = useState('');
+  const [selectedTrackId, setSelectedTrackId] = useState(ENROLLMENT_TRACKS[0].id);
+  const [selectedCohortId, setSelectedCohortId] = useState(INITIAL_COHORTS[0].id);
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -56,6 +78,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         setErrorMessage(error.message);
       } else {
         const resolvedRole = getUserRoleByEmail(targetEmail) || data.user?.user_metadata?.role || targetRole;
+        if (resolvedRole === 'student') {
+          enrollStudentInRoster({
+            studentName: 'STUDENT SCHOLAR',
+            email: targetEmail,
+            cohortId: selectedCohortId,
+            trackId: selectedTrackId,
+            trackTitle: ENROLLMENT_TRACKS.find(t => t.id === selectedTrackId)?.title || ENROLLMENT_TRACKS[0].title
+          });
+        }
         setSuccessMessage(`Welcome back! Unlocking platform as ${resolvedRole.toUpperCase()}...`);
         setTimeout(() => {
           onAuthSuccess(targetEmail, resolvedRole);
@@ -83,11 +114,40 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     }
 
     try {
-      if (mode === 'signup') {
+      if (mode === 'enroll') {
+        const selectedTrack = ENROLLMENT_TRACKS.find(t => t.id === selectedTrackId) || ENROLLMENT_TRACKS[0];
+        const { error } = await signUpUser(cleanEmail, password, 'student');
+        if (error) {
+          setErrorMessage(error.message);
+        } else {
+          // Immediately register student in official Gradebook roster
+          enrollStudentInRoster({
+            studentName: fullName.trim() || cleanEmail.split('@')[0].toUpperCase(),
+            email: cleanEmail,
+            cohortId: selectedCohortId,
+            trackId: selectedTrack.id,
+            trackTitle: selectedTrack.title
+          });
+          setSuccessMessage(`Enrolled successfully in ${selectedTrack.title.slice(0, 30)}...! Launching academy...`);
+          setTimeout(() => {
+            onAuthSuccess(cleanEmail, 'student');
+          }, 400);
+        }
+      } else if (mode === 'signup') {
         const { error } = await signUpUser(cleanEmail, password, role);
         if (error) {
           setErrorMessage(error.message);
         } else {
+          if (role === 'student') {
+            const selectedTrack = ENROLLMENT_TRACKS.find(t => t.id === selectedTrackId) || ENROLLMENT_TRACKS[0];
+            enrollStudentInRoster({
+              studentName: fullName.trim() || cleanEmail.split('@')[0].toUpperCase(),
+              email: cleanEmail,
+              cohortId: selectedCohortId,
+              trackId: selectedTrack.id,
+              trackTitle: selectedTrack.title
+            });
+          }
           setSuccessMessage(`Account created successfully! Unlocking as ${role.toUpperCase()}...`);
           setTimeout(() => {
             onAuthSuccess(cleanEmail, role);
@@ -99,6 +159,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           setErrorMessage(error.message);
         } else {
           const resolvedRole = getUserRoleByEmail(cleanEmail) || data.user?.user_metadata?.role || 'student';
+          if (resolvedRole === 'student') {
+            enrollStudentInRoster({
+              studentName: cleanEmail.split('@')[0].toUpperCase(),
+              email: cleanEmail,
+              cohortId: selectedCohortId,
+              trackId: selectedTrackId,
+              trackTitle: ENROLLMENT_TRACKS.find(t => t.id === selectedTrackId)?.title || ENROLLMENT_TRACKS[0].title
+            });
+          }
           setSuccessMessage(`Signed in! Unlocking learning hub as ${resolvedRole.toUpperCase()}...`);
           setTimeout(() => {
             onAuthSuccess(cleanEmail, resolvedRole);
@@ -231,7 +300,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative">
               
               {/* Mode Switcher Tabs */}
-              <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-950/80 rounded-2xl mb-5 border border-slate-800">
+              <div className="grid grid-cols-3 gap-1 p-1 bg-slate-950/80 rounded-2xl mb-5 border border-slate-800">
                 <button
                   type="button"
                   onClick={() => {
@@ -239,7 +308,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     setErrorMessage(null);
                     setSuccessMessage(null);
                   }}
-                  className={`py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+                  className={`py-2 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
                     mode === 'signin'
                       ? 'bg-blue-600 text-white shadow-md'
                       : 'text-slate-400 hover:text-white'
@@ -250,17 +319,33 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 <button
                   type="button"
                   onClick={() => {
+                    setMode('enroll');
+                    setRole('student');
+                    setErrorMessage(null);
+                    setSuccessMessage(null);
+                  }}
+                  className={`py-2 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                    mode === 'enroll'
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md font-black'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>🎓 Enroll</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
                     setMode('signup');
                     setErrorMessage(null);
                     setSuccessMessage(null);
                   }}
-                  className={`py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+                  className={`py-2 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
                     mode === 'signup'
                       ? 'bg-blue-600 text-white shadow-md'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  Create Account
+                  Staff Sign Up
                 </button>
               </div>
 
@@ -334,16 +419,32 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
               {/* Authentication Form */}
               <form onSubmit={handleSubmit} className="space-y-3.5">
-                {/* Full Name for Sign Up */}
-                {mode === 'signup' && (
+                
+                {/* Enrollment Informational Callout */}
+                {mode === 'enroll' && (
+                  <div className="p-3 bg-blue-950/40 border border-blue-500/30 rounded-2xl mb-2 space-y-1">
+                    <div className="flex items-center gap-1.5 text-blue-400 font-bold text-xs uppercase tracking-wider">
+                      <GraduationCap className="w-4 h-4" />
+                      <span>Student Admission &amp; Course Enrollment</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-normal">
+                      Register your student account to automatically be enrolled into the official academic roster and gain instant access to your syllabus.
+                    </p>
+                  </div>
+                )}
+
+                {/* Full Name for Sign Up & Enrollment */}
+                {(mode === 'signup' || mode === 'enroll') && (
                   <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1">Your Full Name</label>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                      {mode === 'enroll' ? 'Student Full Name *' : 'Your Full Name *'}
+                    </label>
                     <div className="relative">
                       <UserIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                       <input
                         type="text"
-                        required={mode === 'signup'}
-                        placeholder="e.g. Maria Santos"
+                        required
+                        placeholder="e.g. Maria Katrina Santos"
                         value={fullName}
                         onChange={e => setFullName(e.target.value)}
                         className="w-full pl-9 pr-3 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
@@ -354,13 +455,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
                 {/* Email Address */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">Email Address</label>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    {mode === 'enroll' ? 'Student Email Address *' : 'Email Address *'}
+                  </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                     <input
                       type="email"
                       required
-                      placeholder="name@example.com"
+                      placeholder="student@example.com"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       className="w-full pl-9 pr-3 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
@@ -370,7 +473,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
                 {/* Password with View Toggle */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1">Password</label>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Password *</label>
                   <div className="relative">
                     <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                     <input
@@ -392,7 +495,48 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   </div>
                 </div>
 
-                {/* Role Selector for Sign Up */}
+                {/* Course Track & Cohort Selection (For Enroll Mode OR Student Sign Up) */}
+                {(mode === 'enroll' || (mode === 'signup' && role === 'student')) && (
+                  <div className="space-y-3 pt-1">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1">
+                        <BookOpen className="w-3.5 h-3.5 text-blue-400" />
+                        <span>Enrolled Learning Track / Pathway *</span>
+                      </label>
+                      <select
+                        value={selectedTrackId}
+                        onChange={e => setSelectedTrackId(e.target.value)}
+                        className="w-full px-3 py-2.5 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+                      >
+                        {ENROLLMENT_TRACKS.map(t => (
+                          <option key={t.id} value={t.id} className="bg-slate-950 text-white">
+                            {t.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5 text-indigo-400" />
+                        <span>Assigned Academic Cohort Batch *</span>
+                      </label>
+                      <select
+                        value={selectedCohortId}
+                        onChange={e => setSelectedCohortId(e.target.value)}
+                        className="w-full px-3 py-2.5 bg-slate-950/90 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+                      >
+                        {INITIAL_COHORTS.map(c => (
+                          <option key={c.id} value={c.id} className="bg-slate-950 text-white">
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Role Selector for Staff Sign Up */}
                 {mode === 'signup' && (
                   <div className="space-y-1.5 pt-1">
                     <label className="block text-xs font-bold text-slate-300">Choose Your Account Role</label>
@@ -437,10 +581,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   </div>
                 )}
 
-                {/* Specialty / Department for Sign Up */}
-                {mode === 'signup' && (
+                {/* Specialty / Department for Staff Sign Up */}
+                {mode === 'signup' && role !== 'student' && (
                   <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1">Specialty / Interest (Optional)</label>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">Specialty / Department (Optional)</label>
                     <input
                       type="text"
                       placeholder="e.g. Computer Systems Servicing, Full-Stack, Music"
@@ -460,11 +604,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   {isLoading ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Authenticating...</span>
+                      <span>Processing...</span>
                     </>
                   ) : (
                     <>
-                      <span>{mode === 'signin' ? 'Unlock Learning Hub' : 'Register & Enter Platform'}</span>
+                      <span>
+                        {mode === 'enroll' 
+                          ? 'Complete Enrollment & Launch Academy' 
+                          : mode === 'signin' 
+                          ? 'Unlock Learning Hub' 
+                          : 'Register & Enter Platform'}
+                      </span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
