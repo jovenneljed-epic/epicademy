@@ -20,7 +20,7 @@ import { TeacherSetupModal } from './components/teachers/TeacherSetupModal';
 import { CheckoutModal } from './components/modals/CheckoutModal';
 import { DeveloperProfileModal } from './components/modals/DeveloperProfileModal';
 import { ApplyTenantModal } from './components/modals/ApplyTenantModal';
-import { getCurrentUser, supabase, fetchTrackModulesAndLessons, getUserRoleByEmail, signOutUser, isAccountDeleted, isCourseFree, isUserEnrolledInTrack } from './lib/supabaseClient';
+import { getCurrentUser, supabase, fetchTrackModulesAndLessons, getUserRoleByEmail, signOutUser, isCourseFree, isUserEnrolledInTrack } from './lib/supabaseClient';
 import type { Track, CommunityDeveloper, ModuleItem, UserRole } from './types';
 import { CreateCommunityModal } from './components/modals/CreateCommunityModal';
 import { LessonViewer } from './components/classroom/LessonViewer';
@@ -163,8 +163,8 @@ export function App() {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (parsed?.email) {
-          // Immediately purge old demo accounts or deleted accounts
-          if (parsed.email.endsWith('@epicademy.com') || isAccountDeleted(parsed.email)) {
+          // Immediately purge old demo accounts
+          if (parsed.email.endsWith('@epicademy.com')) {
             localStorage.removeItem('epicademy_active_user');
             return null;
           }

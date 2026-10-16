@@ -83,7 +83,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     try {
       if (mode === 'enroll') {
         const selectedTrack = ENROLLMENT_TRACKS.find(t => t.id === selectedTrackId) || ENROLLMENT_TRACKS[0];
-        const { error } = await signUpUser(cleanEmail, password, 'student');
+        const { error } = await signUpUser(cleanEmail, password, 'student', fullName);
         if (error) {
           setErrorMessage(error.message);
         } else {
@@ -101,7 +101,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           }, 400);
         }
       } else if (mode === 'signup') {
-        const { error } = await signUpUser(cleanEmail, password, role);
+        const { error } = await signUpUser(cleanEmail, password, role, fullName);
         if (error) {
           setErrorMessage(error.message);
         } else {
