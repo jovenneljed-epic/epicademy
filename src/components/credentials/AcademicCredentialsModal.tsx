@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Track } from '../../types';
 import { 
   X, 
@@ -12,7 +12,8 @@ import {
   Check, 
   Search, 
   ShieldCheck, 
-  GraduationCap
+  GraduationCap,
+  ArrowLeft
 } from 'lucide-react';
 
 interface AcademicCredentialsModalProps {
@@ -44,6 +45,15 @@ export const AcademicCredentialsModal = ({
     gpa: string;
     distinction: string;
   } | null>(null);
+
+  // Keyboard navigation: Escape key closes modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   if (!isOpen) return null;
 
@@ -102,72 +112,109 @@ export const AcademicCredentialsModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden my-6 flex flex-col text-slate-100">
+    <div 
+      className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md overflow-y-auto p-3 sm:p-6 md:p-8 animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="min-h-full flex flex-col items-center justify-start sm:justify-center py-2 sm:py-6">
+        <div className="bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col text-slate-100 relative">
         
-        {/* Modal Top Bar */}
-        <div className="bg-slate-950 px-6 py-4 border-b border-slate-800 flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
-              <Award className="w-5 h-5" />
+          {/* Modal Top Bar (Sticky so Back & Tabs are always accessible) */}
+          <div className="sticky top-0 z-30 bg-slate-950/98 backdrop-blur-md px-4 sm:px-6 py-3.5 border-b border-slate-800 flex items-center justify-between flex-wrap gap-3 shadow-md">
+            {/* Left: Back Button + Institutional Badge */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onClose}
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition flex items-center gap-1.5 cursor-pointer shadow-sm group"
+                title="Return to Student Portal / Dashboard"
+              >
+                <ArrowLeft className="w-4 h-4 text-amber-400 group-hover:-translate-x-0.5 transition-transform" />
+                <span>Back</span>
+              </button>
+
+              <div className="h-6 w-px bg-slate-800 hidden sm:block"></div>
+
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                  <Award className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 block leading-tight">
+                    Institutional Academic Suite
+                  </span>
+                  <h2 className="text-xs sm:text-sm font-black text-white leading-tight">
+                    Official Credential &amp; Transcript Records
+                  </h2>
+                </div>
+              </div>
             </div>
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">
-                Institutional Academic Suite
-              </span>
-              <h2 className="text-sm sm:text-base font-black text-white">
-                Official Credential &amp; Transcript Records
-              </h2>
+
+            {/* Tab Selector */}
+            <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 overflow-x-auto max-w-full">
+              <button
+                onClick={() => setActiveTab('diploma')}
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                  activeTab === 'diploma'
+                    ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <Award className="w-3.5 h-3.5" /> Official Diploma
+              </button>
+              <button
+                onClick={() => setActiveTab('transcript')}
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                  activeTab === 'transcript'
+                    ? 'bg-blue-600 text-white shadow-md font-black'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" /> Academic Transcript
+              </button>
+              <button
+                onClick={() => setActiveTab('verify')}
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                  activeTab === 'verify'
+                    ? 'bg-emerald-600 text-white shadow-md font-black'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" /> Verification Portal
+              </button>
             </div>
+
+            {/* Right: Close (X) button */}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer border border-slate-700/60"
+              title="Close / Back (Esc)"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
-          {/* Tab Selector */}
-          <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => setActiveTab('diploma')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'diploma'
-                  ? 'bg-amber-500 text-slate-950 shadow-md font-black'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <Award className="w-3.5 h-3.5" /> Official Diploma
-            </button>
-            <button
-              onClick={() => setActiveTab('transcript')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'transcript'
-                  ? 'bg-blue-600 text-white shadow-md font-black'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" /> Academic Transcript
-            </button>
-            <button
-              onClick={() => setActiveTab('verify')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'verify'
-                  ? 'bg-emerald-600 text-white shadow-md font-black'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" /> Verification Portal
-            </button>
-          </div>
+          {/* TAB 1: OFFICIAL DIPLOMA */}
+          {activeTab === 'diploma' && (
+            <div className="p-4 sm:p-8 space-y-6">
+              {/* Context Navigation & Breadcrumb Bar */}
+              <div className="flex items-center justify-between gap-3 bg-slate-950/60 px-4 py-2.5 rounded-2xl border border-slate-800/80">
+                <button
+                  onClick={onClose}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold border border-slate-700 transition cursor-pointer group"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 text-amber-400 group-hover:-translate-x-0.5 transition-transform" />
+                  <span>← Back to Dashboard</span>
+                </button>
+                <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>Conferred Degree: {resolvedStudentName}</span>
+                </div>
+              </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* TAB 1: OFFICIAL DIPLOMA */}
-        {activeTab === 'diploma' && (
-          <div className="p-6 sm:p-8 space-y-6">
-            {/* Printable Diploma Card */}
-            <div className="bg-gradient-to-br from-amber-50 via-white to-amber-50/70 text-slate-900 rounded-2xl p-8 sm:p-12 border-8 border-amber-400 shadow-2xl relative overflow-hidden font-serif">
+              {/* Printable Diploma Card */}
+              <div className="bg-gradient-to-br from-amber-50 via-white to-amber-50/70 text-slate-900 rounded-2xl p-6 sm:p-10 md:p-12 border-4 sm:border-8 border-amber-400 shadow-2xl relative overflow-hidden font-serif">
               {/* Corner Watermarks */}
               <div className="absolute top-3 left-3 text-[10px] tracking-widest text-amber-900/40 font-mono uppercase">
                 KEZJED SOLUTIONS • ACCREDITED
@@ -260,7 +307,14 @@ export const AcademicCredentialsModal = ({
 
             {/* Actions Bar */}
             <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer border border-slate-700 shadow-sm"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Back to Dashboard</span>
+                </button>
                 <button
                   onClick={handleAddToLinkedIn}
                   className="px-4 py-2.5 bg-[#0077b5] hover:bg-[#006097] text-white text-xs font-bold rounded-xl shadow transition flex items-center gap-1.5 cursor-pointer"
@@ -269,7 +323,7 @@ export const AcademicCredentialsModal = ({
                 </button>
                 <button
                   onClick={handleCopyVerificationLink}
-                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer border border-slate-700"
                 >
                   {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                   {copiedLink ? 'Link Copied!' : 'Copy Verification URL'}
@@ -278,7 +332,7 @@ export const AcademicCredentialsModal = ({
 
               <button
                 onClick={() => window.print()}
-                className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl shadow-lg transition flex items-center gap-1.5 cursor-pointer"
+                className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-xl shadow-lg transition flex items-center gap-1.5 cursor-pointer ml-auto"
               >
                 <Printer className="w-4 h-4" /> Print / Export PDF
               </button>
@@ -385,10 +439,17 @@ export const AcademicCredentialsModal = ({
               </div>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <button
+                onClick={onClose}
+                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold rounded-xl transition flex items-center gap-2 cursor-pointer border border-slate-700 shadow-sm"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-blue-400" />
+                <span>Back to Dashboard</span>
+              </button>
               <button
                 onClick={() => window.print()}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow transition flex items-center gap-2 cursor-pointer"
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow transition flex items-center gap-2 cursor-pointer ml-auto"
               >
                 <Printer className="w-4 h-4" /> Print Academic Transcript
               </button>
@@ -484,9 +545,20 @@ export const AcademicCredentialsModal = ({
                 )}
               </div>
             )}
+
+            <div className="flex items-center justify-start gap-3 pt-2">
+              <button
+                onClick={onClose}
+                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold rounded-xl transition flex items-center gap-2 cursor-pointer border border-slate-700 shadow-sm"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Back to Dashboard</span>
+              </button>
+            </div>
           </div>
         )}
 
+        </div>
       </div>
     </div>
   );

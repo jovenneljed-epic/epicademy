@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   X, 
   Briefcase, 
@@ -7,8 +7,9 @@ import {
   CheckCircle2, 
   Sparkles, 
   Printer, 
-  ShieldCheck,
-  Terminal
+  ShieldCheck, 
+  Terminal,
+  ArrowLeft
 } from 'lucide-react';
 
 interface StudentDossierModalProps {
@@ -26,6 +27,15 @@ export const StudentDossierModal = ({
 }: StudentDossierModalProps) => {
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [hireMessageSent, setHireMessageSent] = useState(false);
+
+  // Keyboard navigation: Escape key closes modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   if (!isOpen) return null;
 
@@ -71,40 +81,60 @@ export const StudentDossierModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden my-6 flex flex-col text-slate-100 font-sans">
+    <div 
+      className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md overflow-y-auto p-3 sm:p-6 md:p-8 animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="min-h-full flex flex-col items-center justify-start sm:justify-center py-2 sm:py-6">
+        <div className="bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col text-slate-100 font-sans relative">
         
-        {/* Modal Top Bar */}
-        <div className="bg-slate-950 px-6 py-4 border-b border-slate-800 flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
-              <Briefcase className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
-                Talent Directory &amp; Career Placement
-              </span>
-              <h2 className="text-sm sm:text-base font-black text-white">
-                Student Academic Dossier &amp; Verified Portfolio
-              </h2>
-            </div>
-          </div>
+          {/* Modal Top Bar (Sticky so Back & Actions are always visible) */}
+          <div className="sticky top-0 z-30 bg-slate-950/98 backdrop-blur-md px-4 sm:px-6 py-3.5 border-b border-slate-800 flex items-center justify-between flex-wrap gap-3 shadow-md">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onClose}
+                className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs border border-slate-700 transition flex items-center gap-1.5 cursor-pointer shadow-sm group"
+                title="Return to Student Portal / Dashboard"
+              >
+                <ArrowLeft className="w-4 h-4 text-indigo-400 group-hover:-translate-x-0.5 transition-transform" />
+                <span>Back</span>
+              </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => window.print()}
-              className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer"
-            >
-              <Printer className="w-3.5 h-3.5" /> Print Dossier
-            </button>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
+              <div className="h-6 w-px bg-slate-800 hidden sm:block"></div>
+
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
+                  <Briefcase className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 block leading-tight">
+                    Talent Directory &amp; Career Placement
+                  </span>
+                  <h2 className="text-xs sm:text-base font-black text-white leading-tight">
+                    Student Academic Dossier &amp; Verified Portfolio
+                  </h2>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => window.print()}
+                className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer border border-slate-700"
+              >
+                <Printer className="w-3.5 h-3.5" /> Print Dossier
+              </button>
+              <button
+                onClick={onClose}
+                className="p-1.5 sm:p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer border border-slate-700/60"
+                title="Close / Back (Esc)"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-        </div>
 
         {/* Dossier Content */}
         <div className="p-6 sm:p-8 space-y-6">
@@ -240,11 +270,21 @@ export const StudentDossierModal = ({
                 <Briefcase className="w-3.5 h-3.5" /> {hireMessageSent ? 'Inquiry Sent ✓' : 'Schedule Interview'}
               </button>
             </div>
+            <div className="flex items-center justify-start gap-3 pt-3">
+              <button
+                onClick={onClose}
+                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold rounded-xl transition flex items-center gap-2 cursor-pointer border border-slate-700 shadow-sm"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Back to Dashboard</span>
+              </button>
+            </div>
+
           </div>
 
         </div>
-
       </div>
     </div>
-  );
+  </div>
+);
 };
