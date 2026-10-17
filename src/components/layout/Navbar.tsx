@@ -16,8 +16,6 @@ import {
 import { signOutUser } from '../../lib/supabaseClient';
 
 interface NavbarProps {
-  currentPerspective: 'educator' | 'student';
-  onTogglePerspective: (perspective: 'educator' | 'student') => void;
   onOpenAuth: (mode: 'signup' | 'signin') => void;
   onOpenCourseBuilder: () => void;
   onOpenTeacherSetup: () => void;
@@ -33,8 +31,6 @@ interface NavbarProps {
 }
 
 export const Navbar = ({
-  currentPerspective,
-  onTogglePerspective,
   onOpenAuth,
   onOpenCourseBuilder,
   onOpenTeacherSetup,
@@ -295,34 +291,6 @@ export const Navbar = ({
           {/* Desktop Right Action Area */}
           <div className="hidden lg:flex items-center gap-2 xl:gap-2.5 shrink-0">
             
-            {/* Perspective Switcher (Educators & Admins) */}
-            {canAccessFaculty && (
-              <div className="bg-slate-100 p-0.5 rounded-xl flex items-center text-[11px] xl:text-xs font-medium border border-slate-200 shrink-0">
-                <button
-                  onClick={() => onTogglePerspective('educator')}
-                  className={`px-2 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
-                    currentPerspective === 'educator'
-                      ? 'bg-white text-blue-600 shadow-xs font-bold'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                  title="Teacher Perspective"
-                >
-                  <span>👨‍🏫 Teachers</span>
-                </button>
-                <button
-                  onClick={() => onTogglePerspective('student')}
-                  className={`px-2 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
-                    currentPerspective === 'student'
-                      ? 'bg-white text-blue-600 shadow-xs font-bold'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                  title="Student Perspective"
-                >
-                  <span>🎓 Students</span>
-                </button>
-              </div>
-            )}
-
             {/* Faculty Portal Button (Direct on wide 2xl displays; in Explore on laptops) */}
             {canAccessFaculty && (
               <button
@@ -596,28 +564,6 @@ export const Navbar = ({
                 className="w-full py-2.5 text-center text-xs font-bold text-white bg-blue-600 rounded-xl shadow-xs"
               >
                 Get Started Free
-              </button>
-            </div>
-          )}
-
-          {/* Perspective Switcher on Mobile (If Faculty/Admin) */}
-          {canAccessFaculty && (
-            <div className="bg-slate-100 p-1 rounded-xl flex items-center justify-center text-xs font-medium border border-slate-200">
-              <button
-                onClick={() => onTogglePerspective('educator')}
-                className={`flex-1 py-1.5 rounded-lg text-center ${
-                  currentPerspective === 'educator' ? 'bg-white text-blue-600 shadow-xs font-bold' : 'text-slate-600'
-                }`}
-              >
-                👨‍🏫 For Teachers
-              </button>
-              <button
-                onClick={() => onTogglePerspective('student')}
-                className={`flex-1 py-1.5 rounded-lg text-center ${
-                  currentPerspective === 'student' ? 'bg-white text-blue-600 shadow-xs font-bold' : 'text-slate-600'
-                }`}
-              >
-                🎓 For Students
               </button>
             </div>
           )}

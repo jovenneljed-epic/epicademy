@@ -3,11 +3,10 @@ import { ArrowRight, Star, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { InteractiveDashboardMockup } from './InteractiveDashboardMockup';
 
 interface HeroSectionProps {
- onOpenAuth: (mode: 'signup' | 'signin', email?: string, planId?: string) => void;
-  perspective: 'educator' | 'student';
+  onOpenAuth: (mode: 'signup' | 'signin', email?: string, planId?: string) => void;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenAuth, perspective }) => {
+export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenAuth }) => {
   const [email, setEmail] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -68,7 +67,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenAuth, perspectiv
               type="submit"
               className="px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all duration-200 shadow-md shadow-blue-600/20 text-sm sm:text-base flex items-center justify-center gap-2 group cursor-pointer"
             >
-              <span>{perspective === 'educator' ? 'Teach at Academy' : 'Join Community (Free)'}</span>
+              <span>Join Community (Free)</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
           </form>
@@ -111,7 +110,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenAuth, perspectiv
 
         {/* Live Interactive Platform Preview Mockup */}
         <div className="relative mx-auto max-w-5xl mt-12">
-          <InteractiveDashboardMockup perspective={perspective} />
+          <InteractiveDashboardMockup />
         </div>
 
         {/* Trust Badges Bar */}

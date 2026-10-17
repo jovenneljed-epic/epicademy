@@ -17,11 +17,7 @@ import {
   DollarSign
 } from 'lucide-react';
 
-interface MockupProps {
-  perspective: 'educator' | 'student';
-}
-
-export const InteractiveDashboardMockup = ({ perspective: _perspective }: MockupProps) => {
+export const InteractiveDashboardMockup = () => {
   const [activeTab, setActiveTab] = useState<'lms' | 'community' | 'live' | 'analytics'>('lms');
   const [demoComment, setDemoComment] = useState('');
   const [commentsList, setCommentsList] = useState([

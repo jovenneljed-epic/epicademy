@@ -114,7 +114,6 @@ const COC4_LESSONS = [
 ];
 
 export function App() {
-  const [perspective, setPerspective] = useState<'educator' | 'student'>('educator');
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signup' | 'signin'>('signup');
   const [initialEmail, setInitialEmail] = useState('');
@@ -175,10 +174,7 @@ export function App() {
     setCurrentUser(userObj);
 
     if (role === 'student') {
-      setPerspective('student');
       setStudentMainView('dashboard');
-    } else {
-      setPerspective('educator');
     }
   };
 
@@ -199,10 +195,7 @@ export function App() {
     setCurrentUser(userObj);
 
     if (newRole === 'student') {
-      setPerspective('student');
       setStudentMainView('dashboard');
-    } else {
-      setPerspective('educator');
     }
   };
 
@@ -223,10 +216,7 @@ export function App() {
           const userObj = { email: user.email, role: detectedRole };
           setCurrentUser(userObj);
           if (detectedRole === 'student') {
-            setPerspective('student');
             setStudentMainView('dashboard');
-          } else {
-            setPerspective('educator');
           }
         } else {
           setCurrentUser(null);
@@ -632,8 +622,6 @@ export function App() {
 
       {/* Sticky Header */}
       <Navbar
-        currentPerspective={perspective}
-        onTogglePerspective={setPerspective}
         onOpenAuth={handleOpenAuth}
         onOpenCourseBuilder={handleOpenCourseBuilder}
         onOpenTeacherSetup={() => {
@@ -730,7 +718,6 @@ export function App() {
               </div>
             )}
             <HeroSection
-              perspective={perspective}
               onOpenAuth={handleOpenAuth}
             />
             <AllInOneGrid
