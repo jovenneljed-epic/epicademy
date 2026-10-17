@@ -12,7 +12,8 @@ import {
   Table, 
   Award, 
   RotateCcw,
-  Bot
+  Bot,
+  Edit3
 } from 'lucide-react';
 import type { ActivityItem, ExamItem, WorksheetItem } from '../../types';
 import { CodeSandboxRunner } from './CodeSandboxRunner';
@@ -36,6 +37,8 @@ export interface LessonViewerProps {
   hasNextLesson?: boolean;
   nextLessonTitle?: string;
   studentEmail?: string;
+  isAdmin?: boolean;
+  onEditInStudio?: () => void;
 }
 
 export const LessonViewer = ({
@@ -56,6 +59,8 @@ export const LessonViewer = ({
   onNextLesson,
   hasNextLesson,
   nextLessonTitle,
+  isAdmin,
+  onEditInStudio,
 }: LessonViewerProps) => {
   // Navigation sub-tab inside the lesson
   const [activeTab, setActiveTab] = useState<'lecture' | 'sandbox' | 'activity' | 'exam' | 'worksheet'>('lecture');
@@ -167,9 +172,22 @@ export const LessonViewer = ({
       {/* Lesson Header Banner */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <span className="text-xs font-black uppercase tracking-wider text-orange-400 bg-orange-500/10 px-3 py-1 rounded-lg border border-orange-500/20">
-            Interactive Lesson Hub • {duration || '30 mins'}
-          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-black uppercase tracking-wider text-orange-400 bg-orange-500/10 px-3 py-1 rounded-lg border border-orange-500/20">
+              Interactive Lesson Hub • {duration || '30 mins'}
+            </span>
+            {isAdmin && onEditInStudio && (
+              <button
+                type="button"
+                onClick={onEditInStudio}
+                className="text-xs font-bold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 px-3 py-1 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
+                title="Edit Course & Lessons in Admin Studio"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+                <span>✏️ Studio: Edit Course & Lessons</span>
+              </button>
+            )}
+          </div>
           {isCompleted && (
             <span className="text-xs font-black text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-lg border border-emerald-500/30 flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4" />

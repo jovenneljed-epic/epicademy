@@ -21,7 +21,8 @@ import {
   Flame,
   Award,
   Shield,
-  Lock
+  Lock,
+  Edit3
 } from 'lucide-react';
 import { fetchTracksFromDB, deleteTrackFromDB, getCourseAccessPermission } from '../../lib/supabaseClient';
 import { getPhpPrice } from '../../lib/philippinePayment';
@@ -36,6 +37,7 @@ interface TeachingTracksSectionProps {
   onEnroll: (track: Track) => void;
   onOpenAuth: (mode: 'signup' | 'signin') => void;
   onOpenCourseBuilder: () => void;
+  onEditTrack?: (track: Track) => void;
   refreshTrigger?: number;
   currentUser?: { email?: string; role?: string } | null;
   completedLessonIds?: Record<string, boolean>;
@@ -55,6 +57,7 @@ export const TeachingTracksSection = ({
   onEnroll,
   onOpenAuth: _onOpenAuth,
   onOpenCourseBuilder,
+  onEditTrack,
   refreshTrigger,
   currentUser,
   completedLessonIds: _completedLessonIds,
@@ -187,6 +190,18 @@ export const TeachingTracksSection = ({
                 >
                   <Plus className="w-4 h-4" />
                   <span>+ Create New Course</span>
+                </button>
+              )}
+
+              {userRole === 'admin' && (
+                <button
+                  type="button"
+                  onClick={onOpenCourseBuilder}
+                  className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap hover:scale-105"
+                  title="Open Course & Lesson Studio to manage and edit all courses"
+                >
+                  <Edit3 className="w-4 h-4 text-slate-950" />
+                  <span>✏️ Edit &amp; Upgrade Courses</span>
                 </button>
               )}
             </div>
@@ -1063,7 +1078,18 @@ export const TeachingTracksSection = ({
                             )}
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {userRole === 'admin' && (
+                              <button
+                                type="button"
+                                onClick={() => onEditTrack ? onEditTrack(track) : onOpenCourseBuilder()}
+                                className="px-3 py-2 text-xs font-black rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs hover:scale-105"
+                                title="Edit Course Content, Modules &amp; Lessons (Admin)"
+                              >
+                                <Edit3 className="w-3.5 h-3.5 text-slate-950" />
+                                <span>Edit Course</span>
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => onSelectTrack(track)}
@@ -1151,6 +1177,7 @@ export const TeachingTracksSection = ({
                   onSelectTrack={onSelectTrack}
                   onEnroll={onEnroll}
                   onDeleteTrack={handleDeleteTrack}
+                  onEditTrack={onEditTrack}
                   currentUser={currentUser}
                 />
               ))}

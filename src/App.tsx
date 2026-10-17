@@ -31,7 +31,7 @@ import { AccountSettingsModal } from './components/modals/AccountSettingsModal';
 import { ContributorAccessModal } from './components/modals/ContributorAccessModal';
 import { GradebookModal } from './components/gradebook/GradebookModal';
 import { StudentFocusDashboard } from './components/student/StudentFocusDashboard';
-import { Settings, RefreshCw, GraduationCap, Lock, Unlock, Sparkles, CheckCircle2, Award } from 'lucide-react';
+import { Settings, RefreshCw, GraduationCap, Lock, Unlock, Sparkles, CheckCircle2, Award, Edit3 } from 'lucide-react';
 import { ZERO_TO_HERO_TRACKS } from './data/zeroToHeroCoursesData';
 import { TESDA_CSS_TRACK } from './data/tesdaCssNc2CourseData';
 import { PINOY_DRUM_TRACK } from './data/pinoyDrumCourseData';
@@ -122,6 +122,7 @@ export function App() {
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const [checkoutTrack, setCheckoutTrack] = useState<Track | null>(null);
   const [courseBuilderOpen, setCourseBuilderOpen] = useState(false);
+  const [courseToEdit, setCourseToEdit] = useState<Track | null>(null);
   const [teacherSetupOpen, setTeacherSetupOpen] = useState(false);
   const [selectedDeveloper, setSelectedDeveloper] = useState<CommunityDeveloper | null>(null);
   const [developerProfileOpen, setDeveloperProfileOpen] = useState(false);
@@ -463,7 +464,7 @@ export function App() {
     setSelectedTrack(track);
   };
 
-  const handleOpenCourseBuilder = () => {
+  const handleOpenCourseBuilder = (trackToEdit?: Track) => {
     const role = (currentUser?.role || '').toLowerCase().trim();
     const cleanEmail = (currentUser?.email || '').toLowerCase().trim();
     const isGuest = role === 'guest' || cleanEmail.startsWith('guest@') || !currentUser;
@@ -480,6 +481,7 @@ export function App() {
     }
 
     if (role === 'contributor' || role === 'educator' || role === 'admin') {
+      setCourseToEdit(trackToEdit || null);
       setCourseBuilderOpen(true);
       return;
     }
@@ -487,8 +489,19 @@ export function App() {
     alert('Access restricted: Course creation requires Contributor, Teacher, or Admin role.');
   };
 
-  const handleCourseCreated = (_newTrack: Track) => {
+  const handleCourseCreated = async (newTrack: Track) => {
     setRefreshTrigger(prev => prev + 1);
+    if (selectedActiveTrack?.id === newTrack.id) {
+      setSelectedActiveTrack(newTrack);
+      try {
+        const fetched = await fetchTrackModulesAndLessons(newTrack.id);
+        if (fetched && fetched.length > 0) {
+          setActiveTrackModules(fetched);
+        }
+      } catch (err) {
+        console.error('Failed to reload modules for active course:', err);
+      }
+    }
     const tracksSection = document.getElementById('tracks');
     if (tracksSection) {
       tracksSection.scrollIntoView({ behavior: 'smooth' });
@@ -728,6 +741,7 @@ export function App() {
               onEnroll={handleEnrollTrack}
               onOpenAuth={handleOpenAuth}
               onOpenCourseBuilder={handleOpenCourseBuilder}
+              onEditTrack={(track) => handleOpenCourseBuilder(track)}
               refreshTrigger={refreshTrigger}
               currentUser={currentUser}
               completedLessonIds={completedLessonIds}
@@ -807,10 +821,15 @@ export function App() {
 
       <CourseBuilderModal
         isOpen={courseBuilderOpen}
-        onClose={() => setCourseBuilderOpen(false)}
+        onClose={() => {
+          setCourseBuilderOpen(false);
+          setCourseToEdit(null);
+        }}
+        initialTrackToEdit={courseToEdit}
         onCourseCreated={handleCourseCreated}
         onPreviewCourse={(track) => {
           setCourseBuilderOpen(false);
+          setCourseToEdit(null);
           openTrackClassroom(track);
         }}
         userEmail={currentUser?.email}
@@ -905,6 +924,16 @@ export function App() {
               >
                 <span>🏆 {effectiveOverallProgress === 100 ? 'Claim Certificate ↗' : 'Credentials & Transcript'}</span>
               </button>
+              {currentUser?.role === 'admin' && (
+                <button
+                  onClick={() => handleOpenCourseBuilder(selectedActiveTrack || undefined)}
+                  className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm animate-in fade-in"
+                  title="Edit & Upgrade this Course & Lessons in Admin Studio"
+                >
+                  <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+                  <span>✏️ Edit Course &amp; Lessons</span>
+                </button>
+              )}
               {currentUser?.role === 'admin' && (
                 <button
                   onClick={() => setIsAccountSettingsOpen(true)}
@@ -1199,6 +1228,8 @@ export function App() {
                               }
                             }}
                             studentEmail={currentUser?.email || undefined}
+                            isAdmin={currentUser?.role === 'admin'}
+                            onEditInStudio={() => handleOpenCourseBuilder(selectedActiveTrack || undefined)}
                             hasNextLesson={hasNext}
                             nextLessonTitle={nextTitle}
                             onNextLesson={onNext}
@@ -1371,6 +1402,17 @@ export function App() {
                       <span className="px-3 py-1 bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded-lg text-xs font-black uppercase">
                         {activeCoc.toUpperCase()} • Lesson {currentLesson.id} of {currentLessonsList.length} • {currentLesson.duration}
                       </span>
+                      {currentUser?.role === 'admin' && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenCourseBuilder(selectedActiveTrack || undefined)}
+                          className="text-xs font-bold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 px-3 py-1 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
+                          title="Edit Course in Admin Studio"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+                          <span>✏️ Studio: Edit Course &amp; Lessons</span>
+                        </button>
+                      )}
                     </div>
 
                     <h3 className="text-xl font-black text-white">{currentLesson.title}</h3>

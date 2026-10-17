@@ -1,5 +1,5 @@
 import type { Track } from '../../types';
-import { Star, Clock, BookOpen, Users, CheckCircle, ArrowRight, Sparkles, Trash2, Shield, Lock } from 'lucide-react';
+import { Star, Clock, BookOpen, Users, CheckCircle, ArrowRight, Sparkles, Trash2, Shield, Lock, Edit3 } from 'lucide-react';
 import { getPhpPrice } from '../../lib/philippinePayment';
 import { getCourseAccessPermission } from '../../lib/supabaseClient';
 
@@ -8,10 +8,11 @@ interface TrackCardProps {
   onSelectTrack: (track: Track) => void;
   onEnroll: (track: Track) => void;
   onDeleteTrack?: (trackId: string) => void;
+  onEditTrack?: (track: Track) => void;
   currentUser?: { email?: string; role?: string } | null;
 }
 
-export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack, currentUser }: TrackCardProps) => {
+export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack, onEditTrack, currentUser }: TrackCardProps) => {
   const pricePhp = getPhpPrice(track.price || 49);
   const origPhp = track.originalPrice ? getPhpPrice(track.originalPrice) : null;
 
@@ -298,54 +299,70 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack, curre
               : 'GCash • GoTyme • Maya'}
           </span>
         </div>
-        <button
-          onClick={() => onEnroll(track)}
-          className={`px-3.5 py-2 text-xs font-black active:scale-95 rounded-xl shadow-sm flex items-center gap-1.5 transition-all cursor-pointer ${
-            isGuest
-              ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-500/20'
-              : isBundle6
-              ? 'bg-gradient-to-r from-rose-600 via-red-600 to-amber-500 hover:from-rose-500 hover:to-amber-400 text-white shadow-rose-500/20'
-              : isBundle5
-              ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-amber-500 hover:from-emerald-500 hover:to-amber-400 text-white shadow-emerald-500/20'
-              : isBundle4
-              ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 text-white shadow-purple-500/20'
-              : isBundle3
-              ? 'bg-gradient-to-r from-red-600 via-amber-600 to-yellow-500 hover:from-red-500 hover:to-yellow-400 text-white shadow-orange-500/20'
-              : isBundle2
-              ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/20'
-              : isFree
-              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-              : currentUser?.role === 'admin'
-              ? 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white shadow-amber-600/25'
-              : currentUser?.role === 'contributor'
-              ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30'
-              : 'text-white bg-blue-600 hover:bg-blue-700'
-          }`}
-        >
-          {currentUser?.role === 'admin' && !isFree && !isGuest ? (
-            <Shield className="w-3.5 h-3.5 text-amber-300" />
-          ) : currentUser?.role === 'contributor' && !isFree && !isGuest ? (
-            <Lock className="w-3.5 h-3.5 text-amber-400" />
-          ) : null}
-          <span>
-            {isGuest
-              ? '🔒 Guest Preview • Sign In to Access'
-              : isBundle6
-              ? 'Enroll in Bundle #6 • FREE'
-              : isBundle5
-              ? 'Enroll in Bundle #5 • FREE'
-              : isBundle4
-              ? 'Enroll in Bundle #4 • FREE'
-              : isBundle3
-              ? 'Enroll in Bundle #3 • FREE'
-              : isBundle2
-              ? 'Enroll in Bundle #2 • FREE'
-              : isFree
-              ? 'Enroll Free'
-              : permission.buttonText}
-          </span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center gap-2">
+          {currentUser?.role === 'admin' && onEditTrack && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditTrack(track);
+              }}
+              className="px-3 py-2 text-xs font-bold rounded-xl border border-amber-400/80 bg-amber-50 hover:bg-amber-100 text-amber-900 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+              title="Edit Course & Lessons (Admin Studio)"
+            >
+              <Edit3 className="w-3.5 h-3.5 text-amber-600" />
+              <span>Edit</span>
+            </button>
+          )}
+          <button
+            onClick={() => onEnroll(track)}
+            className={`px-3.5 py-2 text-xs font-black active:scale-95 rounded-xl shadow-sm flex items-center gap-1.5 transition-all cursor-pointer ${
+              isGuest
+                ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-500/20'
+                : isBundle6
+                ? 'bg-gradient-to-r from-rose-600 via-red-600 to-amber-500 hover:from-rose-500 hover:to-amber-400 text-white shadow-rose-500/20'
+                : isBundle5
+                ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-amber-500 hover:from-emerald-500 hover:to-amber-400 text-white shadow-emerald-500/20'
+                : isBundle4
+                ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 text-white shadow-purple-500/20'
+                : isBundle3
+                ? 'bg-gradient-to-r from-red-600 via-amber-600 to-yellow-500 hover:from-red-500 hover:to-yellow-400 text-white shadow-orange-500/20'
+                : isBundle2
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/20'
+                : isFree
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                : currentUser?.role === 'admin'
+                ? 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white shadow-amber-600/25'
+                : currentUser?.role === 'contributor'
+                ? 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30'
+                : 'text-white bg-blue-600 hover:bg-blue-700'
+            }`}
+          >
+            {currentUser?.role === 'admin' && !isFree && !isGuest ? (
+              <Shield className="w-3.5 h-3.5 text-amber-300" />
+            ) : currentUser?.role === 'contributor' && !isFree && !isGuest ? (
+              <Lock className="w-3.5 h-3.5 text-amber-400" />
+            ) : null}
+            <span>
+              {isGuest
+                ? '🔒 Guest Preview • Sign In to Access'
+                : isBundle6
+                ? 'Enroll in Bundle #6 • FREE'
+                : isBundle5
+                ? 'Enroll in Bundle #5 • FREE'
+                : isBundle4
+                ? 'Enroll in Bundle #4 • FREE'
+                : isBundle3
+                ? 'Enroll in Bundle #3 • FREE'
+                : isBundle2
+                ? 'Enroll in Bundle #2 • FREE'
+                : isFree
+                ? 'Enroll Free'
+                : permission.buttonText}
+            </span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
     </div>

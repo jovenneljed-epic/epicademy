@@ -28,7 +28,9 @@ import {
   updateTrackInDB, 
   deleteTrackFromDB, 
   getLocalTeacherTracks, 
-  fetchTeachersFromDB 
+  fetchTeachersFromDB,
+  fetchTrackModulesAndLessons,
+  fetchTracksFromDB
 } from '../../lib/supabaseClient';
 import { INITIAL_COHORTS, INITIAL_STUDENT_ROSTER, type StudentGradeRecord } from '../../data/gradebookData';
 import type { 
@@ -46,6 +48,7 @@ interface CourseBuilderModalProps {
   onPreviewCourse?: (track: Track) => void;
   userEmail?: string;
   userRole?: string;
+  initialTrackToEdit?: Track | null;
 }
 
 export const CourseBuilderModal = ({
@@ -55,6 +58,7 @@ export const CourseBuilderModal = ({
   onPreviewCourse,
   userEmail,
   userRole,
+  initialTrackToEdit,
 }: CourseBuilderModalProps) => {
   // Main Studio Navigation Tabs
   const [studioTab, setStudioTab] = useState<'essentials' | 'curriculum' | 'lesson-suite' | 'my-courses' | 'gradebook'>('essentials');
@@ -185,10 +189,27 @@ export const CourseBuilderModal = ({
     loadTeacherCourses();
   }, [userEmail, isOpen]);
 
-  const loadTeacherCourses = () => {
+  const loadTeacherCourses = async () => {
+    try {
+      if (userRole === 'admin') {
+        const { tracks: allTracks } = await fetchTracksFromDB();
+        if (allTracks && allTracks.length > 0) {
+          setTeacherCourses(allTracks);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('Admin course loading fallback:', err);
+    }
     const list = getLocalTeacherTracks();
     setTeacherCourses(list);
   };
+
+  useEffect(() => {
+    if (isOpen && initialTrackToEdit) {
+      handleEditExistingCourse(initialTrackToEdit);
+    }
+  }, [isOpen, initialTrackToEdit]);
 
   if (!isOpen) return null;
 
@@ -455,7 +476,7 @@ export const CourseBuilderModal = ({
   };
 
   // Load an existing course to edit
-  const handleEditExistingCourse = (track: Track) => {
+  const handleEditExistingCourse = async (track: Track) => {
     setEditingCourseId(track.id);
     setTitle(track.title);
     setCategory(track.category);
@@ -470,8 +491,17 @@ export const CourseBuilderModal = ({
     setInstructorAvatar(track.instructor.avatar);
     setColorTheme(track.colorTheme);
 
-    if (track.modules && track.modules.length > 0) {
-      const convertedMods: CreateModuleInput[] = track.modules.map(m => ({
+    let rawModules = track.modules;
+    if (!rawModules || rawModules.length === 0) {
+      try {
+        rawModules = await fetchTrackModulesAndLessons(track.id);
+      } catch (err) {
+        console.warn('Could not fetch track modules:', err);
+      }
+    }
+
+    if (rawModules && rawModules.length > 0) {
+      const convertedMods: CreateModuleInput[] = rawModules.map(m => ({
         id: m.id,
         title: m.title,
         duration: m.duration || '1 Week',
@@ -480,14 +510,14 @@ export const CourseBuilderModal = ({
           id: l.id,
           title: l.title,
           duration: l.duration,
-          videoUrl: l.video_url || '',
-          content: l.content || '',
+          videoUrl: l.video_url || (l as any).videoUrl || '',
+          content: l.content || (l as any).theoryContent || '',
           objective: l.objective || '',
-          codeSnippet: l.code_snippet || '',
+          codeSnippet: l.code_snippet || (l as any).codeSnippet || '',
           activity: l.activity,
           exam: l.exam,
           worksheet: l.worksheet,
-          classroomLink: l.classroom_link || ''
+          classroomLink: l.classroom_link || (l as any).classroomLink || ''
         }))
       }));
       setModules(convertedMods);
