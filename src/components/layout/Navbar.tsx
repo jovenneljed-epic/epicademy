@@ -28,6 +28,7 @@ interface NavbarProps {
   onOpenTuition?: () => void;
   onOpenAccountSettings?: () => void;
   onOpenGradebook?: () => void;
+  onOpenStudentPortal?: () => void;
   currentUser?: { email?: string; role?: string } | null;
   onSignOut?: () => void;
   onSwitchRole?: (role: UserRole) => void;
@@ -45,6 +46,7 @@ export const Navbar = ({
   onOpenTuition,
   onOpenAccountSettings,
   onOpenGradebook,
+  onOpenStudentPortal,
   currentUser,
   onSignOut,
   onSwitchRole,
@@ -188,6 +190,16 @@ export const Navbar = ({
                 </button>
               )}
 
+              {isStudent && onOpenStudentPortal && (
+                <button
+                  onClick={onOpenStudentPortal}
+                  className="px-3 py-1.5 font-black text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all border border-blue-200 shadow-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <GraduationCap className="w-4 h-4 text-blue-600" />
+                  <span>My Portal</span>
+                </button>
+              )}
+
               {!isGuest && onOpenCredentials && (
                 <button
                   onClick={onOpenCredentials}
@@ -206,12 +218,12 @@ export const Navbar = ({
                 </button>
               )}
 
-              {canAccessFaculty && onOpenGradebook && (
+              {(canAccessFaculty || isStudent) && onOpenGradebook && (
                 <button
                   onClick={onOpenGradebook}
                   className="px-2.5 py-2 font-bold text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
                 >
-                  📊 Gradebook
+                  📊 {isStudent ? 'My Gradebook' : 'Gradebook'}
                 </button>
               )}
 
@@ -236,14 +248,20 @@ export const Navbar = ({
 
               {exploreDropdownOpen && (
                 <div className="absolute top-full left-0 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 mt-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150 space-y-1">
+                  {isStudent && onOpenStudentPortal && (
+                    <button onClick={() => { setExploreDropdownOpen(false); onOpenStudentPortal(); }} className="w-full text-left px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5">
+                      <GraduationCap className="w-4 h-4 text-blue-600" />
+                      <span>🎓 My Student Focus Portal</span>
+                    </button>
+                  )}
                   {canAccessFaculty && (
                     <button onClick={() => { setExploreDropdownOpen(false); onOpenTeacherSetup(); }} className="w-full text-left px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5">
                       <span>👨‍🏫 Faculty Portal</span>
                     </button>
                   )}
-                  {canAccessFaculty && onOpenGradebook && (
+                  {(canAccessFaculty || isStudent) && onOpenGradebook && (
                     <button onClick={() => { setExploreDropdownOpen(false); onOpenGradebook(); }} className="w-full text-left px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5">
-                      <span>📊 Student Gradebook</span>
+                      <span>📊 {isStudent ? 'My Gradebook & SF2' : 'Student Gradebook'}</span>
                     </button>
                   )}
                   <a href="#community" onClick={() => setExploreDropdownOpen(false)} className="block px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors">
@@ -782,6 +800,20 @@ export const Navbar = ({
               </button>
             )}
 
+            {/* Student Focus Portal on Mobile */}
+            {isStudent && onOpenStudentPortal && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenStudentPortal();
+                }}
+                className="w-full text-left px-3 py-2.5 text-sm font-black text-white bg-blue-600 rounded-xl flex items-center gap-2 cursor-pointer shadow-xs"
+              >
+                <GraduationCap className="w-4 h-4" />
+                <span>🎓 My Student Focus Portal</span>
+              </button>
+            )}
+
             {/* Faculty Portal */}
             {canAccessFaculty && (
               <button
@@ -797,7 +829,7 @@ export const Navbar = ({
             )}
 
             {/* Student Gradebook */}
-            {canAccessFaculty && onOpenGradebook && (
+            {(canAccessFaculty || isStudent) && onOpenGradebook && (
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
@@ -806,7 +838,7 @@ export const Navbar = ({
                 className="w-full text-left px-3 py-2 text-indigo-700 hover:bg-indigo-50 rounded-xl flex items-center gap-2 cursor-pointer font-bold"
               >
                 <GraduationCap className="w-4 h-4" />
-                <span>📊 Student Gradebook &amp; Roster</span>
+                <span>📊 {isStudent ? 'My Gradebook & SF2' : 'Student Gradebook & Roster'}</span>
               </button>
             )}
 

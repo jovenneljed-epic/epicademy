@@ -30,6 +30,7 @@ import { StudentDossierModal } from './components/profile/StudentDossierModal';
 import { AccountSettingsModal } from './components/modals/AccountSettingsModal';
 import { ContributorAccessModal } from './components/modals/ContributorAccessModal';
 import { GradebookModal } from './components/gradebook/GradebookModal';
+import { StudentFocusDashboard } from './components/student/StudentFocusDashboard';
 import { Settings, RefreshCw, GraduationCap, Lock, Unlock, Sparkles, CheckCircle2, Award } from 'lucide-react';
 import { ZERO_TO_HERO_TRACKS } from './data/zeroToHeroCoursesData';
 import { TESDA_CSS_TRACK } from './data/tesdaCssNc2CourseData';
@@ -129,6 +130,7 @@ export function App() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [createCommunityOpen, setCreateCommunityOpen] = useState(false);
   const [contributorRestrictedTrack, setContributorRestrictedTrack] = useState<Track | null>(null);
+  const [studentMainView, setStudentMainView] = useState<'dashboard' | 'explore'>('dashboard');
 
   // Active Classroom / Workspace state
   const [isClassroomOpen, setIsClassroomOpen] = useState(false);
@@ -174,6 +176,7 @@ export function App() {
 
     if (role === 'student') {
       setPerspective('student');
+      setStudentMainView('dashboard');
     } else {
       setPerspective('educator');
     }
@@ -186,6 +189,7 @@ export function App() {
       console.error('Sign out error:', e);
     }
     setCurrentUser(null);
+    setStudentMainView('dashboard');
   };
 
   const handleSwitchRole = (newRole: UserRole) => {
@@ -196,6 +200,7 @@ export function App() {
 
     if (newRole === 'student') {
       setPerspective('student');
+      setStudentMainView('dashboard');
     } else {
       setPerspective('educator');
     }
@@ -219,6 +224,7 @@ export function App() {
           setCurrentUser(userObj);
           if (detectedRole === 'student') {
             setPerspective('student');
+            setStudentMainView('dashboard');
           } else {
             setPerspective('educator');
           }
@@ -685,6 +691,7 @@ export function App() {
           }
           setIsGradebookOpen(true);
         }}
+        onOpenStudentPortal={() => setStudentMainView('dashboard')}
         currentUser={currentUser}
         onSignOut={handleSignOut}
         onSwitchRole={handleSwitchRole}
@@ -692,45 +699,78 @@ export function App() {
 
       {/* Main Content Sections */}
       <main className="flex-1">
-        <HeroSection
-          perspective={perspective}
-          onOpenAuth={handleOpenAuth}
-        />
-        <AllInOneGrid
-          onOpenAuth={handleOpenAuth}
-        />
-        <TeachingTracksSection
-          onSelectTrack={(track) => setSelectedTrack(track)}
-          onEnroll={handleEnrollTrack}
-          onOpenAuth={handleOpenAuth}
-          onOpenCourseBuilder={handleOpenCourseBuilder}
-          refreshTrigger={refreshTrigger}
-          currentUser={currentUser}
-          completedLessonIds={completedLessonIds}
-        />
-        <CommunityDevelopersSection
-          onSelectDeveloper={handleSelectDeveloper}
-          onEnrollTrack={handleEnrollTrack}
-          onViewSyllabus={handleViewSyllabus}
-          onOpenApplyTenant={() => setApplyTenantOpen(true)}
-        />
-        <CommunityHubSection
-          onOpenAuth={handleOpenAuth}
-          currentUser={currentUser}
-        />
-        <FeatureDeepDives
-          onOpenAuth={handleOpenAuth}
-        />
-        <PricingSection
-          onOpenAuth={handleOpenAuth}
-        />
-        <TestimonialsSection />
-        <FAQSection
-          onOpenAuth={handleOpenAuth}
-        />
-        <FinalCTA
-          onOpenAuth={handleOpenAuth}
-        />
+        {currentUser?.role === 'student' && studentMainView === 'dashboard' ? (
+          <StudentFocusDashboard
+            currentUser={currentUser}
+            onOpenClassroom={(track) => openTrackClassroom(track)}
+            onOpenGradebook={() => setIsGradebookOpen(true)}
+            onOpenCredentials={(trackId, name, email) => {
+              setCertStudent({ trackId, name, email });
+              setShowCertificateModal(true);
+            }}
+            onOpenDossier={(name, email) => {
+              setDossierStudent({ name: name || '', email: email || '' });
+              setShowDossierModal(true);
+            }}
+            onExploreCourses={() => setStudentMainView('explore')}
+            completedLessonIds={completedLessonIds}
+          />
+        ) : (
+          <>
+            {currentUser?.role === 'student' && (
+              <div className="bg-slate-900 border-b border-slate-800 py-3 px-4 sm:px-8 flex items-center justify-between text-white flex-wrap gap-2 sticky top-16 z-30 shadow-md">
+                <span className="text-xs font-bold text-slate-300 flex items-center gap-2">
+                  <span>🎓 You are browsing the Course Catalog as an Enrolled Student.</span>
+                </span>
+                <button
+                  onClick={() => setStudentMainView('dashboard')}
+                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs transition-all shadow-md cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>➔ Back to My Student Focus Portal</span>
+                </button>
+              </div>
+            )}
+            <HeroSection
+              perspective={perspective}
+              onOpenAuth={handleOpenAuth}
+            />
+            <AllInOneGrid
+              onOpenAuth={handleOpenAuth}
+            />
+            <TeachingTracksSection
+              onSelectTrack={(track) => setSelectedTrack(track)}
+              onEnroll={handleEnrollTrack}
+              onOpenAuth={handleOpenAuth}
+              onOpenCourseBuilder={handleOpenCourseBuilder}
+              refreshTrigger={refreshTrigger}
+              currentUser={currentUser}
+              completedLessonIds={completedLessonIds}
+            />
+            <CommunityDevelopersSection
+              onSelectDeveloper={handleSelectDeveloper}
+              onEnrollTrack={handleEnrollTrack}
+              onViewSyllabus={handleViewSyllabus}
+              onOpenApplyTenant={() => setApplyTenantOpen(true)}
+            />
+            <CommunityHubSection
+              onOpenAuth={handleOpenAuth}
+              currentUser={currentUser}
+            />
+            <FeatureDeepDives
+              onOpenAuth={handleOpenAuth}
+            />
+            <PricingSection
+              onOpenAuth={handleOpenAuth}
+            />
+            <TestimonialsSection />
+            <FAQSection
+              onOpenAuth={handleOpenAuth}
+            />
+            <FinalCTA
+              onOpenAuth={handleOpenAuth}
+            />
+          </>
+        )}
       </main>
 
       {/* Footer */}
