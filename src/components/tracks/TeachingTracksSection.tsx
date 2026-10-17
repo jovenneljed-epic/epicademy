@@ -38,6 +38,7 @@ interface TeachingTracksSectionProps {
   onOpenCourseBuilder: () => void;
   refreshTrigger?: number;
   currentUser?: { email?: string; role?: string } | null;
+  completedLessonIds?: Record<string, boolean>;
 }
 
 const CATEGORIES: { id: CategoryType; name: string; icon: React.ComponentType<{ className?: string }> }[] = [
@@ -56,6 +57,7 @@ export const TeachingTracksSection = ({
   onOpenCourseBuilder,
   refreshTrigger,
   currentUser,
+  completedLessonIds: _completedLessonIds,
 }: TeachingTracksSectionProps) => {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -688,6 +690,36 @@ export const TeachingTracksSection = ({
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Career Roadmap Progression Bar */}
+              <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-900/40 rounded-2xl p-5 text-white shadow-lg space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" /> Career Pathway Progression
+                      </span>
+                      <span className="text-xs text-indigo-300 font-semibold">Zero to Hero Master Roadmap</span>
+                    </div>
+                    <h4 className="font-black text-base text-white">Full-Stack Engineering & Vocational Milestones</h4>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-slate-300 font-medium">9 Sequential Career Levels</span>
+                    <span className="px-3 py-1 rounded-xl bg-blue-600/30 border border-blue-500/40 text-blue-300 text-xs font-mono font-bold">
+                      Levels 1 - 9
+                    </span>
+                  </div>
+                </div>
+                {/* Progression Bar Track */}
+                <div className="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800 p-0.5">
+                  <div className="h-full rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 w-full animate-pulse opacity-90" />
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-slate-400 font-semibold pt-0.5">
+                  <span className="text-blue-400 font-bold">Level 1: Web Fundamentals</span>
+                  <span className="text-indigo-300">Level 5: React & TS</span>
+                  <span className="text-emerald-400 font-bold">Level 9: Full-Stack AI Hero</span>
+                </div>
               </div>
 
               {/* Step by Step Progression Ladder */}

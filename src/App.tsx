@@ -30,7 +30,7 @@ import { StudentDossierModal } from './components/profile/StudentDossierModal';
 import { AccountSettingsModal } from './components/modals/AccountSettingsModal';
 import { ContributorAccessModal } from './components/modals/ContributorAccessModal';
 import { GradebookModal } from './components/gradebook/GradebookModal';
-import { Settings, RefreshCw, GraduationCap } from 'lucide-react';
+import { Settings, RefreshCw, GraduationCap, Lock, Unlock, Sparkles, CheckCircle2, Award } from 'lucide-react';
 import { ZERO_TO_HERO_TRACKS } from './data/zeroToHeroCoursesData';
 import { TESDA_CSS_TRACK } from './data/tesdaCssNc2CourseData';
 import { PINOY_DRUM_TRACK } from './data/pinoyDrumCourseData';
@@ -154,7 +154,15 @@ export function App() {
   // Dynamic Teacher / Custom Tracks state in Classroom
   const [activeTrackModules, setActiveTrackModules] = useState<ModuleItem[]>([]);
   const [activeModuleIndex, setActiveModuleIndex] = useState(0);
-  const [completedLessonIds, setCompletedLessonIds] = useState<Record<string, boolean>>({});
+  const [completedLessonIds, setCompletedLessonIds] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('epicademy_completed_lessons_global');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [adminBypassProgression, setAdminBypassProgression] = useState(false);
 
   // Active Supabase user state (Pure Supabase session management)
   const [currentUser, setCurrentUser] = useState<{ email?: string; role?: string } | null>(null);
@@ -255,6 +263,43 @@ export function App() {
     };
   }, []);
 
+  // Synchronize completed lessons with localStorage scoped by active user
+  useEffect(() => {
+    if (currentUser?.email) {
+      try {
+        const userKey = `epicademy_completed_lessons_${currentUser.email.toLowerCase().trim()}`;
+        const saved = localStorage.getItem(userKey);
+        if (saved) {
+          setCompletedLessonIds(JSON.parse(saved));
+        } else {
+          const globalSaved = localStorage.getItem('epicademy_completed_lessons_global');
+          if (globalSaved) {
+            setCompletedLessonIds(JSON.parse(globalSaved));
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load completed lessons from localStorage:', err);
+      }
+    }
+  }, [currentUser?.email]);
+
+  const markLessonCompleted = (lessonId: string) => {
+    if (!lessonId) return;
+    setCompletedLessonIds(prev => {
+      const updated = { ...prev, [lessonId]: true };
+      try {
+        if (currentUser?.email) {
+          const userKey = `epicademy_completed_lessons_${currentUser.email.toLowerCase().trim()}`;
+          localStorage.setItem(userKey, JSON.stringify(updated));
+        }
+        localStorage.setItem('epicademy_completed_lessons_global', JSON.stringify(updated));
+      } catch (err) {
+        console.warn('Failed to persist lesson progress:', err);
+      }
+      return updated;
+    });
+  };
+
   const handleOpenAuth = (mode: 'signup' | 'signin', email: string = '', planId?: string) => {
     setAuthMode(mode);
     setInitialEmail(email);
@@ -291,36 +336,69 @@ export function App() {
 
     setSelectedActiveTrack(track);
 
-    let mods: ModuleItem[] = [];
+    let rawMods: ModuleItem[] = [];
     if (track.id === 'track-tesda-css-nc2' || track.bundleNumber === 2 || track.id.includes('tesda')) {
-      mods = (TESDA_CSS_TRACK.modules && TESDA_CSS_TRACK.modules.length > 0)
+      rawMods = (TESDA_CSS_TRACK.modules && TESDA_CSS_TRACK.modules.length > 0)
         ? TESDA_CSS_TRACK.modules
         : await fetchTrackModulesAndLessons(track.id);
     } else if (track.id === 'track-pinoy-drum-zero-to-hero' || track.bundleNumber === 3) {
-      mods = (PINOY_DRUM_TRACK.modules && PINOY_DRUM_TRACK.modules.length > 0)
+      rawMods = (PINOY_DRUM_TRACK.modules && PINOY_DRUM_TRACK.modules.length > 0)
         ? PINOY_DRUM_TRACK.modules
         : await fetchTrackModulesAndLessons(track.id);
     } else if (track.id === 'track-pinoy-piano-zero-to-hero' || track.bundleNumber === 4) {
-      mods = (PINOY_PIANO_TRACK.modules && PINOY_PIANO_TRACK.modules.length > 0)
+      rawMods = (PINOY_PIANO_TRACK.modules && PINOY_PIANO_TRACK.modules.length > 0)
         ? PINOY_PIANO_TRACK.modules
         : await fetchTrackModulesAndLessons(track.id);
     } else if (track.id === 'track-pinoy-guitar-zero-to-hero' || track.bundleNumber === 5) {
-      mods = (PINOY_GUITAR_TRACK.modules && PINOY_GUITAR_TRACK.modules.length > 0)
+      rawMods = (PINOY_GUITAR_TRACK.modules && PINOY_GUITAR_TRACK.modules.length > 0)
         ? PINOY_GUITAR_TRACK.modules
         : await fetchTrackModulesAndLessons(track.id);
     } else if (track.id === 'track-pinoy-lead-guitar-zero-to-hero' || track.bundleNumber === 6) {
-      mods = (PINOY_LEAD_GUITAR_TRACK.modules && PINOY_LEAD_GUITAR_TRACK.modules.length > 0)
+      rawMods = (PINOY_LEAD_GUITAR_TRACK.modules && PINOY_LEAD_GUITAR_TRACK.modules.length > 0)
         ? PINOY_LEAD_GUITAR_TRACK.modules
         : await fetchTrackModulesAndLessons(track.id);
     } else if (track.modules && track.modules.length > 0) {
-      mods = track.modules;
+      rawMods = track.modules;
     } else {
-      mods = await fetchTrackModulesAndLessons(track.id);
+      rawMods = await fetchTrackModulesAndLessons(track.id);
     }
 
+    // Sanitize modules and lessons to guarantee deterministic IDs
+    const mods: ModuleItem[] = (rawMods || []).map((m, mIdx) => ({
+      ...m,
+      id: m.id || `mod-${track.id}-${mIdx}`,
+      lessonItems: (m.lessonItems || []).map((l, lIdx) => ({
+        ...l,
+        id: l.id || `les-${track.id}-${mIdx}-${lIdx}`,
+      }))
+    }));
+
     setActiveTrackModules(mods);
-    setActiveModuleIndex(0);
-    setActiveLessonIndex(0);
+
+    // Auto-advance to the active progress milestone: find the first incomplete lesson
+    let firstIncompleteModIdx = 0;
+    let firstIncompleteLesIdx = 0;
+    let foundIncomplete = false;
+
+    for (let m = 0; m < mods.length; m++) {
+      const lessons = mods[m].lessonItems || [];
+      const incIdx = lessons.findIndex(l => !completedLessonIds[l.id || '']);
+      if (incIdx !== -1) {
+        firstIncompleteModIdx = m;
+        firstIncompleteLesIdx = incIdx;
+        foundIncomplete = true;
+        break;
+      }
+    }
+
+    if (foundIncomplete) {
+      setActiveModuleIndex(firstIncompleteModIdx);
+      setActiveLessonIndex(firstIncompleteLesIdx);
+    } else {
+      setActiveModuleIndex(0);
+      setActiveLessonIndex(0);
+    }
+
     setIsClassroomOpen(true);
   };
 
@@ -491,6 +569,29 @@ export function App() {
   const dynamicCourseProgress = totalDynamicLessons > 0 ? Math.min(100, Math.round((completedDynamicCount / totalDynamicLessons) * 100)) : 0;
   const effectiveOverallProgress = activeTrackModules.length > 0 ? dynamicCourseProgress : overallCourseProgress;
 
+  // Dynamic course progression helpers (Sequential Module & Lesson Locking)
+  const isModuleUnlocked = (mIdx: number): boolean => {
+    if (adminBypassProgression && (currentUser?.role === 'admin' || currentUser?.role === 'educator')) {
+      return true;
+    }
+    if (mIdx === 0) return true;
+    const prevMod = activeTrackModules[mIdx - 1];
+    if (!prevMod || !prevMod.lessonItems || prevMod.lessonItems.length === 0) return true;
+    return prevMod.lessonItems.every(l => Boolean(l.id && completedLessonIds[l.id]));
+  };
+
+  const isDynamicLessonUnlocked = (mIdx: number, lIdx: number): boolean => {
+    if (adminBypassProgression && (currentUser?.role === 'admin' || currentUser?.role === 'educator')) {
+      return true;
+    }
+    if (!isModuleUnlocked(mIdx)) return false;
+    if (lIdx === 0) return true;
+    const mod = activeTrackModules[mIdx];
+    if (!mod || !mod.lessonItems) return false;
+    const prevLesson = mod.lessonItems[lIdx - 1];
+    return Boolean(prevLesson?.id && completedLessonIds[prevLesson.id]);
+  };
+
   // =========================================================================
   // AUTHENTICATION GATE: Before main page unlocks, require verified Supabase auth
   // =========================================================================
@@ -605,6 +706,7 @@ export function App() {
           onOpenCourseBuilder={handleOpenCourseBuilder}
           refreshTrigger={refreshTrigger}
           currentUser={currentUser}
+          completedLessonIds={completedLessonIds}
         />
         <CommunityDevelopersSection
           onSelectDeveloper={handleSelectDeveloper}
@@ -802,6 +904,126 @@ export function App() {
 
           <div className="flex-1 bg-slate-950 overflow-y-auto p-6 text-white flex flex-col items-center">
             <div className="max-w-6xl w-full space-y-6">
+              {/* ======================================================== */}
+              {/* COMPREHENSIVE COURSE PROGRESSION BAR & METRICS DASHBOARD   */}
+              {/* ======================================================== */}
+              <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/80 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" /> Sequential Progression Enforced
+                      </span>
+                      {effectiveOverallProgress === 100 ? (
+                        <span className="text-xs font-black uppercase tracking-wider text-amber-300 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20 flex items-center gap-1.5">
+                          <Award className="w-3.5 h-3.5" /> Course 100% Mastered!
+                        </span>
+                      ) : (
+                        <span className="text-xs font-bold text-slate-400">
+                          {activeTrackModules.length > 0
+                            ? `Module ${activeModuleIndex + 1} of ${activeTrackModules.length}`
+                            : `${activeCoc.toUpperCase()}`
+                          }
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-black text-white flex items-center gap-2">
+                      <span>{selectedActiveTrack.title}</span>
+                    </h3>
+                  </div>
+
+                  <div className="flex items-center gap-4 self-end sm:self-center">
+                    {(currentUser?.role === 'admin' || currentUser?.role === 'educator') && (
+                      <button
+                        onClick={() => setAdminBypassProgression(prev => !prev)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                          adminBypassProgression
+                            ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 hover:bg-amber-500/30'
+                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+                        }`}
+                        title="Toggle Admin/Faculty progression bypass for testing all lessons"
+                      >
+                        {adminBypassProgression ? (
+                          <>
+                            <Unlock className="w-3.5 h-3.5 text-amber-400" />
+                            <span>⚡ Admin Bypass: ON</span>
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-3.5 h-3.5 text-slate-400" />
+                            <span>🔒 Sequential: Enforced</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    <div className="text-right">
+                      <span className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-emerald-400 font-mono">
+                        {effectiveOverallProgress}%
+                      </span>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        {activeTrackModules.length > 0
+                          ? `${completedDynamicCount} of ${totalDynamicLessons} Lessons Mastered`
+                          : `${totalCompletedCount} of ${allCocLessons.length} Competencies Mastered`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Animated Glowing Multi-tier Progress Bar */}
+                <div className="space-y-2">
+                  <div className="w-full bg-slate-950/80 h-3.5 rounded-full p-0.5 border border-slate-800 overflow-hidden relative shadow-inner">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-blue-600 via-indigo-500 to-emerald-400 transition-all duration-500 relative shadow-lg shadow-blue-500/30"
+                      style={{ width: `${Math.max(2, effectiveOverallProgress)}%` }}
+                    >
+                      <div className="absolute inset-0 bg-white/20 animate-pulse rounded-full" />
+                    </div>
+                  </div>
+
+                  {/* Module Milestone Checkpoints */}
+                  {activeTrackModules.length > 0 && (
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 px-1 flex-wrap gap-2">
+                      {activeTrackModules.map((mod, mIdx) => {
+                        const mLessons = mod.lessonItems || [];
+                        const mDone = mLessons.length > 0 && mLessons.every(l => Boolean(l.id && completedLessonIds[l.id]));
+                        const mUnlocked = isModuleUnlocked(mIdx);
+                        const isCurMod = activeModuleIndex === mIdx;
+
+                        return (
+                          <div
+                            key={mod.id || mIdx}
+                            className={`flex items-center gap-1 cursor-pointer transition-colors ${
+                              isCurMod
+                                ? 'text-blue-400 font-black'
+                                : mDone
+                                ? 'text-emerald-400 font-bold'
+                                : mUnlocked
+                                ? 'text-slate-300'
+                                : 'text-slate-600'
+                            }`}
+                            onClick={() => {
+                              if (!mUnlocked) {
+                                alert(`🔒 Module Locked: Complete all lessons in Module ${mIdx} first.`);
+                                return;
+                              }
+                              setActiveModuleIndex(mIdx);
+                              const firstInc = mLessons.findIndex(l => !completedLessonIds[l.id || '']);
+                              setActiveLessonIndex(firstInc >= 0 ? firstInc : 0);
+                            }}
+                          >
+                            <span>
+                              {mDone ? '✓' : mUnlocked ? '●' : '🔒'}
+                            </span>
+                            <span>M{mIdx + 1}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {activeTrackModules.length > 0 ? (
                 /* ======================================================== */
                 /* TEACHER / CUSTOM AUTHOR SUITE LMS CLASSROOM               */
@@ -815,26 +1037,40 @@ export function App() {
                         const modLessons = mod.lessonItems || [];
                         const completedInMod = modLessons.filter(l => Boolean(l.id && completedLessonIds[l.id])).length;
                         const isModDone = modLessons.length > 0 && completedInMod === modLessons.length;
+                        const unlocked = isModuleUnlocked(mIdx);
+
                         return (
                           <button
                             key={mod.id || mIdx}
                             onClick={() => {
+                              if (!unlocked) {
+                                const prevMod = activeTrackModules[mIdx - 1];
+                                alert(`🔒 Module Locked: Please complete all lessons in "${prevMod?.title || `Module ${mIdx}`}" to unlock this module.`);
+                                return;
+                              }
                               setActiveModuleIndex(mIdx);
-                              setActiveLessonIndex(0);
+                              const firstIncomplete = modLessons.findIndex(l => !completedLessonIds[l.id || '']);
+                              setActiveLessonIndex(firstIncomplete >= 0 ? firstIncomplete : 0);
                             }}
                             className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                               isCurrent 
                                 ? 'bg-blue-600 text-white shadow-md' 
+                                : !unlocked
+                                ? 'bg-slate-900/60 text-slate-500 border border-slate-800/60 opacity-60 hover:opacity-80'
+                                : isModDone
+                                ? 'bg-slate-800/90 text-emerald-300 border border-emerald-500/30 hover:bg-slate-700'
                                 : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                             }`}
+                            title={!unlocked ? `🔒 Locked (Prerequisite: Complete Module ${mIdx})` : mod.title}
                           >
-                            <span>{mod.title}</span>
+                            {!unlocked && <Lock className="w-3 h-3 text-slate-500 shrink-0" />}
+                            <span className="truncate max-w-[200px]">{mod.title}</span>
                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                               isCurrent ? 'bg-blue-800 text-blue-100' : 'bg-slate-700 text-slate-400'
                             }`}>
                               {completedInMod}/{modLessons.length}
                             </span>
-                            {isModDone && <span className="text-emerald-400">✓</span>}
+                            {isModDone && <span className="text-emerald-400 font-bold">✓</span>}
                           </button>
                         );
                       })}
@@ -859,9 +1095,62 @@ export function App() {
                           );
                         }
 
+                        // Prerequisite lock check for the current lesson
+                        const isCurLessonUnlocked = isDynamicLessonUnlocked(activeModuleIndex, activeLessonIndex);
+                        if (!isCurLessonUnlocked) {
+                          const prevLesson = activeLessonIndex > 0 ? modLessons[activeLessonIndex - 1] : null;
+                          return (
+                            <div className="p-12 text-center bg-slate-900 border border-slate-800 rounded-3xl text-slate-300 space-y-5 shadow-2xl">
+                              <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto">
+                                <Lock className="w-8 h-8" />
+                              </div>
+                              <div className="space-y-2">
+                                <h3 className="text-xl font-black text-white">Lesson Locked</h3>
+                                <p className="text-sm text-slate-400 max-w-md mx-auto">
+                                  {prevLesson 
+                                    ? `Please complete the prerequisite lesson "${prevLesson.title}" to unlock this unit.`
+                                    : 'Please complete all lessons in the previous module to unlock this unit.'}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  const firstInc = modLessons.findIndex(l => !completedLessonIds[l.id || '']);
+                                  setActiveLessonIndex(firstInc >= 0 ? firstInc : 0);
+                                }}
+                                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black transition-all cursor-pointer shadow-lg shadow-blue-600/30"
+                              >
+                                Go to Current Active Lesson ➔
+                              </button>
+                            </div>
+                          );
+                        }
+
+                        // Determine next lesson logic
+                        let hasNext = false;
+                        let nextTitle = '';
+                        let onNext: (() => void) | undefined = undefined;
+
+                        if (activeLessonIndex < modLessons.length - 1) {
+                          hasNext = true;
+                          nextTitle = modLessons[activeLessonIndex + 1]?.title || `Lesson ${activeLessonIndex + 2}`;
+                          onNext = () => {
+                            setActiveLessonIndex(prev => prev + 1);
+                          };
+                        } else if (activeModuleIndex < activeTrackModules.length - 1) {
+                          const nextMod = activeTrackModules[activeModuleIndex + 1];
+                          hasNext = true;
+                          nextTitle = nextMod?.lessonItems?.[0]?.title
+                            ? `${nextMod.title} ➔ ${nextMod.lessonItems[0].title}`
+                            : (nextMod?.title || 'Next Module');
+                          onNext = () => {
+                            setActiveModuleIndex(prev => prev + 1);
+                            setActiveLessonIndex(0);
+                          };
+                        }
+
                         return (
                           <LessonViewer
-                            key={curLesson.id || `les-${activeLessonIndex}`}
+                            key={curLesson.id || `les-${activeModuleIndex}-${activeLessonIndex}`}
                             lessonTitle={curLesson.title}
                             duration={curLesson.duration}
                             objective={curLesson.objective}
@@ -880,10 +1169,12 @@ export function App() {
                             isCompleted={Boolean(curLesson.id && completedLessonIds[curLesson.id])}
                             onCompleteLesson={() => {
                               if (curLesson.id) {
-                                const lId = curLesson.id;
-                                setCompletedLessonIds(prev => ({ ...prev, [lId]: true }));
+                                markLessonCompleted(curLesson.id);
                               }
                             }}
+                            hasNextLesson={hasNext}
+                            nextLessonTitle={nextTitle}
+                            onNextLesson={onNext}
                           />
                         );
                       })()}
@@ -906,32 +1197,63 @@ export function App() {
                               {modLessons.map((les, lIdx) => {
                                 const isDone = Boolean(les.id && completedLessonIds[les.id]);
                                 const isCurrent = activeLessonIndex === lIdx;
+                                const unlocked = isDynamicLessonUnlocked(activeModuleIndex, lIdx);
 
                                 return (
                                   <button
                                     key={les.id || lIdx}
-                                    onClick={() => setActiveLessonIndex(lIdx)}
+                                    onClick={() => {
+                                      if (!unlocked) {
+                                        const prevLes = modLessons[lIdx - 1];
+                                        alert(`🔒 Lesson Locked: Please complete the prerequisite lesson "${prevLes?.title || `Lesson ${lIdx}`}" first.`);
+                                        return;
+                                      }
+                                      setActiveLessonIndex(lIdx);
+                                    }}
                                     className={`w-full text-left p-3 rounded-xl border transition-all flex flex-col gap-1 cursor-pointer ${
                                       isCurrent
                                         ? 'bg-blue-600/20 border-blue-500 text-white shadow-md'
+                                        : !unlocked
+                                        ? 'bg-slate-900/40 border-slate-800/40 text-slate-500 opacity-60 hover:opacity-80'
                                         : isDone
-                                        ? 'bg-slate-800/60 border-slate-700 text-slate-200'
+                                        ? 'bg-slate-800/60 border-slate-700 text-slate-200 hover:bg-slate-800'
                                         : 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-800 text-slate-300'
                                     }`}
+                                    title={!unlocked ? `🔒 Locked: Complete Lesson ${lIdx} first` : les.title}
                                   >
                                     <div className="flex items-center justify-between">
-                                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
-                                        isCurrent ? 'bg-blue-600 text-white' : isDone ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30' : 'bg-slate-700 text-slate-300'
+                                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded flex items-center gap-1 ${
+                                        isCurrent 
+                                          ? 'bg-blue-600 text-white' 
+                                          : !unlocked
+                                          ? 'bg-slate-800 text-slate-500'
+                                          : isDone 
+                                          ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/30' 
+                                          : 'bg-slate-700 text-slate-300'
                                       }`}>
-                                        Lesson {lIdx + 1} • {les.duration || '15 mins'}
+                                        {!unlocked && <Lock className="w-2.5 h-2.5" />}
+                                        <span>Lesson {lIdx + 1} • {les.duration || '15 mins'}</span>
                                       </span>
                                       {isDone ? (
-                                        <span className="text-xs font-bold text-emerald-400">✓ Complete</span>
+                                        <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                                          <CheckCircle2 className="w-3.5 h-3.5" /> Complete
+                                        </span>
+                                      ) : !unlocked ? (
+                                        <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1">
+                                          <Lock className="w-3 h-3" /> Locked
+                                        </span>
                                       ) : (
-                                        <span className="text-[10px] text-slate-500">Incomplete</span>
+                                        <span className="text-[10px] text-amber-400/80 font-medium">In Progress</span>
                                       )}
                                     </div>
-                                    <p className="font-bold text-xs mt-1 leading-snug">{les.title}</p>
+                                    <p className={`font-bold text-xs mt-1 leading-snug ${!unlocked ? 'text-slate-400' : 'text-white'}`}>
+                                      {les.title}
+                                    </p>
+                                    {!unlocked && (
+                                      <p className="text-[10px] text-amber-400/70 italic">
+                                        Prerequisite: Complete Lesson {lIdx}
+                                      </p>
+                                    )}
                                     <div className="flex items-center gap-2 text-[10px] text-slate-400 pt-0.5 flex-wrap">
                                       {les.video_url && <span>🎥 Video</span>}
                                       {les.activity && <span>🛠️ Activity</span>}

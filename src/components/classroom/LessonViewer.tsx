@@ -32,6 +32,9 @@ export interface LessonViewerProps {
   onSaveClassroomLink?: (link: string) => void;
   isCompleted: boolean;
   onCompleteLesson: () => void;
+  onNextLesson?: () => void;
+  hasNextLesson?: boolean;
+  nextLessonTitle?: string;
 }
 
 export const LessonViewer = ({
@@ -48,6 +51,9 @@ export const LessonViewer = ({
   onSaveClassroomLink,
   isCompleted,
   onCompleteLesson,
+  onNextLesson,
+  hasNextLesson,
+  nextLessonTitle,
 }: LessonViewerProps) => {
   // Navigation sub-tab inside the lesson
   const [activeTab, setActiveTab] = useState<'lecture' | 'sandbox' | 'activity' | 'exam' | 'worksheet'>('lecture');
@@ -695,19 +701,35 @@ export const LessonViewer = ({
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex items-center justify-between gap-4 flex-wrap shadow-xl">
         <div>
           <h4 className="font-bold text-sm text-white">Finished reviewing this lesson?</h4>
-          <p className="text-xs text-slate-400">Marking complete updates your overall course progress and unlocks subsequent units.</p>
+          <p className="text-xs text-slate-400">
+            {isCompleted
+              ? 'This lesson is verified complete and the next sequential lesson is unlocked.'
+              : 'Marking complete updates your overall course progress bar and unlocks the next designated unit.'}
+          </p>
         </div>
-        <button
-          onClick={onCompleteLesson}
-          className={`px-6 py-3 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 ${
-            isCompleted
-              ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
-              : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20'
-          }`}
-        >
-          <CheckCircle2 className="w-4 h-4" />
-          <span>{isCompleted ? 'Lesson Completed ✓' : 'Mark Lesson Complete'}</span>
-        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={onCompleteLesson}
+            className={`px-6 py-3 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 ${
+              isCompleted
+                ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20'
+            }`}
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            <span>{isCompleted ? 'Lesson Completed ✓' : 'Mark Lesson Complete'}</span>
+          </button>
+
+          {isCompleted && hasNextLesson && onNextLesson && (
+            <button
+              onClick={onNextLesson}
+              className="px-5 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-xs font-black transition-all cursor-pointer flex items-center gap-2 shadow-lg shadow-indigo-600/30 animate-pulse"
+              title={nextLessonTitle ? `Advance to: ${nextLessonTitle}` : 'Advance to Next Lesson'}
+            >
+              <span>Continue to Next Lesson ➔</span>
+            </button>
+          )}
+        </div>
       </div>
 
       <KezjedAiMentor
