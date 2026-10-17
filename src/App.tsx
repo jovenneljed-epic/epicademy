@@ -694,7 +694,6 @@ export function App() {
         onOpenStudentPortal={() => setStudentMainView('dashboard')}
         currentUser={currentUser}
         onSignOut={handleSignOut}
-        onSwitchRole={handleSwitchRole}
       />
 
       {/* Main Content Sections */}

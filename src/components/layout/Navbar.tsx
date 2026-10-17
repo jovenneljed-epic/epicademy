@@ -14,7 +14,6 @@ import {
   Shield
 } from 'lucide-react';
 import { signOutUser } from '../../lib/supabaseClient';
-import type { UserRole } from '../../types';
 
 interface NavbarProps {
   currentPerspective: 'educator' | 'student';
@@ -31,7 +30,6 @@ interface NavbarProps {
   onOpenStudentPortal?: () => void;
   currentUser?: { email?: string; role?: string } | null;
   onSignOut?: () => void;
-  onSwitchRole?: (role: UserRole) => void;
 }
 
 export const Navbar = ({
@@ -49,13 +47,11 @@ export const Navbar = ({
   onOpenStudentPortal,
   currentUser,
   onSignOut,
-  onSwitchRole,
 }: NavbarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [tracksDropdownOpen, setTracksDropdownOpen] = useState(false);
   const [exploreDropdownOpen, setExploreDropdownOpen] = useState(false);
-  const [roleSwitcherOpen, setRoleSwitcherOpen] = useState(false);
 
   const cleanEmail = (currentUser?.email || '').toLowerCase().trim();
   const role = (currentUser?.role || '').toLowerCase().trim();
@@ -404,28 +400,27 @@ export const Navbar = ({
                 </button>
               </div>
             ) : currentUser ? (
-              <div className="relative flex items-center gap-1.5 pl-1.5 border-l border-slate-200">
-                {/* Backdrop overlay for closing dropdown */}
-                {roleSwitcherOpen && (
-                  <div 
-                    className="fixed inset-0 z-40 bg-transparent" 
-                    onClick={() => setRoleSwitcherOpen(false)} 
-                  />
-                )}
-
-                {/* User Pill with Role Badge */}
-                <div className="flex items-center gap-1 bg-slate-100/90 border border-slate-200/90 pl-2 pr-1.5 py-1 rounded-xl">
-                  <button
-                    onClick={isAdmin && onOpenAccountSettings ? onOpenAccountSettings : () => setRoleSwitcherOpen(!roleSwitcherOpen)}
-                    className="flex items-center gap-1 text-xs font-bold text-slate-800 hover:text-blue-600 transition-colors cursor-pointer"
-                    title={isAdmin ? "Open Admin Account Settings" : "Switch Account Role"}
-                  >
-                    <User className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                    <span className="max-w-[80px] xl:max-w-[110px] truncate">{currentUser.email?.split('@')[0]}</span>
-                  </button>
+              <div className="relative flex items-center gap-2 pl-2 border-l border-slate-200">
+                {/* User Identity Pill with Official Role Badge */}
+                <div className="flex items-center gap-1.5 bg-slate-100/90 border border-slate-200/90 pl-2.5 pr-2 py-1 rounded-xl">
+                  {isAdmin && onOpenAccountSettings ? (
+                    <button
+                      onClick={onOpenAccountSettings}
+                      className="flex items-center gap-1.5 text-xs font-bold text-slate-800 hover:text-blue-600 transition-colors cursor-pointer"
+                      title="Open Admin Account Settings"
+                    >
+                      <User className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                      <span className="max-w-[80px] xl:max-w-[110px] truncate">{currentUser.email?.split('@')[0]}</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                      <User className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                      <span className="max-w-[80px] xl:max-w-[110px] truncate">{currentUser.email?.split('@')[0]}</span>
+                    </div>
+                  )}
 
                   {/* Colored Role Pill */}
-                  <span className={`px-1.5 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 border shrink-0 ${
+                  <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 border shrink-0 ${
                     isAdmin
                       ? 'bg-indigo-950 text-indigo-200 border-indigo-500/40'
                       : isEducator
@@ -440,109 +435,7 @@ export const Navbar = ({
                     {isStudent && '🎓 Student'}
                     {!isAdmin && !isEducator && !isContributor && !isStudent && (currentUser.role || 'User')}
                   </span>
-
-                  {/* Switch Role Dropdown Trigger */}
-                  {onSwitchRole && (
-                    <button
-                      onClick={() => setRoleSwitcherOpen(!roleSwitcherOpen)}
-                      className="p-1 hover:bg-slate-200 text-slate-500 hover:text-slate-900 rounded-lg transition-colors cursor-pointer ml-0.5"
-                      title="Quick Switch Account Role"
-                    >
-                      <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${roleSwitcherOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                  )}
                 </div>
-
-                {/* Role Switcher Menu - Safely anchored within viewport boundaries */}
-                {roleSwitcherOpen && onSwitchRole && (
-                  <div className="absolute right-0 top-full mt-2 w-60 max-w-[calc(100vw-1.5rem)] bg-slate-900/98 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 text-white">
-                    <div className="px-3 py-1.5 text-[10px] uppercase font-black tracking-wider text-slate-400 border-b border-slate-800 flex items-center justify-between">
-                      <span>⚡ Quick Role Switcher</span>
-                      <span className="text-[9px] text-blue-400 font-mono">1-CLICK</span>
-                    </div>
-                    <div className="space-y-1 mt-1">
-                      <button
-                        onClick={() => {
-                          onSwitchRole('admin');
-                          setRoleSwitcherOpen(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
-                          isAdmin ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 text-slate-300'
-                        }`}
-                      >
-                        <span className="flex items-center gap-2">
-                          <span>🛡️</span>
-                          <span>Admin (Full Control)</span>
-                        </span>
-                        {isAdmin && <span>✓</span>}
-                      </button>
-                      <button
-                        onClick={() => {
-                          onSwitchRole('educator');
-                          setRoleSwitcherOpen(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
-                          isEducator ? 'bg-purple-600 text-white' : 'hover:bg-slate-800 text-slate-300'
-                        }`}
-                      >
-                        <span className="flex items-center gap-2">
-                          <span>👨‍🏫</span>
-                          <span>Educator</span>
-                        </span>
-                        {isEducator && <span>✓</span>}
-                      </button>
-                      <button
-                        onClick={() => {
-                          onSwitchRole('contributor');
-                          setRoleSwitcherOpen(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
-                          isContributor ? 'bg-amber-600 text-white' : 'hover:bg-slate-800 text-slate-300'
-                        }`}
-                      >
-                        <span className="flex items-center gap-2">
-                          <span>✍️</span>
-                          <span>Contributor</span>
-                        </span>
-                        {isContributor && <span>✓</span>}
-                      </button>
-                      <button
-                        onClick={() => {
-                          onSwitchRole('student');
-                          setRoleSwitcherOpen(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
-                          isStudent ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 text-slate-300'
-                        }`}
-                      >
-                        <span className="flex items-center gap-2">
-                          <span>🎓</span>
-                          <span>Student</span>
-                        </span>
-                        {isStudent && <span>✓</span>}
-                      </button>
-                    </div>
-
-                    {/* Direct Admin Control Center shortcut */}
-                    {isAdmin && onOpenAccountSettings && (
-                      <div className="pt-1.5 mt-1 border-t border-slate-800">
-                        <button
-                          onClick={() => {
-                            setRoleSwitcherOpen(false);
-                            onOpenAccountSettings();
-                          }}
-                          className="w-full text-left px-3 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-blue-600 to-purple-600 text-white flex items-center justify-between shadow-xs hover:from-blue-500 hover:to-purple-500 transition-all cursor-pointer"
-                        >
-                          <span className="flex items-center gap-1.5">
-                            <Shield className="w-3.5 h-3.5" />
-                            <span>⚙️ Open Account Settings</span>
-                          </span>
-                          <span>→</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 {/* Sign Out Button */}
                 <button
@@ -683,61 +576,6 @@ export const Navbar = ({
                   {isAdmin ? '🛡️ Admin' : isEducator ? '👨‍🏫 Educator' : isContributor ? '✍️ Contributor' : '🎓 Student'}
                 </span>
               </div>
-
-              {/* Mobile Quick Role Switcher Grid */}
-              {onSwitchRole && (
-                <div className="pt-2 border-t border-slate-200">
-                  <div className="text-[10px] uppercase font-black text-slate-500 mb-1.5">
-                    ⚡ Quick Test Role Switcher
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5 text-xs font-bold">
-                    <button
-                      onClick={() => {
-                        onSwitchRole('admin');
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`p-2 rounded-xl text-left cursor-pointer transition-colors ${
-                        isAdmin ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                      }`}
-                    >
-                      🛡️ Admin
-                    </button>
-                    <button
-                      onClick={() => {
-                        onSwitchRole('educator');
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`p-2 rounded-xl text-left cursor-pointer transition-colors ${
-                        isEducator ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
-                      }`}
-                    >
-                      👨‍🏫 Educator
-                    </button>
-                    <button
-                      onClick={() => {
-                        onSwitchRole('contributor');
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`p-2 rounded-xl text-left cursor-pointer transition-colors ${
-                        isContributor ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
-                      }`}
-                    >
-                      ✍️ Contributor
-                    </button>
-                    <button
-                      onClick={() => {
-                        onSwitchRole('student');
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`p-2 rounded-xl text-left cursor-pointer transition-colors ${
-                        isStudent ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                      }`}
-                    >
-                      🎓 Student
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2 pt-1">
