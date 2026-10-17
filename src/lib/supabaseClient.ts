@@ -1226,7 +1226,7 @@ export interface CourseAccessResult {
     theme: 'admin' | 'free' | 'paid' | 'enrolled' | 'restricted';
   };
   buttonText: string;
-  actionType: 'open_admin' | 'open_free' | 'open_enrolled' | 'contributor_restricted' | 'teacher_pay_required' | 'student_pay_required';
+  actionType: 'open_admin' | 'open_free' | 'open_enrolled' | 'contributor_restricted' | 'teacher_pay_required' | 'student_pay_required' | 'guest_restricted';
   noticeText?: string;
 }
 
@@ -1238,7 +1238,27 @@ export function getCourseAccessPermission(
   const isFree = isCourseFree(track);
   const isPaid = !isFree;
   const cleanRole = (role || 'student').toLowerCase().trim();
-  const enrolled = email ? isUserEnrolledInTrack(email, track.id) : false;
+  const cleanEmail = (email || '').toLowerCase().trim();
+  const enrolled = cleanEmail ? isUserEnrolledInTrack(cleanEmail, track.id) : false;
+  const isGuest = cleanRole === 'guest' || cleanEmail.startsWith('guest@');
+
+  // 0. GUEST (PREVIEW ONLY): Can browse roadmap & curriculum, but CANNOT access classroom or enroll
+  if (isGuest) {
+    return {
+      isFree,
+      isPaid,
+      isEnrolled: false,
+      canView: true,
+      canOpen: false,
+      badge: {
+        label: isFree ? 'Free • Preview Only' : 'Paid • Preview Only',
+        theme: 'restricted',
+      },
+      buttonText: '🔒 Guest Preview • Sign In to Access',
+      actionType: 'guest_restricted',
+      noticeText: 'Guest Preview Mode: Course curriculum and syllabus are view-only. Please Sign In or Enroll as a Student to access interactive classrooms and exercises.',
+    };
+  }
 
   // 1. ADMIN: Can view and open EVERY paid and unpaid course
   if (cleanRole === 'admin') {

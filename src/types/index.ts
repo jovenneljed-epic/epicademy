@@ -1,6 +1,6 @@
 export type CategoryType = 'all' | 'stem' | 'business' | 'creative' | 'humanities' | 'wellness' | 'other';
 
-export type UserRole = 'admin' | 'educator' | 'contributor' | 'student';
+export type UserRole = 'admin' | 'educator' | 'contributor' | 'student' | 'guest';
 
 export interface RolePermissions {
   canAccessAccountSettings: boolean;
@@ -57,6 +57,17 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canUseSandbox: true,
     canUseKezjedAi: true,
     canAccessTrb: true,
+    canSwitchPerspectives: false,
+  },
+  guest: {
+    canAccessAccountSettings: false,
+    canManageUsers: false,
+    canCreateCourses: false,
+    canManageFaculty: false,
+    canAccessClassroom: false,
+    canUseSandbox: false,
+    canUseKezjedAi: false,
+    canAccessTrb: false,
     canSwitchPerspectives: false,
   },
 };

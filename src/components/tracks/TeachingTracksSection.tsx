@@ -697,6 +697,7 @@ export const TeachingTracksSection = ({
                   // Check if course is free
                   const permission = getCourseAccessPermission(track, currentUser?.role, currentUser?.email);
                   const isFree = permission.isFree;
+                  const isGuest = currentUser?.role === 'guest' || Boolean(currentUser?.email?.toLowerCase().startsWith('guest@'));
                   const pricePhp = getPhpPrice(track.price || 49);
                   const origPhp = track.originalPrice ? getPhpPrice(track.originalPrice) : null;
 
@@ -1004,13 +1005,20 @@ export const TeachingTracksSection = ({
                             </div>
                             {!isFree && (
                               <span className="text-[11px] font-bold block">
-                                {currentUser?.role === 'admin' ? (
+                                {isGuest ? (
+                                  <span className="text-amber-600">👀 Guest Preview (View Only)</span>
+                                ) : currentUser?.role === 'admin' ? (
                                   <span className="text-amber-600">🛡️ Admin Access Bypass</span>
                                 ) : currentUser?.role === 'contributor' ? (
                                   <span className="text-amber-700">🔒 Contributor Restricted</span>
                                 ) : (
                                   <span className="text-blue-600">GCash • GoTyme • Maya</span>
                                 )}
+                              </span>
+                            )}
+                            {isFree && isGuest && (
+                              <span className="text-[11px] font-bold text-amber-600 block">
+                                👀 Guest Preview (View Only)
                               </span>
                             )}
                           </div>
@@ -1039,7 +1047,9 @@ export const TeachingTracksSection = ({
                               type="button"
                               onClick={() => onEnroll(track)}
                               className={`px-4 py-2 text-xs font-black active:scale-95 rounded-xl shadow-md flex items-center gap-1.5 transition-all cursor-pointer ${
-                                isBundle6
+                                isGuest
+                                  ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-500/25'
+                                  : isBundle6
                                   ? 'text-white bg-gradient-to-r from-rose-600 via-red-600 to-amber-500 hover:from-rose-500 hover:to-amber-400 shadow-rose-500/25'
                                   : isBundle5
                                   ? 'text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-amber-500 hover:from-emerald-500 hover:to-amber-400 shadow-emerald-500/25'
@@ -1058,13 +1068,15 @@ export const TeachingTracksSection = ({
                                   : 'text-white bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
                               }`}
                             >
-                              {currentUser?.role === 'admin' && !isFree ? (
+                              {currentUser?.role === 'admin' && !isFree && !isGuest ? (
                                 <Shield className="w-3.5 h-3.5 text-amber-300" />
-                              ) : currentUser?.role === 'contributor' && !isFree ? (
+                              ) : currentUser?.role === 'contributor' && !isFree && !isGuest ? (
                                 <Lock className="w-3.5 h-3.5 text-amber-400" />
                               ) : null}
                               <span>
-                                {isFree 
+                                {isGuest
+                                  ? '🔒 Guest Preview • Sign In to Access'
+                                  : isFree 
                                   ? isBundle6
                                     ? 'Enroll in Bundle #6 • FREE'
                                     : isBundle5

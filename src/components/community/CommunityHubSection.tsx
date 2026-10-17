@@ -39,6 +39,7 @@ const IDEA_CATEGORIES = [
 ];
 
 export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpenAuth, currentUser }) => {
+  const isGuest = currentUser?.role === 'guest' || Boolean(currentUser?.email?.toLowerCase().startsWith('guest@'));
   const [selectedChannel, setSelectedChannel] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterIdeasOnly, setFilterIdeasOnly] = useState(false);
@@ -133,6 +134,12 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
 
   // Handle Like Post
   const handleLike = async (postId: string) => {
+    if (isGuest) {
+      alert('👀 Guest Preview Mode: Please Sign In or Enroll as a Student to like and interact with community discussions.');
+      onOpenAuth('signin');
+      return;
+    }
+
     const updated = posts.map(p => {
       if (p.id === postId) {
         const isLiked = Boolean(p.isLiked);
@@ -157,6 +164,11 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
   // Handle Create Post / Share Idea
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isGuest) {
+      alert('👀 Guest Preview Mode: Please Sign In or Enroll as a Student to post or share ideas in community discussions.');
+      onOpenAuth('signin');
+      return;
+    }
     if (!newPostTitle.trim() || !newPostContent.trim()) return;
 
     const authorName = currentUser?.email 
@@ -229,6 +241,11 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
   // Handle Add Reply to Post
   const handleAddReply = (postId: string, e: React.FormEvent) => {
     e.preventDefault();
+    if (isGuest) {
+      alert('👀 Guest Preview Mode: Please Sign In or Enroll as a Student to reply to community discussions.');
+      onOpenAuth('signin');
+      return;
+    }
     const replyText = replyTextByPost[postId]?.trim();
     if (!replyText) return;
 
@@ -440,6 +457,11 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
               <button
                 type="button"
                 onClick={() => {
+                  if (isGuest) {
+                    alert('👀 Guest Preview Mode: Please Sign In or Enroll as a Student to pitch ideas to the community.');
+                    onOpenAuth('signin');
+                    return;
+                  }
                   setShowPostComposer(true);
                   setNewPostChannel('ideas');
                   setNewPostCategory(IDEA_CATEGORIES[0].id);
@@ -447,7 +469,7 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
                 className="w-full py-2 px-3 bg-white hover:bg-amber-50 text-amber-900 border border-amber-300 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5 text-amber-600" />
-                <span>Pitch a New Idea</span>
+                <span>{isGuest ? 'Pitch a New Idea (Sign In)' : 'Pitch a New Idea'}</span>
               </button>
             </div>
 
@@ -510,16 +532,31 @@ export const CommunityHubSection: React.FC<CommunityHubSectionProps> = ({ onOpen
               {!showPostComposer ? (
                 <div className="flex items-center gap-3.5">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
-                    {currentUser?.email ? currentUser.email[0].toUpperCase() : 'U'}
+                    {isGuest ? '👀' : currentUser?.email ? currentUser.email[0].toUpperCase() : 'U'}
                   </div>
                   <button
                     type="button"
-                    onClick={() => setShowPostComposer(true)}
+                    onClick={() => {
+                      if (isGuest) {
+                        alert('👀 Guest Preview Mode: Please Sign In or Enroll as a Student to create discussions in the community.');
+                        onOpenAuth('signin');
+                        return;
+                      }
+                      setShowPostComposer(true);
+                    }}
                     className="flex-1 text-left px-5 py-3 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 text-xs sm:text-sm rounded-2xl border border-slate-200/80 transition-all cursor-pointer flex items-center justify-between"
                   >
-                    <span>Start a discussion, ask a question, or share an idea...</span>
-                    <span className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-xl border border-blue-100 shrink-0">
-                      + Create Post
+                    <span>
+                      {isGuest 
+                        ? '🔒 Guest Preview: Sign In or Enroll to start a discussion or pitch ideas...' 
+                        : 'Start a discussion, ask a question, or share an idea...'}
+                    </span>
+                    <span className={`text-xs font-bold px-3 py-1 rounded-xl border shrink-0 ${
+                      isGuest 
+                        ? 'text-amber-700 bg-amber-50 border-amber-200' 
+                        : 'text-blue-600 bg-blue-50 border-blue-100'
+                    }`}>
+                      {isGuest ? '🔒 View Only' : '+ Create Post'}
                     </span>
                   </button>
                 </div>

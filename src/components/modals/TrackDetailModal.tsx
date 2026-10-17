@@ -44,6 +44,8 @@ export const TrackDetailModal = ({
   const [activeLessonPlan, setActiveLessonPlan] = useState<DetailedLesson | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
 
+  const isGuest = (currentUser?.role || '').toLowerCase() === 'guest' || Boolean(currentUser?.email?.toLowerCase().startsWith('guest@'));
+
   useEffect(() => {
     if (!track) {
       setModules([]);
@@ -71,8 +73,10 @@ export const TrackDetailModal = ({
         })),
       }));
       setModules(mapped);
-      if (zeroCourse.detailedModules[0]?.lessons[0]) {
+      if (!isGuest && zeroCourse.detailedModules[0]?.lessons[0]) {
         setActiveLessonPlan(zeroCourse.detailedModules[0].lessons[0]);
+      } else {
+        setActiveLessonPlan(null);
       }
       return;
     }
@@ -97,8 +101,10 @@ export const TrackDetailModal = ({
         })),
       }));
       setModules(mapped);
-      if (tenantDetailed[0]?.lessons[0]) {
+      if (!isGuest && tenantDetailed[0]?.lessons[0]) {
         setActiveLessonPlan(tenantDetailed[0].lessons[0]);
+      } else {
+        setActiveLessonPlan(null);
       }
       return;
     }
@@ -298,6 +304,31 @@ export const TrackDetailModal = ({
 
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
+          {isGuest && (
+            <div className="p-4 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-2 border-amber-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl shrink-0">👀</span>
+                <div>
+                  <h4 className="font-black text-xs sm:text-sm text-amber-950">
+                    Guest Preview Mode (Strictly View-Only)
+                  </h4>
+                  <p className="text-[11px] sm:text-xs text-amber-800 mt-0.5">
+                    You are exploring the course outline and roadmap. Course classrooms, lesson materials, code environments, and accounts are locked for guests.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  onClose();
+                  onEnroll(track);
+                }}
+                className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs font-black rounded-xl shadow-sm transition-all cursor-pointer shrink-0 text-center"
+              >
+                Sign In / Enroll
+              </button>
+            </div>
+          )}
+
           {activeLessonPlan ? (
             <div className="space-y-6 animate-in fade-in duration-200">
               <button
@@ -504,7 +535,15 @@ export const TrackDetailModal = ({
                             {mod.lessonItems.map((les, lIdx) => (
                               <button
                                 key={lIdx}
-                                onClick={() => handleSelectLesson(les.title)}
+                                onClick={() => {
+                                  if (isGuest) {
+                                    alert('👀 Guest Preview Mode: Lesson materials and practical coding labs are locked. Please Sign In or Enroll as a Student to access.');
+                                    onClose();
+                                    onEnroll(track);
+                                    return;
+                                  }
+                                  handleSelectLesson(les.title);
+                                }}
                                 className="w-full text-left p-3 rounded-xl bg-slate-50 hover:bg-orange-50/60 hover:border-orange-300 border border-slate-200/70 transition-all flex items-center justify-between cursor-pointer group"
                               >
                                 <div className="flex items-center gap-2.5">
@@ -525,7 +564,7 @@ export const TrackDetailModal = ({
                                   </div>
                                 </div>
                                 <span className="text-xs font-bold text-orange-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                                  <span>Start Lesson</span>
+                                  <span>{isGuest ? 'Locked (Guest)' : 'Start Lesson'}</span>
                                   <ArrowRight className="w-3.5 h-3.5" />
                                 </span>
                               </button>
@@ -575,7 +614,9 @@ export const TrackDetailModal = ({
                 onEnroll(track);
               }}
               className={`px-6 py-2.5 font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer ${
-                isFree
+                isGuest
+                  ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-500/20'
+                  : isFree
                   ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20'
                   : currentUser?.role === 'admin'
                   ? 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white shadow-amber-600/25'
@@ -584,7 +625,7 @@ export const TrackDetailModal = ({
                   : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20'
               }`}
             >
-              <span>{isFree ? 'Open Classroom • Free' : permission.buttonText}</span>
+              <span>{isGuest ? '🔒 Guest Preview • Sign In / Enroll to Access' : isFree ? 'Open Classroom • Free' : permission.buttonText}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

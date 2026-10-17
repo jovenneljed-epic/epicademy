@@ -55,14 +55,16 @@ export const Navbar = ({
   const [exploreDropdownOpen, setExploreDropdownOpen] = useState(false);
   const [roleSwitcherOpen, setRoleSwitcherOpen] = useState(false);
 
-  const role = (currentUser?.role || '').toLowerCase();
-  const isAdmin = role === 'admin';
-  const isEducator = role === 'educator';
-  const isContributor = role === 'contributor';
-  const isStudent = role === 'student';
+  const cleanEmail = (currentUser?.email || '').toLowerCase().trim();
+  const role = (currentUser?.role || '').toLowerCase().trim();
+  const isGuest = role === 'guest' || cleanEmail.startsWith('guest@');
+  const isAdmin = !isGuest && role === 'admin';
+  const isEducator = !isGuest && role === 'educator';
+  const isContributor = !isGuest && role === 'contributor';
+  const isStudent = !isGuest && role === 'student';
 
-  const canBuildCourse = !currentUser || isAdmin || isEducator || isContributor;
-  const canAccessFaculty = isAdmin || isEducator;
+  const canBuildCourse = !isGuest && Boolean(isAdmin || isEducator || isContributor);
+  const canAccessFaculty = !isGuest && Boolean(isAdmin || isEducator);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -186,7 +188,7 @@ export const Navbar = ({
                 </button>
               )}
 
-              {onOpenCredentials && (
+              {!isGuest && onOpenCredentials && (
                 <button
                   onClick={onOpenCredentials}
                   className="px-2.5 py-2 font-bold text-amber-700 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
@@ -195,7 +197,7 @@ export const Navbar = ({
                 </button>
               )}
 
-              {onOpenDossier && (
+              {!isGuest && onOpenDossier && (
                 <button
                   onClick={onOpenDossier}
                   className="px-2.5 py-2 font-bold text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
@@ -252,17 +254,17 @@ export const Navbar = ({
                       <span>💳 Tuition &amp; Plans</span>
                     </button>
                   )}
-                  {onOpenCredentials && (
+                  {!isGuest && onOpenCredentials && (
                     <button onClick={() => { setExploreDropdownOpen(false); onOpenCredentials(); }} className="w-full text-left px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-50 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5">
                       <span>🎓 Credentials &amp; Certs</span>
                     </button>
                   )}
-                  {onOpenDossier && (
+                  {!isGuest && onOpenDossier && (
                     <button onClick={() => { setExploreDropdownOpen(false); onOpenDossier(); }} className="w-full text-left px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5">
                       <span>💼 Student Dossier</span>
                     </button>
                   )}
-                  {onOpenApplyTenant && (
+                  {!isGuest && onOpenApplyTenant && (
                     <button onClick={() => { setExploreDropdownOpen(false); onOpenApplyTenant(); }} className="w-full text-left px-3 py-2 text-xs font-semibold text-purple-700 hover:bg-purple-50 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5">
                       <span>✨ Become a Mentor</span>
                     </button>
@@ -357,7 +359,33 @@ export const Navbar = ({
             )}
 
             {/* User Session or Auth Buttons */}
-            {currentUser ? (
+            {isGuest ? (
+              <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+                <span className="px-2.5 py-1 rounded-xl text-xs font-black uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-1.5 shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  <span>👀 Guest (View Only)</span>
+                </span>
+                <button
+                  onClick={() => onOpenAuth('signin')}
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => onOpenAuth('signup')}
+                  className="hidden xl:inline-flex px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black rounded-xl shadow-xs transition-all cursor-pointer"
+                >
+                  🎓 Enroll
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                  title="Exit Guest Mode"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : currentUser ? (
               <div className="relative flex items-center gap-1.5 pl-1.5 border-l border-slate-200">
                 {/* Backdrop overlay for closing dropdown */}
                 {roleSwitcherOpen && (
@@ -583,7 +611,42 @@ export const Navbar = ({
         <div className="lg:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-6 space-y-4 animate-in slide-in-from-top-4 duration-200 max-h-[85vh] overflow-y-auto">
           
           {/* User Session Info Card & Instant Switcher */}
-          {currentUser ? (
+          {isGuest ? (
+            <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="text-xs font-black text-amber-900 uppercase tracking-wider">Guest Preview Mode</span>
+                </div>
+                <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                  View Only
+                </span>
+              </div>
+              <p className="text-[11px] text-amber-800/90 leading-relaxed font-medium">
+                You are previewing Epicademy in read-only mode. Course classrooms and interactive lessons are locked until you sign in or enroll.
+              </p>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenAuth('signin');
+                  }}
+                  className="py-2.5 text-center text-xs font-bold text-white bg-blue-600 rounded-xl shadow-xs cursor-pointer"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenAuth('signup');
+                  }}
+                  className="py-2.5 text-center text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-xs cursor-pointer"
+                >
+                  🎓 Enroll
+                </button>
+              </div>
+            </div>
+          ) : currentUser ? (
             <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 truncate">
@@ -775,7 +838,7 @@ export const Navbar = ({
             )}
 
             {/* Credentials */}
-            {onOpenCredentials && (
+            {!isGuest && onOpenCredentials && (
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
@@ -788,7 +851,7 @@ export const Navbar = ({
             )}
 
             {/* Dossier */}
-            {onOpenDossier && (
+            {!isGuest && onOpenDossier && (
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);

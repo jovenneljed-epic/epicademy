@@ -263,6 +263,13 @@ export function App() {
   };
 
   const openTrackClassroom = async (track: Track) => {
+    const isGuest = currentUser?.role === 'guest' || !currentUser?.email || currentUser.email.toLowerCase().startsWith('guest@');
+    if (isGuest) {
+      alert('👀 Guest Preview Mode: Course classrooms and practical lessons are view-only on the landing page. Please Sign In or Enroll as a Student to enter the interactive academy!');
+      handleOpenAuth('signin');
+      return;
+    }
+
     const isFree = isCourseFree(track);
     const role = currentUser?.role || 'student';
     const isEnrolled = currentUser?.email ? isUserEnrolledInTrack(currentUser.email, track.id) : false;
@@ -318,6 +325,13 @@ export function App() {
   };
 
   const handleEnrollTrack = (track: Track) => {
+    const isGuest = currentUser?.role === 'guest' || !currentUser?.email || currentUser.email.toLowerCase().startsWith('guest@');
+    if (isGuest) {
+      alert('👀 Guest Preview Mode: Please Sign In or Enroll as a Student to access course tracks!');
+      handleOpenAuth('signup', '', track.id);
+      return;
+    }
+
     const isFree = isCourseFree(track);
     const role = currentUser?.role || 'student';
     const isEnrolled = currentUser?.email ? isUserEnrolledInTrack(currentUser.email, track.id) : false;
@@ -475,7 +489,7 @@ export function App() {
     return (
       <LoginPage 
         onAuthSuccess={handleAuthSuccess}
-        onExploreAsGuest={() => handleAuthSuccess('guest@epicademy.ph', 'student')}
+        onExploreAsGuest={() => handleAuthSuccess('guest@epicademy.ph', 'guest')}
       />
     );
   }
@@ -492,15 +506,53 @@ export function App() {
         onOpenAuth={handleOpenAuth}
         onOpenCourseBuilder={() => setCourseBuilderOpen(true)}
         onOpenTeacherSetup={() => setTeacherSetupOpen(true)}
-        onOpenApplyTenant={() => setApplyTenantOpen(true)}
-        onOpenCredentials={() => setShowCertificateModal(true)}
-        onOpenDossier={() => setShowDossierModal(true)}
+        onOpenApplyTenant={() => {
+          if (currentUser?.role === 'guest' || currentUser?.email?.toLowerCase().startsWith('guest@')) {
+            alert('👀 Guest Preview Mode: Please Sign In or Enroll as a Student to apply as a mentor.');
+            handleOpenAuth('signin');
+            return;
+          }
+          setApplyTenantOpen(true);
+        }}
+        onOpenCredentials={() => {
+          if (currentUser?.role === 'guest' || currentUser?.email?.toLowerCase().startsWith('guest@')) {
+            alert('👀 Guest Preview Mode: Please Sign In or Enroll as a Student to view academic credentials and certificates.');
+            handleOpenAuth('signin');
+            return;
+          }
+          setShowCertificateModal(true);
+        }}
+        onOpenDossier={() => {
+          if (currentUser?.role === 'guest' || currentUser?.email?.toLowerCase().startsWith('guest@')) {
+            alert('👀 Guest Preview Mode: Please Sign In or Enroll as a Student to view student dossier.');
+            handleOpenAuth('signin');
+            return;
+          }
+          setShowDossierModal(true);
+        }}
         onOpenTuition={() => {
+          if (currentUser?.role === 'guest' || currentUser?.email?.toLowerCase().startsWith('guest@')) {
+            alert('👀 Guest Preview Mode: Please Sign In or Enroll as a Student to view tuition plans and checkout.');
+            handleOpenAuth('signup');
+            return;
+          }
           setCheckoutTrack(ZERO_TO_HERO_TRACKS[0]);
           setCheckoutModalOpen(true);
         }}
-        onOpenAccountSettings={() => setIsAccountSettingsOpen(true)}
-        onOpenGradebook={() => setIsGradebookOpen(true)}
+        onOpenAccountSettings={() => {
+          if (currentUser?.role === 'guest' || currentUser?.email?.toLowerCase().startsWith('guest@')) {
+            alert('👀 Guest Preview Mode: Account settings are reserved for authenticated Administrators.');
+            return;
+          }
+          setIsAccountSettingsOpen(true);
+        }}
+        onOpenGradebook={() => {
+          if (currentUser?.role === 'guest' || currentUser?.email?.toLowerCase().startsWith('guest@')) {
+            alert('👀 Guest Preview Mode: Student Gradebook is reserved for authenticated faculty members.');
+            return;
+          }
+          setIsGradebookOpen(true);
+        }}
         currentUser={currentUser}
         onSignOut={handleSignOut}
         onSwitchRole={handleSwitchRole}

@@ -24,6 +24,7 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack, curre
 
   const permission = getCourseAccessPermission(track, currentUser?.role, currentUser?.email);
   const isFree = permission.isFree;
+  const isGuest = currentUser?.role === 'guest' || Boolean(currentUser?.email?.toLowerCase().startsWith('guest@'));
 
   return (
     <div className={`rounded-2xl border transition-all duration-300 flex flex-col justify-between overflow-hidden group relative ${
@@ -286,7 +287,9 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack, curre
             )}
           </div>
           <span className="text-[10px] text-slate-500 font-semibold block">
-            {isFree 
+            {isGuest
+              ? '👀 Guest Preview (View Only)'
+              : isFree 
               ? '100% Free Lifetime Access' 
               : currentUser?.role === 'admin'
               ? '🛡️ Admin Superuser Bypass'
@@ -298,7 +301,9 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack, curre
         <button
           onClick={() => onEnroll(track)}
           className={`px-3.5 py-2 text-xs font-black active:scale-95 rounded-xl shadow-sm flex items-center gap-1.5 transition-all cursor-pointer ${
-            isBundle6
+            isGuest
+              ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-500/20'
+              : isBundle6
               ? 'bg-gradient-to-r from-rose-600 via-red-600 to-amber-500 hover:from-rose-500 hover:to-amber-400 text-white shadow-rose-500/20'
               : isBundle5
               ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-amber-500 hover:from-emerald-500 hover:to-amber-400 text-white shadow-emerald-500/20'
@@ -317,13 +322,15 @@ export const TrackCard = ({ track, onSelectTrack, onEnroll, onDeleteTrack, curre
               : 'text-white bg-blue-600 hover:bg-blue-700'
           }`}
         >
-          {currentUser?.role === 'admin' && !isFree ? (
+          {currentUser?.role === 'admin' && !isFree && !isGuest ? (
             <Shield className="w-3.5 h-3.5 text-amber-300" />
-          ) : currentUser?.role === 'contributor' && !isFree ? (
+          ) : currentUser?.role === 'contributor' && !isFree && !isGuest ? (
             <Lock className="w-3.5 h-3.5 text-amber-400" />
           ) : null}
           <span>
-            {isBundle6
+            {isGuest
+              ? '🔒 Guest Preview • Sign In to Access'
+              : isBundle6
               ? 'Enroll in Bundle #6 • FREE'
               : isBundle5
               ? 'Enroll in Bundle #5 • FREE'
