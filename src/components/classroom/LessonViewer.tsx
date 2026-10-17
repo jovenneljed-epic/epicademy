@@ -35,6 +35,7 @@ export interface LessonViewerProps {
   onNextLesson?: () => void;
   hasNextLesson?: boolean;
   nextLessonTitle?: string;
+  studentEmail?: string;
 }
 
 export const LessonViewer = ({
@@ -43,6 +44,7 @@ export const LessonViewer = ({
   objective,
   videoUrl,
   theoryContent,
+  studentEmail,
   codeSnippet,
   activity,
   exam,
@@ -98,6 +100,18 @@ export const LessonViewer = ({
     setExamScore(scorePercentage);
     setExamPassed(passed);
     setExamSubmitted(true);
+
+    if (studentEmail) {
+      try {
+        const clean = studentEmail.toLowerCase().trim();
+        const raw = localStorage.getItem(`epicademy_exam_scores_${clean}`);
+        const parsed = raw ? JSON.parse(raw) : {};
+        parsed[lessonTitle] = scorePercentage;
+        localStorage.setItem(`epicademy_exam_scores_${clean}`, JSON.stringify(parsed));
+      } catch (err) {
+        console.warn('Could not save exam score locally', err);
+      }
+    }
 
     if (passed && !isCompleted) {
       onCompleteLesson();

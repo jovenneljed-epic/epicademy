@@ -12,6 +12,8 @@ export interface CohortItem {
 
 export type StudentStatus = 'Active' | 'In Review' | 'Completed' | 'Academic Probation' | 'Dropped';
 
+export type AttendanceStatusCode = 'P' | 'A' | 'T' | 'E' | '--';
+
 export interface StudentGradeRecord {
   id: string;
   lrn: string; // 12-digit DepEd/TESDA Learner Reference Number
@@ -30,12 +32,12 @@ export interface StudentGradeRecord {
   examAverage: number;
   worksheetsScore: number;
   attendancePercent: number;
-  sf2AttendanceDays: Record<number, 'P' | 'A' | 'T' | 'E'>; // Days 1 to 20 for official DepEd SF2
+  sf2AttendanceDays: Record<number, AttendanceStatusCode>; // Days 1 to 20 for official DepEd SF2
   finalNumericGrade: number;
-  letterGrade: 'A+' | 'A' | 'B+' | 'B' | 'C' | 'F';
+  letterGrade: 'A+' | 'A' | 'B+' | 'B' | 'C' | 'F' | 'IP';
   gpa: number;
   philippineGrade?: string;
-  academicStanding: 'Summa Cum Laude' | 'Magna Cum Laude' | 'Cum Laude' | 'Good Standing' | 'Academic Probation';
+  academicStanding: string;
   certificateIssued: boolean;
   certificateId?: string;
   certificateIssuedDate?: string;
@@ -90,19 +92,205 @@ export function generateLrn(email?: string): string {
   return '10' + Math.floor(1000000000 + Math.random() * 9000000000).toString().slice(0, 10);
 }
 
-// Generate default 20-day SF2 attendance matrix (P = Present, A = Absent, T = Tardy, E = Excused)
-export function getDefaultSf2Days(attendancePercent: number = 95): Record<number, 'P' | 'A' | 'T' | 'E'> {
-  const days: Record<number, 'P' | 'A' | 'T' | 'E'> = {};
+// Generate real 20-day SF2 attendance matrix based on conducted school days
+export function getRealSf2Days(attendedDays: number = 1): Record<number, AttendanceStatusCode> {
+  const days: Record<number, AttendanceStatusCode> = {};
   for (let d = 1; d <= 20; d++) {
-    if (attendancePercent < 75 && (d === 4 || d === 5 || d === 6 || d === 12)) {
-      days[d] = 'A';
-    } else if (attendancePercent < 85 && (d === 7 || d === 15)) {
-      days[d] = 'T';
-    } else {
+    if (d <= attendedDays) {
       days[d] = 'P';
+    } else {
+      days[d] = '--';
     }
   }
   return days;
+}
+
+export function getDefaultSf2Days(_attendancePercent: number = 100): Record<number, AttendanceStatusCode> {
+  return getRealSf2Days(1);
+}
+
+export function computeRealAttendancePercent(sf2Days: Record<number, AttendanceStatusCode>): number {
+  let conducted = 0;
+  let present = 0;
+  for (let d = 1; d <= 20; d++) {
+    const code = sf2Days[d];
+    if (code && code !== '--') {
+      conducted++;
+      if (code === 'P' || code === 'T' || code === 'E') {
+        present++;
+      }
+    }
+  }
+  if (conducted === 0) return 100;
+  return Math.round((present / conducted) * 100);
+}
+
+// ==========================================
+// Curriculum Plan & Program of Study
+// ==========================================
+export interface CurriculumSubjectPlan {
+  code: string;
+  title: string;
+  units: number;
+  lecHours: number;
+  labHours: number;
+  prerequisite: string;
+  term: string;
+  status: 'In Progress' | 'Completed' | 'Locked';
+  lessonsCount: number;
+  completedLessons: number;
+  numericGrade?: number;
+  phGrade?: string;
+  remarks: string;
+}
+
+export interface StudentCurriculumPlan {
+  programId: string;
+  programTitle: string;
+  degreeCode: string;
+  department: string;
+  accreditingBody: string;
+  totalCurriculumUnits: number;
+  earnedUnits: number;
+  overallProgressPercent: number;
+  activeSubjectCode: string;
+  subjects: CurriculumSubjectPlan[];
+}
+
+export function getStudentCurriculumPlan(
+  trackId: string = 'track-pinoy-piano-zero-to-hero',
+  completedLessonsCount: number = 0,
+  realExamAverage: number = 0
+): StudentCurriculumPlan {
+  let programTitle = 'Pinoy Piano & Church Keyboard Masterclass: Zero to Hero';
+  let degreeCode = 'PNO-CERT';
+  let department = 'Department of Church Music & Sacred Arts';
+  let accreditingBody = 'CHED & Philippine Sacred Music Conservatory Standards';
+  let baseSubjects = [
+    { code: 'MUS-101', title: 'Keyboard Geography, Posture & White/Black Keys', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'None (Entry Level)', term: 'Term 1', lessonsCount: 4 },
+    { code: 'MUS-102', title: 'The 7 Major & Minor Triads & Finger Dexterity', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'MUS-101', term: 'Term 1', lessonsCount: 4 },
+    { code: 'MUS-103', title: 'Triad Inversions, Slash Chords & Left-Hand Bass Octaves', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'MUS-102', term: 'Term 2', lessonsCount: 4 },
+    { code: 'MUS-104', title: 'Nashville Number System 1-7 & Church Transposition', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'MUS-103', term: 'Term 2', lessonsCount: 4 },
+    { code: 'MUS-105', title: 'Modern Worship Flow, Talk Music & Ambient Pad Layers', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'MUS-104', term: 'Term 3', lessonsCount: 4 },
+    { code: 'MUS-106', title: 'Gospel Passing Chords (2-5-1), Reharm & Recital Capstone', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'MUS-105', term: 'Term 3', lessonsCount: 4 },
+  ];
+
+  if (trackId.includes('drum')) {
+    programTitle = 'Pinoy Drum Masterclass: Zero to Hero Professional Drumming';
+    degreeCode = 'DRM-CERT';
+    department = 'Department of Percussion Studies';
+    accreditingBody = 'Philippine Guild of Drummers & Contemporary Arts';
+    baseSubjects = [
+      { code: 'DRM-101', title: 'Acoustic & Electronic Drum Kit Geography & Setup', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'None (Entry Level)', term: 'Term 1', lessonsCount: 4 },
+      { code: 'DRM-102', title: 'Fundamental Rock, Pop & Contemporary Worship Beats', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'DRM-101', term: 'Term 1', lessonsCount: 4 },
+      { code: 'DRM-103', title: '16th-Note Subdivision, Snare Ghost Notes & Fills', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'DRM-102', term: 'Term 2', lessonsCount: 4 },
+      { code: 'DRM-104', title: 'Ear Training "Sipra sa Tenga" & Metronome Discipline', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'DRM-103', term: 'Term 2', lessonsCount: 4 },
+      { code: 'DRM-105', title: 'Double Bass Drumming, Polyrhythms & Linear Chops', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'DRM-104', term: 'Term 3', lessonsCount: 4 },
+      { code: 'DRM-106', title: 'Live Stage Performance & Worship Clinic Capstone', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'DRM-105', term: 'Term 3', lessonsCount: 4 },
+    ];
+  } else if (trackId.includes('lead-guitar') || trackId.includes('guitar')) {
+    programTitle = 'Pinoy Guitar Masterclass: Rhythm & Lead Virtuosity';
+    degreeCode = 'GTR-CERT';
+    department = 'Department of String Instruments & Guitar Arts';
+    accreditingBody = 'CHED & Philippine Acoustic Fellowship';
+    baseSubjects = [
+      { code: 'GTR-101', title: 'Fretboard Geography, Open Chords & Strumming Mechanics', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'None (Entry Level)', term: 'Term 1', lessonsCount: 4 },
+      { code: 'GTR-102', title: 'Barre Chords, Palm Muting, Reggae Skanks & Comping', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'GTR-101', term: 'Term 1', lessonsCount: 4 },
+      { code: 'GTR-103', title: 'Alternate Picking, Pitch Bending & Vocal Vibrato', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'GTR-102', term: 'Term 2', lessonsCount: 4 },
+      { code: 'GTR-104', title: 'Pentatonic Boxes 1-5, Speed Drills & Blues Scales', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'GTR-103', term: 'Term 2', lessonsCount: 4 },
+      { code: 'GTR-105', title: 'CAGED Soloing System, Modes & Dotted-8th Delay Swells', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'GTR-104', term: 'Term 3', lessonsCount: 4 },
+      { code: 'GTR-106', title: 'Rivermaya "214" & Pinoy Rock Guitar Soloing Capstone', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'GTR-105', term: 'Term 3', lessonsCount: 4 },
+    ];
+  } else if (trackId.includes('tesda') || trackId.includes('css')) {
+    programTitle = 'Computer Systems Servicing (CSS) NC II Technical Diploma';
+    degreeCode = 'TESDA-CSS-NC2';
+    department = 'Information & Communications Technology (ICT)';
+    accreditingBody = 'Technical Education and Skills Development Authority (TESDA)';
+    baseSubjects = [
+      { code: 'COC-1', title: 'Install and Configure Computer Systems (ICCS)', units: 4.0, lecHours: 40, labHours: 60, prerequisite: 'Basic Computer Literacy', term: 'Cycle 1', lessonsCount: 6 },
+      { code: 'COC-2', title: 'Set-up Computer Networks (SUCN)', units: 4.0, lecHours: 40, labHours: 60, prerequisite: 'COC-1', term: 'Cycle 2', lessonsCount: 6 },
+      { code: 'COC-3', title: 'Set-up Computer Servers (SUCS)', units: 4.0, lecHours: 40, labHours: 60, prerequisite: 'COC-2', term: 'Cycle 3', lessonsCount: 6 },
+      { code: 'COC-4', title: 'Maintain and Repair Computer Systems and Networks (MRCSN)', units: 4.0, lecHours: 40, labHours: 60, prerequisite: 'COC-3', term: 'Cycle 4', lessonsCount: 6 },
+    ];
+  } else if (trackId.includes('html') || trackId.includes('level-1')) {
+    programTitle = 'Level 1: Modern HTML5 Fundamentals & Semantic Web Architecture';
+    degreeCode = 'CS-WEB-01';
+    department = 'Department of Computer Science & Software Engineering';
+    accreditingBody = 'CHED Technical Committee for Information Technology';
+    baseSubjects = [
+      { code: 'CS-101', title: 'Modern HTML5 Fundamentals & Semantic Web Architecture', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'None (Entry Level)', term: 'Term 1', lessonsCount: 4 },
+      { code: 'CS-102', title: 'CSS3 Modern Styling, Flexbox, Grid & Responsive UI', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'CS-101', term: 'Term 1', lessonsCount: 4 },
+      { code: 'CS-103', title: 'Modern JavaScript ES6+, DOM Engines & State Management', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'CS-102', term: 'Term 2', lessonsCount: 4 },
+      { code: 'CS-104', title: 'Asynchronous Architecture, Fetch Engines & REST APIs', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'CS-103', term: 'Term 2', lessonsCount: 4 },
+      { code: 'CS-105', title: 'React 19 & TypeScript Production Component Systems', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'CS-104', term: 'Term 3', lessonsCount: 4 },
+      { code: 'CS-106', title: 'Full-Stack Supabase Cloud Backend & AI SaaS Hero Capstone', units: 3.0, lecHours: 4, labHours: 6, prerequisite: 'CS-105', term: 'Term 3', lessonsCount: 4 },
+    ];
+  }
+
+  let totalCurriculumUnits = 0;
+  let earnedUnits = 0;
+  let remainingCompletedLessons = completedLessonsCount;
+  let activeSubjectCode = baseSubjects[0].code;
+
+  const subjects: CurriculumSubjectPlan[] = baseSubjects.map((sub, idx) => {
+    totalCurriculumUnits += sub.units;
+    let status: 'In Progress' | 'Completed' | 'Locked' = 'Locked';
+    let subCompleted = 0;
+    let remarks = `Prerequisite: ${sub.prerequisite}`;
+    let phGrade = '--';
+    let numericGrade: number | undefined = undefined;
+
+    if (idx === 0 && completedLessonsCount === 0) {
+      status = 'In Progress';
+      subCompleted = 0;
+      remarks = 'Currently Enrolled (Starting Journey)';
+      phGrade = 'IP';
+    } else if (remainingCompletedLessons >= sub.lessonsCount) {
+      status = 'Completed';
+      subCompleted = sub.lessonsCount;
+      remainingCompletedLessons -= sub.lessonsCount;
+      earnedUnits += sub.units;
+      numericGrade = realExamAverage > 0 ? realExamAverage : 88;
+      phGrade = computePhilippineGrade(numericGrade, true).phGrade;
+      remarks = 'PASSED';
+    } else if (remainingCompletedLessons > 0) {
+      status = 'In Progress';
+      subCompleted = remainingCompletedLessons;
+      remainingCompletedLessons = 0;
+      activeSubjectCode = sub.code;
+      remarks = 'In Progress';
+      phGrade = 'IP';
+    } else if (idx > 0 && baseSubjects[idx - 1] && remainingCompletedLessons === 0 && activeSubjectCode === sub.code) {
+      status = 'In Progress';
+      remarks = 'In Progress';
+      phGrade = 'IP';
+    }
+
+    return {
+      ...sub,
+      status,
+      completedLessons: subCompleted,
+      numericGrade,
+      phGrade,
+      remarks,
+    };
+  });
+
+  const totalLessonsInCurriculum = baseSubjects.reduce((acc, s) => acc + s.lessonsCount, 0);
+  const overallProgressPercent = Math.min(100, Math.round((completedLessonsCount / totalLessonsInCurriculum) * 100));
+
+  return {
+    programId: trackId,
+    programTitle,
+    degreeCode,
+    department,
+    accreditingBody,
+    totalCurriculumUnits,
+    earnedUnits,
+    overallProgressPercent,
+    activeSubjectCode,
+    subjects,
+  };
 }
 
 export function getStoredRoster(): StudentGradeRecord[] {
@@ -111,17 +299,56 @@ export function getStoredRoster(): StudentGradeRecord[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    // Ensure all records have LRN and SF2 days populated
+    
     return parsed
       .filter((s: any) => !s.id?.startsWith('stu-10'))
-      .map((s: any) => ({
-        ...s,
-        lrn: s.lrn || generateLrn(s.email),
-        status: s.status || 'Active',
-        tags: Array.isArray(s.tags) && s.tags.length > 0 ? s.tags : ['Enrolled Scholar', 'Student'],
-        sf2AttendanceDays: s.sf2AttendanceDays || getDefaultSf2Days(s.attendancePercent || 95),
-        philippineGrade: s.philippineGrade || computePhilippineGrade(s.finalNumericGrade || 85).phGrade,
-      }));
+      .map((s: any) => {
+        // Cleanse legacy mock data (e.g. 88.5% B+ 10/12) so newly enrolled students start real
+        const isLegacyMock = s.finalNumericGrade === 88.5 && s.completedActivities === 10 && (s.examAverage === 90 || s.worksheetsScore === 92);
+        
+        const completedActivities = isLegacyMock ? 0 : (s.completedActivities || 0);
+        const progressPercent = isLegacyMock ? 0 : (s.progressPercent || 0);
+        const examAverage = isLegacyMock ? 0 : (s.examAverage || 0);
+        const worksheetsScore = isLegacyMock ? 0 : (s.worksheetsScore || 0);
+        const attendancePercent = isLegacyMock ? 100 : (s.attendancePercent || 100);
+        const sf2AttendanceDays = isLegacyMock || !s.sf2AttendanceDays ? getRealSf2Days(1) : s.sf2AttendanceDays;
+        
+        let finalNumericGrade = isLegacyMock ? 0 : (s.finalNumericGrade || 0);
+        let letterGrade = isLegacyMock ? 'IP' : (s.letterGrade || 'IP');
+        let gpa = isLegacyMock ? 0.0 : (s.gpa || 0.0);
+        let phGrade = isLegacyMock ? 'IP' : (s.philippineGrade || 'IP');
+        let standing = isLegacyMock ? 'Newly Enrolled - In Progress' : (s.academicStanding || 'Newly Enrolled - In Progress');
+        let certificateIssued = isLegacyMock ? false : Boolean(s.certificateIssued);
+
+        // If genuinely 0 completed activities, ensure In Progress status
+        if (completedActivities === 0 && examAverage === 0 && worksheetsScore === 0) {
+          finalNumericGrade = 0;
+          letterGrade = 'IP';
+          gpa = 0.0;
+          phGrade = 'IP';
+          standing = 'Newly Enrolled - In Progress';
+          certificateIssued = false;
+        }
+
+        return {
+          ...s,
+          completedActivities,
+          progressPercent,
+          examAverage,
+          worksheetsScore,
+          attendancePercent,
+          sf2AttendanceDays,
+          finalNumericGrade,
+          letterGrade,
+          gpa,
+          philippineGrade: phGrade,
+          academicStanding: standing,
+          certificateIssued,
+          lrn: s.lrn || generateLrn(s.email),
+          status: s.status || 'Active',
+          tags: Array.isArray(s.tags) && s.tags.length > 0 ? s.tags : ['Enrolled Scholar', 'Student'],
+        };
+      });
   } catch {
     return [];
   }
@@ -192,7 +419,7 @@ export async function syncRosterWithSupabase(): Promise<StudentGradeRecord[]> {
         trackTitle = 'Level 1: Modern HTML5 Fundamentals & Semantic Web Architecture';
       }
 
-      // Check if user has completed lessons in localStorage
+      // Check if user has real completed lessons in localStorage
       let completedLessonsCount = 0;
       try {
         const rawLessons = localStorage.getItem(`epicademy_completed_lessons_${email}`);
@@ -202,47 +429,75 @@ export async function syncRosterWithSupabase(): Promise<StudentGradeRecord[]> {
         }
       } catch {}
 
+      // Check if user has real exam scores recorded
+      let realExamScore = 0;
+      try {
+        const rawExams = localStorage.getItem(`epicademy_exam_scores_${email}`);
+        if (rawExams) {
+          const parsedExams = JSON.parse(rawExams);
+          const scores = Object.values(parsedExams).filter((v): v is number => typeof v === 'number');
+          if (scores.length > 0) {
+            realExamScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+          }
+        }
+      } catch {}
+
       const existing = rosterMap.get(email);
       if (existing) {
-        // Update existing record with any live Supabase changes
-        const updatedProgress = Math.max(existing.progressPercent, Math.min(100, Math.round((completedLessonsCount / 24) * 100)));
-        const updatedActivities = Math.max(existing.completedActivities, completedLessonsCount);
-        const { finalNumericGrade, letterGrade, gpa } = computeWeightedGrade(
-          existing.completedActivities > 0 ? (existing.completedActivities / existing.totalActivities) * 100 : existing.examAverage,
-          existing.examAverage,
-          existing.worksheetsScore,
-          existing.attendancePercent
-        );
-        const ph = computePhilippineGrade(finalNumericGrade);
-        const standing = computeAcademicStanding(finalNumericGrade);
+        // Maintain real user progress or newly enrolled starting state
+        const isLegacyMock = existing.finalNumericGrade === 88.5 && existing.completedActivities === 10;
+        const totalActivities = existing.totalActivities || 12;
+        const completedActivities = isLegacyMock ? completedLessonsCount : Math.max(existing.completedActivities, completedLessonsCount);
+        const progressPercent = Math.min(100, Math.round((completedActivities / totalActivities) * 100));
+
+        let examAverage = isLegacyMock ? realExamScore : (existing.examAverage || realExamScore);
+        let worksheetsScore = isLegacyMock ? 0 : existing.worksheetsScore;
+        let attendancePercent = existing.attendancePercent || 100;
+        let sf2Days = isLegacyMock || !existing.sf2AttendanceDays ? getRealSf2Days(1) : existing.sf2AttendanceDays;
+
+        let finalNumericGrade = 0;
+        let letterGrade: StudentGradeRecord['letterGrade'] = 'IP';
+        let gpa = 0.0;
+        let phGrade = 'IP';
+        let standing = 'Newly Enrolled - In Progress';
+        let certificateIssued = false;
+
+        if (completedActivities > 0 || examAverage > 0 || worksheetsScore > 0) {
+          const actScore = totalActivities > 0 ? (completedActivities / totalActivities) * 100 : 0;
+          const weighted = computeWeightedGrade(actScore, examAverage, worksheetsScore, attendancePercent);
+          finalNumericGrade = weighted.finalNumericGrade;
+          letterGrade = weighted.letterGrade;
+          gpa = weighted.gpa;
+          phGrade = computePhilippineGrade(finalNumericGrade, true).phGrade;
+          standing = computeAcademicStanding(finalNumericGrade, true);
+          certificateIssued = progressPercent === 100 && finalNumericGrade >= 75;
+        }
 
         rosterMap.set(email, {
           ...existing,
           studentName: prof.full_name || existing.studentName,
           trackId: enrolledTrackId || existing.trackId,
           trackTitle: trackTitle || existing.trackTitle,
-          progressPercent: updatedProgress > 0 ? updatedProgress : existing.progressPercent,
-          completedActivities: updatedActivities > 0 ? updatedActivities : existing.completedActivities,
+          progressPercent,
+          completedActivities,
+          totalActivities,
           lrn: existing.lrn || generateLrn(email),
           status: existing.status || 'Active',
+          examAverage,
+          worksheetsScore,
+          attendancePercent,
+          sf2AttendanceDays: sf2Days,
           finalNumericGrade,
           letterGrade,
           gpa,
+          philippineGrade: phGrade,
           academicStanding: standing,
+          certificateIssued,
           tags: existing.tags && existing.tags.length > 0 ? existing.tags : ['Enrolled Scholar', 'Student', 'Batch 2026-A'],
           enrollmentDate: existing.enrollmentDate || (prof.created_at ? new Date(prof.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Oct 17, 2026'),
-          sf2AttendanceDays: existing.sf2AttendanceDays || getDefaultSf2Days(existing.attendancePercent),
-          philippineGrade: ph.phGrade,
         });
       } else {
-        // Instantiate new record for enrolled student
-        const actScore = completedLessonsCount > 0 ? Math.min(100, Math.round((completedLessonsCount / 24) * 100)) : 88;
-        const examScore = 90;
-        const worksheetScore = 92;
-        const attendanceScore = 98;
-        const { finalNumericGrade, letterGrade, gpa } = computeWeightedGrade(actScore, examScore, worksheetScore, attendanceScore);
-        const ph = computePhilippineGrade(finalNumericGrade);
-        const standing = computeAcademicStanding(finalNumericGrade);
+        // Instantiate genuine newly enrolled student record (REAL 0% starting journey)
         const lrn = generateLrn(email);
         const enrollDate = prof.created_at ? new Date(prof.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Oct 17, 2026';
 
@@ -258,21 +513,20 @@ export async function syncRosterWithSupabase(): Promise<StudentGradeRecord[]> {
           cohortId: INITIAL_COHORTS[0].id,
           trackId: enrolledTrackId,
           trackTitle,
-          progressPercent: Math.min(100, Math.round((completedLessonsCount / 24) * 100)),
-          completedActivities: completedLessonsCount > 0 ? completedLessonsCount : 10,
+          progressPercent: 0,
+          completedActivities: 0,
           totalActivities: 12,
-          examAverage: examScore,
-          worksheetsScore: worksheetScore,
-          attendancePercent: attendanceScore,
-          sf2AttendanceDays: getDefaultSf2Days(attendanceScore),
-          finalNumericGrade,
-          letterGrade,
-          gpa,
-          philippineGrade: ph.phGrade,
-          academicStanding: standing,
-          certificateIssued: finalNumericGrade >= 75,
+          examAverage: 0,
+          worksheetsScore: 0,
+          attendancePercent: 100,
+          sf2AttendanceDays: getRealSf2Days(1), // Day 1 attended, rest upcoming
+          finalNumericGrade: 0,
+          letterGrade: 'IP',
+          gpa: 0.0,
+          philippineGrade: 'IP',
+          academicStanding: 'Newly Enrolled - In Progress',
+          certificateIssued: false,
           certificateId: `EPIC-CERT-2026-${enrolledTrackId.replace('track-', '').slice(0, 8).toUpperCase()}-${Math.floor(10000 + Math.random() * 90000)}`,
-          certificateIssuedDate: 'October 17, 2026',
           lastActive: 'Just now',
         };
         rosterMap.set(email, newStudent);
@@ -339,15 +593,15 @@ export function enrollStudentInRoster(params: {
     progressPercent: 0,
     completedActivities: 0,
     totalActivities: 12,
-    examAverage: 90,
-    worksheetsScore: 90,
+    examAverage: 0,
+    worksheetsScore: 0,
     attendancePercent: 100,
-    sf2AttendanceDays: getDefaultSf2Days(100),
-    finalNumericGrade: 85,
-    letterGrade: 'B+',
-    gpa: 3.5,
-    philippineGrade: '2.00',
-    academicStanding: 'Good Standing',
+    sf2AttendanceDays: getRealSf2Days(1),
+    finalNumericGrade: 0,
+    letterGrade: 'IP',
+    gpa: 0.0,
+    philippineGrade: 'IP',
+    academicStanding: 'Newly Enrolled - In Progress',
     certificateIssued: false,
     lastActive: 'Just now'
   };
@@ -356,6 +610,129 @@ export function enrollStudentInRoster(params: {
   saveStoredRoster(updatedRoster);
 
   return newStudent;
+}
+
+export function updateStudentRealScores(
+  email: string,
+  scores: {
+    examAverage?: number;
+    worksheetsScore?: number;
+    completedActivities?: number;
+    attendancePercent?: number;
+    status?: StudentStatus;
+    tags?: string[];
+    trackId?: string;
+  }
+): StudentGradeRecord[] {
+  const roster = getStoredRoster();
+  const cleanEmail = email.toLowerCase().trim();
+  const index = roster.findIndex(s => s.email.toLowerCase() === cleanEmail);
+  if (index >= 0) {
+    const student = roster[index];
+    const examAverage = scores.examAverage !== undefined ? scores.examAverage : student.examAverage;
+    const worksheetsScore = scores.worksheetsScore !== undefined ? scores.worksheetsScore : student.worksheetsScore;
+    const completedActivities = scores.completedActivities !== undefined ? scores.completedActivities : student.completedActivities;
+    const attendancePercent = scores.attendancePercent !== undefined ? scores.attendancePercent : student.attendancePercent;
+    const status = scores.status || student.status;
+    const tags = scores.tags || student.tags;
+    const trackId = scores.trackId || student.trackId;
+
+    const actScore = student.totalActivities > 0 ? (completedActivities / student.totalActivities) * 100 : 0;
+    const hasScores = examAverage > 0 || worksheetsScore > 0 || completedActivities > 0;
+
+    let finalNumericGrade = 0;
+    let letterGrade: StudentGradeRecord['letterGrade'] = 'IP';
+    let gpa = 0.0;
+    let standing = 'Newly Enrolled - In Progress';
+    let phGrade = 'IP';
+
+    if (hasScores) {
+      const weighted = computeWeightedGrade(actScore, examAverage, worksheetsScore, attendancePercent);
+      finalNumericGrade = weighted.finalNumericGrade;
+      letterGrade = weighted.letterGrade;
+      gpa = weighted.gpa;
+      standing = computeAcademicStanding(finalNumericGrade, true);
+      phGrade = computePhilippineGrade(finalNumericGrade, true).phGrade;
+    }
+
+    const progressPercent = Math.min(100, Math.round((completedActivities / student.totalActivities) * 100));
+    const certificateIssued = progressPercent === 100 && finalNumericGrade >= 75;
+
+    roster[index] = {
+      ...student,
+      trackId,
+      status,
+      tags,
+      completedActivities,
+      progressPercent,
+      examAverage,
+      worksheetsScore,
+      attendancePercent,
+      finalNumericGrade,
+      letterGrade,
+      gpa,
+      philippineGrade: phGrade,
+      academicStanding: standing,
+      certificateIssued,
+      certificateIssuedDate: certificateIssued ? new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : undefined,
+    };
+    saveStoredRoster(roster);
+  }
+  return roster;
+}
+
+export function resetStudentToStartingJourney(email: string): StudentGradeRecord[] {
+  const roster = getStoredRoster();
+  const cleanEmail = email.toLowerCase().trim();
+  const index = roster.findIndex(s => s.email.toLowerCase() === cleanEmail);
+  if (index >= 0) {
+    const student = roster[index];
+    roster[index] = {
+      ...student,
+      progressPercent: 0,
+      completedActivities: 0,
+      examAverage: 0,
+      worksheetsScore: 0,
+      attendancePercent: 100,
+      sf2AttendanceDays: getRealSf2Days(1),
+      finalNumericGrade: 0,
+      letterGrade: 'IP',
+      gpa: 0.0,
+      philippineGrade: 'IP',
+      academicStanding: 'Newly Enrolled - In Progress',
+      certificateIssued: false,
+      certificateIssuedDate: undefined,
+    };
+    saveStoredRoster(roster);
+  }
+  try {
+    localStorage.removeItem(`epicademy_completed_lessons_${cleanEmail}`);
+    localStorage.removeItem(`epicademy_exam_scores_${cleanEmail}`);
+  } catch {}
+  return roster;
+}
+
+export async function updateStudentTrackEnrollment(email: string, newTrackId: string, newTrackTitle?: string): Promise<StudentGradeRecord[]> {
+  const cleanEmail = email.toLowerCase().trim();
+  try {
+    await supabase.from('enrollments').upsert([
+      {
+        user_email: cleanEmail,
+        track_id: newTrackId
+      }
+    ], { onConflict: 'track_id,user_email' });
+  } catch (err) {
+    console.warn('Supabase enrollment update note:', err);
+  }
+
+  const roster = getStoredRoster();
+  const index = roster.findIndex(s => s.email.toLowerCase() === cleanEmail);
+  if (index >= 0) {
+    roster[index].trackId = newTrackId;
+    if (newTrackTitle) roster[index].trackTitle = newTrackTitle;
+    saveStoredRoster(roster);
+  }
+  return roster;
 }
 
 export function computeWeightedGrade(
@@ -396,8 +773,10 @@ export function computeWeightedGrade(
 }
 
 export function computeAcademicStanding(
-  finalNumericGrade: number
+  finalNumericGrade: number,
+  hasStarted: boolean = true
 ): StudentGradeRecord['academicStanding'] {
+  if (!hasStarted || finalNumericGrade === 0) return 'Newly Enrolled - In Progress';
   if (finalNumericGrade >= 97) return 'Summa Cum Laude';
   if (finalNumericGrade >= 94) return 'Magna Cum Laude';
   if (finalNumericGrade >= 90) return 'Cum Laude';
@@ -405,10 +784,13 @@ export function computeAcademicStanding(
   return 'Academic Probation';
 }
 
-export function computePhilippineGrade(finalNumericGrade: number): {
+export function computePhilippineGrade(finalNumericGrade: number, hasStarted: boolean = true): {
   phGrade: string;
   description: string;
 } {
+  if (!hasStarted || finalNumericGrade === 0) {
+    return { phGrade: 'IP', description: 'In Progress (Starting Journey)' };
+  }
   if (finalNumericGrade >= 97) return { phGrade: '1.00', description: 'Excellent' };
   if (finalNumericGrade >= 94) return { phGrade: '1.25', description: 'Superior' };
   if (finalNumericGrade >= 91) return { phGrade: '1.50', description: 'Very Good' };
@@ -418,7 +800,7 @@ export function computePhilippineGrade(finalNumericGrade: number): {
   if (finalNumericGrade >= 79) return { phGrade: '2.50', description: 'Fair' };
   if (finalNumericGrade >= 76) return { phGrade: '2.75', description: 'Passing' };
   if (finalNumericGrade >= 75) return { phGrade: '3.00', description: 'Passed' };
-  return { phGrade: '5.00', description: 'Failed / Incomplete' };
+  return { phGrade: '5.00', description: 'Failed / Deficiency' };
 }
 
 export function exportRosterToCSV(roster: StudentGradeRecord[], cohortName: string = 'All_Cohorts') {

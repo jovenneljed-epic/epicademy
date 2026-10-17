@@ -23,7 +23,11 @@ import {
   Copy,
   Check,
   AlertTriangle,
-  UserCheck
+  UserCheck,
+  BookOpen,
+  ArrowRight,
+  Layers,
+  Compass
 } from 'lucide-react';
 import { 
   INITIAL_COHORTS, 
@@ -37,9 +41,19 @@ import {
   saveStoredRoster,
   syncRosterWithSupabase,
   generateLrn,
-  getDefaultSf2Days
+  getDefaultSf2Days,
+  getRealSf2Days,
+  computeRealAttendancePercent,
+  getStudentCurriculumPlan,
+  resetStudentToStartingJourney,
+  updateStudentTrackEnrollment
 } from '../../data/gradebookData';
-import type { CohortItem, StudentGradeRecord, StudentStatus } from '../../data/gradebookData';
+import type { 
+  CohortItem, 
+  StudentGradeRecord, 
+  StudentStatus, 
+  AttendanceStatusCode
+} from '../../data/gradebookData';
 import { supabase } from '../../lib/supabaseClient';
 
 interface GradebookModalProps {
@@ -57,56 +71,6 @@ interface GradebookModalProps {
   onOpenCredentials?: (trackId?: string, studentName?: string, studentEmail?: string) => void;
 }
 
-// Curriculum subjects breakdown for University Official Transcript of Records (OTR)
-function getCurriculumSubjects(trackId: string = '') {
-  if (trackId.includes('piano')) {
-    return [
-      { code: 'MUS-101', title: 'Keyboard Geography, Posture & White/Black Keys', units: 3.0, lec: 4, lab: 6 },
-      { code: 'MUS-102', title: 'The 7 Major & Minor Triads & Finger Dexterity', units: 3.0, lec: 4, lab: 6 },
-      { code: 'MUS-103', title: 'Triad Inversions, Slash Chords & Left-Hand Bass Octaves', units: 3.0, lec: 4, lab: 6 },
-      { code: 'MUS-104', title: 'Nashville Number System 1-7 & Church Transposition', units: 3.0, lec: 4, lab: 6 },
-      { code: 'MUS-105', title: 'Modern Worship Flow, Talk Music & Ambient Pad Layers', units: 3.0, lec: 4, lab: 6 },
-      { code: 'MUS-106', title: 'Gospel Passing Chords (2-5-1), Reharm & Recital Capstone', units: 3.0, lec: 4, lab: 6 },
-    ];
-  }
-  if (trackId.includes('drum')) {
-    return [
-      { code: 'DRM-101', title: 'Acoustic & Electronic Drum Kit Geography & Setup', units: 3.0, lec: 4, lab: 6 },
-      { code: 'DRM-102', title: 'Fundamental Rock, Pop & Contemporary Worship Beats', units: 3.0, lec: 4, lab: 6 },
-      { code: 'DRM-103', title: '16th-Note Subdivision, Snare Ghost Notes & Fills', units: 3.0, lec: 4, lab: 6 },
-      { code: 'DRM-104', title: 'Ear Training "Sipra sa Tenga" & Metronome Discipline', units: 3.0, lec: 4, lab: 6 },
-      { code: 'DRM-105', title: 'Double Bass Drumming, Polyrhythms & Linear Chops', units: 3.0, lec: 4, lab: 6 },
-      { code: 'DRM-106', title: 'Live Stage Performance & Worship Clinic Capstone', units: 3.0, lec: 4, lab: 6 },
-    ];
-  }
-  if (trackId.includes('lead-guitar') || trackId.includes('guitar')) {
-    return [
-      { code: 'GTR-101', title: 'Fretboard Geography, Open Chords & Strumming Mechanics', units: 3.0, lec: 4, lab: 6 },
-      { code: 'GTR-102', title: 'Barre Chords, Palm Muting, Reggae Skanks & Comping', units: 3.0, lec: 4, lab: 6 },
-      { code: 'GTR-103', title: 'Alternate Picking, Pitch Bending & Vocal Vibrato', units: 3.0, lec: 4, lab: 6 },
-      { code: 'GTR-104', title: 'Pentatonic Boxes 1-5, Speed Drills & Blues Scales', units: 3.0, lec: 4, lab: 6 },
-      { code: 'GTR-105', title: 'CAGED Soloing System, Modes & Dotted-8th Delay Swells', units: 3.0, lec: 4, lab: 6 },
-      { code: 'GTR-106', title: 'Rivermaya "214" & Pinoy Rock Guitar Soloing Capstone', units: 3.0, lec: 4, lab: 6 },
-    ];
-  }
-  if (trackId.includes('tesda') || trackId.includes('css')) {
-    return [
-      { code: 'COC-1', title: 'Install and Configure Computer Systems (ICCS)', units: 4.0, lec: 40, lab: 60 },
-      { code: 'COC-2', title: 'Set-up Computer Networks (SUCN)', units: 4.0, lec: 40, lab: 60 },
-      { code: 'COC-3', title: 'Set-up Computer Servers (SUCS)', units: 4.0, lec: 40, lab: 60 },
-      { code: 'COC-4', title: 'Maintain and Repair Computer Systems and Networks (MRCSN)', units: 4.0, lec: 40, lab: 60 },
-    ];
-  }
-  return [
-    { code: 'CS-101', title: 'Modern HTML5 Fundamentals & Semantic Web Architecture', units: 3.0, lec: 4, lab: 6 },
-    { code: 'CS-102', title: 'CSS3 Modern Styling, Flexbox, Grid & Responsive UI', units: 3.0, lec: 4, lab: 6 },
-    { code: 'CS-103', title: 'Modern JavaScript ES6+, DOM Engines & State Management', units: 3.0, lec: 4, lab: 6 },
-    { code: 'CS-104', title: 'Asynchronous Architecture, Fetch Engines & REST APIs', units: 3.0, lec: 4, lab: 6 },
-    { code: 'CS-105', title: 'React 19 & TypeScript Production Component Systems', units: 3.0, lec: 4, lab: 6 },
-    { code: 'CS-106', title: 'Full-Stack Supabase Cloud Backend & AI SaaS Hero Capstone', units: 3.0, lec: 4, lab: 6 },
-  ];
-}
-
 export const GradebookModal = ({
   isOpen,
   onClose,
@@ -114,8 +78,9 @@ export const GradebookModal = ({
   onOpenDossier: _onOpenDossier,
   onOpenCredentials: _onOpenCredentials,
 }: GradebookModalProps) => {
-  // Navigation tabs (Systeme.io Master Roster, DepEd SF2 Daily Attendance, Official Transcript OTR, Certificate, Analytics, Printable)
-  const [activeTab, setActiveTab] = useState<'roster' | 'sf2' | 'reportCard' | 'certificate' | 'analytics' | 'printable'>('roster');
+  // Navigation tabs (Systeme.io Master Roster, Curriculum Plan, DepEd SF2 Daily Attendance, Official Transcript OTR, Certificate, Analytics, Printable)
+  const [activeTab, setActiveTab] = useState<'roster' | 'curriculum' | 'sf2' | 'reportCard' | 'certificate' | 'analytics' | 'printable'>('roster');
+  const [isChangingTrack, setIsChangingTrack] = useState(false);
 
   // Cohort & Roster state
   const [cohorts] = useState<CohortItem[]>(() => {
@@ -300,30 +265,42 @@ export const GradebookModal = ({
     setTimeout(() => setCopiedLrnId(null), 2000);
   };
 
-  // SF2 Attendance toggle day cycle: P -> A -> T -> E -> P
+  // SF2 Attendance toggle day cycle: '--' -> 'P' -> 'A' -> 'T' -> 'E' -> '--'
   const handleToggleAttendanceDay = (studentId: string, day: number) => {
     setRoster(prev => prev.map(s => {
       if (s.id !== studentId) return s;
-      const days = { ...(s.sf2AttendanceDays || getDefaultSf2Days(s.attendancePercent)) };
-      const currentVal = days[day] || 'P';
-      let nextVal: 'P' | 'A' | 'T' | 'E' = 'P';
-      if (currentVal === 'P') nextVal = 'A';
+      const days = { ...(s.sf2AttendanceDays || getRealSf2Days(1)) };
+      const currentVal = days[day] || '--';
+      let nextVal: AttendanceStatusCode = 'P';
+      if (currentVal === '--') nextVal = 'P';
+      else if (currentVal === 'P') nextVal = 'A';
       else if (currentVal === 'A') nextVal = 'T';
       else if (currentVal === 'T') nextVal = 'E';
-      else if (currentVal === 'E') nextVal = 'P';
+      else if (currentVal === 'E') nextVal = '--';
       days[day] = nextVal;
 
-      const presentCount = Object.values(days).filter(v => v === 'P' || v === 'T' || v === 'E').length;
-      const newAttendancePercent = Math.round((presentCount / 20) * 100);
+      const newAttendancePercent = computeRealAttendancePercent(days);
 
-      const { finalNumericGrade, letterGrade, gpa } = computeWeightedGrade(
-        (s.completedActivities / (s.totalActivities || 12)) * 100,
-        s.examAverage,
-        s.worksheetsScore,
-        newAttendancePercent
-      );
-      const standing = computeAcademicStanding(finalNumericGrade);
-      const ph = computePhilippineGrade(finalNumericGrade);
+      const hasActivity = s.completedActivities > 0 || s.examAverage > 0 || s.worksheetsScore > 0;
+      let finalNumericGrade = 0;
+      let letterGrade: StudentGradeRecord['letterGrade'] = 'IP';
+      let gpa = 0.0;
+      let standing = 'Newly Enrolled - In Progress';
+      let ph = computePhilippineGrade(0, false);
+
+      if (hasActivity) {
+        const weighted = computeWeightedGrade(
+          (s.completedActivities / (s.totalActivities || 12)) * 100,
+          s.examAverage,
+          s.worksheetsScore,
+          newAttendancePercent
+        );
+        finalNumericGrade = weighted.finalNumericGrade;
+        letterGrade = weighted.letterGrade;
+        gpa = weighted.gpa;
+        standing = computeAcademicStanding(finalNumericGrade, true);
+        ph = computePhilippineGrade(finalNumericGrade, true);
+      }
 
       return {
         ...s,
@@ -336,6 +313,19 @@ export const GradebookModal = ({
         academicStanding: standing
       };
     }));
+  };
+
+  const handleTrackChange = async (studentEmail: string, newTrackId: string, newTrackTitle: string) => {
+    const updated = await updateStudentTrackEnrollment(studentEmail, newTrackId, newTrackTitle);
+    setRoster(updated);
+    setIsChangingTrack(false);
+  };
+
+  const handleResetToStarting = (studentEmail: string) => {
+    if (window.confirm('Reset this student to starting journey (Real 0% baseline, Day 1 attendance)?')) {
+      const updated = resetStudentToStartingJourney(studentEmail);
+      setRoster(updated);
+    }
   };
 
   const handleToggleCertificate = (studentId: string) => {
@@ -578,6 +568,18 @@ export const GradebookModal = ({
             >
               <Users className="w-4 h-4" />
               <span>Master Roster ({filteredRoster.length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('curriculum')}
+              className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'curriculum'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
+            >
+              <BookOpen className="w-4 h-4 text-cyan-400" />
+              <span>Curriculum Plan (Study Plan)</span>
             </button>
 
             <button
@@ -906,20 +908,28 @@ export const GradebookModal = ({
                                   {student.completedActivities} / {student.totalActivities}
                                 </span>
                                 <div className="text-[10px] text-slate-500">
-                                  {Math.round((student.completedActivities / student.totalActivities) * 100)}%
+                                  {student.completedActivities === 0 ? '0% (Start)' : `${Math.round((student.completedActivities / student.totalActivities) * 100)}%`}
                                 </div>
                               </td>
 
                               {/* Exam Score */}
                               <td className="py-3 px-3 text-center">
-                                <span className="font-bold text-slate-200">{student.examAverage}%</span>
-                                <div className="text-[10px] text-slate-500">Exam Avg</div>
+                                <span className="font-bold text-slate-200">
+                                  {student.examAverage > 0 ? `${student.examAverage}%` : '--'}
+                                </span>
+                                <div className="text-[10px] text-slate-500">
+                                  {student.examAverage > 0 ? 'Exam Avg' : 'Pending'}
+                                </div>
                               </td>
 
                               {/* Worksheets */}
                               <td className="py-3 px-3 text-center">
-                                <span className="font-bold text-slate-200">{student.worksheetsScore}%</span>
-                                <div className="text-[10px] text-slate-500">Rubric</div>
+                                <span className="font-bold text-slate-200">
+                                  {student.worksheetsScore > 0 ? `${student.worksheetsScore}%` : '--'}
+                                </span>
+                                <div className="text-[10px] text-slate-500">
+                                  {student.worksheetsScore > 0 ? 'Rubric' : 'Pending'}
+                                </div>
                               </td>
 
                               {/* Attendance */}
@@ -943,31 +953,50 @@ export const GradebookModal = ({
 
                               {/* Final Grade */}
                               <td className="py-3 px-3 text-center">
-                                <div className="flex items-center justify-center gap-1.5">
-                                  <span className={`text-sm font-black font-mono ${
-                                    student.finalNumericGrade >= 75 ? 'text-emerald-400' : 'text-rose-400'
-                                  }`}>
-                                    {student.finalNumericGrade}%
-                                  </span>
-                                  <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
-                                    {student.letterGrade}
-                                  </span>
-                                </div>
-                                <div className="text-[10px] text-slate-500 font-mono">GPA {student.gpa.toFixed(2)}</div>
+                                {student.finalNumericGrade === 0 || student.letterGrade === 'IP' ? (
+                                  <div>
+                                    <span className="text-[10px] font-bold text-amber-300 bg-amber-950/60 border border-amber-500/30 px-2 py-0.5 rounded-lg inline-block">
+                                      In Progress
+                                    </span>
+                                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">1st Term</div>
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <div className="flex items-center justify-center gap-1.5">
+                                      <span className={`text-sm font-black font-mono ${
+                                        student.finalNumericGrade >= 75 ? 'text-emerald-400' : 'text-rose-400'
+                                      }`}>
+                                        {student.finalNumericGrade}%
+                                      </span>
+                                      <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
+                                        {student.letterGrade}
+                                      </span>
+                                    </div>
+                                    <div className="text-[10px] text-slate-500 font-mono">GPA {student.gpa.toFixed(2)}</div>
+                                  </div>
+                                )}
                               </td>
 
                               {/* PH Equivalent Grade */}
                               <td className="py-3 px-3 text-center">
-                                <span className="text-xs font-mono font-black text-amber-300 bg-amber-950/40 border border-amber-500/20 px-2 py-0.5 rounded-lg">
-                                  {ph.phGrade}
+                                <span className={`text-xs font-mono font-black px-2 py-0.5 rounded-lg ${
+                                  student.philippineGrade === 'IP' || student.finalNumericGrade === 0
+                                    ? 'text-cyan-300 bg-cyan-950/40 border border-cyan-500/20'
+                                    : 'text-amber-300 bg-amber-950/40 border border-amber-500/20'
+                                }`}>
+                                  {student.philippineGrade || 'IP'}
                                 </span>
-                                <div className="text-[9px] text-slate-500 mt-0.5">{ph.description}</div>
+                                <div className="text-[9px] text-slate-500 mt-0.5">
+                                  {student.philippineGrade === 'IP' || student.finalNumericGrade === 0 ? 'Enrolled' : ph.description}
+                                </div>
                               </td>
 
                               {/* Academic Standing */}
                               <td className="py-3 px-3 text-center">
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block ${
-                                  isHonors 
+                                  student.academicStanding.includes('Newly Enrolled') || student.academicStanding === 'In Progress'
+                                    ? 'bg-blue-500/10 text-blue-300 border border-blue-500/30'
+                                    : isHonors 
                                     ? 'bg-amber-500/10 text-amber-300 border border-amber-500/30' 
                                     : isProbation 
                                     ? 'bg-rose-500/10 text-rose-300 border border-rose-500/30' 
@@ -1008,6 +1037,16 @@ export const GradebookModal = ({
                                   <button
                                     onClick={() => {
                                       setSelectedStudentId(student.id);
+                                      setActiveTab('curriculum');
+                                    }}
+                                    className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-cyan-400 transition cursor-pointer"
+                                    title="View Enrolled Curriculum Plan & Study Plan"
+                                  >
+                                    <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedStudentId(student.id);
                                       setActiveTab('reportCard');
                                     }}
                                     className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-emerald-400 transition cursor-pointer"
@@ -1028,9 +1067,16 @@ export const GradebookModal = ({
                                   <button
                                     onClick={() => handleOpenEditModal(student)}
                                     className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-blue-400 transition cursor-pointer"
-                                    title="Edit student records & grades"
+                                    title="Encode Assessment & Real Grades"
                                   >
                                     <Edit3 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleResetToStarting(student.email)}
+                                    className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-amber-400 transition cursor-pointer"
+                                    title="Reset Student to Starting Journey (Real 0%)"
+                                  >
+                                    <RotateCcw className="w-3.5 h-3.5" />
                                   </button>
                                   <button
                                     onClick={() => handleDeleteStudent(student.id, student.studentName)}
@@ -1049,6 +1095,273 @@ export const GradebookModal = ({
                   </table>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* TAB: CURRICULUM PLAN (STUDY PLAN & DEGREE AUDIT) */}
+          {activeTab === 'curriculum' && (
+            <div className="space-y-6">
+              {currentSelectedStudent ? (() => {
+                const plan = getStudentCurriculumPlan(
+                  currentSelectedStudent.trackId,
+                  currentSelectedStudent.completedActivities,
+                  currentSelectedStudent.examAverage
+                );
+                const activeSubject = plan.subjects.find(s => s.status === 'In Progress') || plan.subjects[0];
+
+                return (
+                  <div className="space-y-6">
+                    {/* Header: Student Identity & Degree Program Banner */}
+                    <div className="bg-slate-950 border-2 border-cyan-500/40 rounded-3xl p-6 sm:p-8 text-white space-y-6 shadow-2xl relative overflow-hidden">
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-slate-800 pb-6">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-950/80 px-3 py-1 rounded-full border border-cyan-500/30 flex items-center gap-1.5">
+                              <Compass className="w-3.5 h-3.5" /> Official Program of Study (POS) • Curriculum Plan
+                            </span>
+                            <span className="text-[10px] font-mono text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-500/30">
+                              LRN: {currentSelectedStudent.lrn || generateLrn(currentSelectedStudent.email)}
+                            </span>
+                          </div>
+                          <h3 className="text-xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
+                            <span>{currentSelectedStudent.studentName}</span>
+                            <span className="text-xs font-bold text-slate-400 bg-slate-800 px-2.5 py-1 rounded-xl font-normal">
+                              {currentSelectedStudent.email}
+                            </span>
+                          </h3>
+                          <p className="text-xs text-slate-300 max-w-3xl leading-relaxed">
+                            <strong className="text-cyan-300">{plan.programTitle}</strong> • {plan.department} • {plan.accreditingBody}. Starting journey with sequential prerequisite progression.
+                          </p>
+                        </div>
+
+                        {/* Quick Program Switcher & Actions */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="relative">
+                            <button
+                              onClick={() => setIsChangingTrack(!isChangingTrack)}
+                              className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold rounded-xl text-white flex items-center gap-2 cursor-pointer"
+                              title="Assign different program / track"
+                            >
+                              <Layers className="w-4 h-4 text-cyan-400" />
+                              <span>Switch / Enroll Program ▾</span>
+                            </button>
+
+                            {isChangingTrack && (
+                              <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-slate-900 border border-slate-700 rounded-2xl p-2 shadow-2xl z-20 space-y-1 text-xs">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 py-1">Select Enrolled Curriculum Track</p>
+                                {[
+                                  { id: 'track-pinoy-piano-zero-to-hero', title: 'Pinoy Piano & Church Keyboard Masterclass' },
+                                  { id: 'track-pinoy-drum-zero-to-hero', title: 'Pinoy Drum Masterclass: Zero to Hero' },
+                                  { id: 'track-pinoy-guitar-zero-to-hero', title: 'Pinoy Rhythm Guitar Masterclass' },
+                                  { id: 'track-pinoy-lead-guitar-zero-to-hero', title: 'Pinoy Lead Guitar Masterclass' },
+                                  { id: 'track-tesda-css-nc2', title: 'TESDA Computer Systems Servicing (CSS) NC II' },
+                                  { id: 'track-level-1-html-foundations', title: 'Modern HTML5 Fundamentals & Web Architecture' },
+                                ].map((t) => (
+                                  <button
+                                    key={t.id}
+                                    onClick={() => handleTrackChange(currentSelectedStudent.email, t.id, t.title)}
+                                    className={`w-full text-left px-3 py-2 rounded-xl transition cursor-pointer flex items-center justify-between ${
+                                      currentSelectedStudent.trackId === t.id
+                                        ? 'bg-cyan-600/30 text-cyan-200 border border-cyan-500/40 font-bold'
+                                        : 'hover:bg-slate-800 text-slate-300'
+                                    }`}
+                                  >
+                                    <span className="truncate">{t.title}</span>
+                                    {currentSelectedStudent.trackId === t.id && <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <button
+                            onClick={() => handleOpenEditModal(currentSelectedStudent)}
+                            className="px-3.5 py-2 bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-xs font-bold rounded-xl text-indigo-200 flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                            <span>Encode Grades</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleResetToStarting(currentSelectedStudent.email)}
+                            className="px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-xs font-bold rounded-xl text-amber-300 flex items-center gap-1.5 cursor-pointer"
+                            title="Reset student to Day 1 Real 0% starting journey"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>Reset to 0% Start</span>
+                          </button>
+
+                          <button
+                            onClick={handlePrint}
+                            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-xl text-slate-200 flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                            <span>Print Study Plan</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Degree Audit KPI Metrics */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                        <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
+                          <span className="text-slate-400 block text-[10px] uppercase font-bold">Degree / Certificate Code</span>
+                          <span className="text-lg font-black text-cyan-400 font-mono">{plan.degreeCode}</span>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Academic Cycle 2026–2027</span>
+                        </div>
+
+                        <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
+                          <span className="text-slate-400 block text-[10px] uppercase font-bold">Curriculum Units Earned</span>
+                          <div className="flex items-baseline gap-1 mt-0.5">
+                            <span className="text-lg font-black text-white font-mono">{plan.earnedUnits.toFixed(1)}</span>
+                            <span className="text-xs font-semibold text-slate-400">/ {plan.totalCurriculumUnits.toFixed(1)} Units</span>
+                          </div>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">
+                            {plan.earnedUnits === plan.totalCurriculumUnits ? 'Graduation Eligible' : 'In Progress (Requirements Pending)'}
+                          </span>
+                        </div>
+
+                        <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
+                          <span className="text-slate-400 block text-[10px] uppercase font-bold">Overall Program Progress</span>
+                          <div className="flex items-baseline gap-1 mt-0.5">
+                            <span className="text-lg font-black text-emerald-400 font-mono">{plan.overallProgressPercent}%</span>
+                            <span className="text-xs font-semibold text-slate-500">Completed</span>
+                          </div>
+                          <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1.5">
+                            <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${plan.overallProgressPercent}%` }} />
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
+                          <span className="text-slate-400 block text-[10px] uppercase font-bold">Current Active Subject</span>
+                          <span className="text-sm font-black text-amber-300 truncate block mt-0.5">{activeSubject?.code || 'None'}</span>
+                          <span className="text-[10px] text-slate-400 truncate block mt-0.5">{activeSubject?.title || 'Starting Step 1'}</span>
+                        </div>
+                      </div>
+
+                      {/* Active Subject Callout Banner */}
+                      <div className="bg-gradient-to-r from-cyan-950/80 via-slate-900 to-indigo-950/80 border border-cyan-500/30 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30">
+                              CURRENT STEP 1 IN PROGRESS
+                            </span>
+                            <span className="text-xs font-mono font-bold text-cyan-300">{activeSubject.code}</span>
+                          </div>
+                          <h4 className="text-base font-black text-white">{activeSubject.title}</h4>
+                          <p className="text-xs text-slate-400">
+                            Credits: {activeSubject.units.toFixed(1)} Units ({activeSubject.lecHours} hrs Lecture, {activeSubject.labHours} hrs Lab) • Lessons: {activeSubject.completedLessons} of {activeSubject.lessonsCount} completed
+                          </p>
+                        </div>
+                        <button
+                          onClick={onClose}
+                          className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                          title="Open Classroom to start or continue this lesson"
+                        >
+                          <span>🚀 Open Classroom • Start Lesson 1</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Complete Curriculum Subject Roadmap */}
+                      <div className="space-y-3">
+                        <h4 className="font-black text-xs uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                          <BookOpen className="w-4 h-4 text-cyan-400" />
+                          <span>Structured Curriculum Subjects Roadmap ({plan.subjects.length} Subjects)</span>
+                        </h4>
+
+                        <div className="space-y-3">
+                          {plan.subjects.map((sub, idx) => {
+                            const isCurrent = sub.status === 'In Progress';
+                            const isDone = sub.status === 'Completed';
+
+                            return (
+                              <div
+                                key={sub.code}
+                                className={`p-4 sm:p-5 rounded-2xl border transition-all ${
+                                  isCurrent
+                                    ? 'bg-cyan-950/30 border-cyan-500/50 shadow-lg shadow-cyan-950/50'
+                                    : isDone
+                                    ? 'bg-slate-900/60 border-emerald-500/30'
+                                    : 'bg-slate-900/40 border-slate-800/80 opacity-75'
+                                }`}
+                              >
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                  <div className="flex items-start sm:items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
+                                      isDone
+                                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                                        : isCurrent
+                                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                                        : 'bg-slate-800 text-slate-500 border border-slate-700'
+                                    }`}>
+                                      {idx + 1}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-mono text-xs font-bold text-cyan-400">{sub.code}</span>
+                                        <span className="font-black text-sm text-white">{sub.title}</span>
+                                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                                          isDone
+                                            ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
+                                            : isCurrent
+                                            ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/40 animate-pulse'
+                                            : 'bg-slate-800 text-slate-400 border border-slate-700'
+                                        }`}>
+                                          {isDone ? '✓ Completed' : isCurrent ? '🟢 Active Enrolled' : '🔒 Locked'}
+                                        </span>
+                                      </div>
+                                      <div className="text-xs text-slate-400 flex items-center gap-3 pt-1 flex-wrap">
+                                        <span>{sub.units.toFixed(1)} Credit Units</span>
+                                        <span>•</span>
+                                        <span>{sub.lecHours} hrs Lecture / {sub.labHours} hrs Lab</span>
+                                        <span>•</span>
+                                        <span>Prerequisite: <strong className="text-slate-300">{sub.prerequisite}</strong></span>
+                                        <span>•</span>
+                                        <span className="text-slate-300">{sub.term}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-4 shrink-0 sm:self-center">
+                                    <div className="text-right">
+                                      <span className="text-[10px] text-slate-400 block">Lessons Completed</span>
+                                      <span className="font-mono font-bold text-xs text-white">
+                                        {sub.completedLessons} / {sub.lessonsCount}
+                                      </span>
+                                    </div>
+
+                                    <div className="text-right">
+                                      <span className="text-[10px] text-slate-400 block">Grade / PH Equiv</span>
+                                      <span className={`font-mono font-black text-xs ${
+                                        isDone ? 'text-emerald-400' : isCurrent ? 'text-cyan-300' : 'text-slate-500'
+                                      }`}>
+                                        {sub.numericGrade ? `${sub.numericGrade}% (${sub.phGrade})` : sub.phGrade || '--'}
+                                      </span>
+                                    </div>
+
+                                    <div className="text-right w-24">
+                                      <span className="text-[10px] text-slate-400 block">Evaluation</span>
+                                      <span className={`text-[10px] font-bold block ${
+                                        isDone ? 'text-emerald-400' : isCurrent ? 'text-cyan-300' : 'text-slate-500'
+                                      }`}>
+                                        {sub.remarks}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })() : (
+                <div className="p-12 text-center bg-slate-950 border border-slate-800 rounded-3xl text-slate-400">
+                  Select a student from the Master Roster to view their Curriculum Plan.
+                </div>
+              )}
             </div>
           )}
 
@@ -1291,27 +1604,48 @@ export const GradebookModal = ({
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                          {getCurriculumSubjects(currentSelectedStudent.trackId).map((subj, idx) => {
-                            const variation = (idx * 2) % 5;
-                            const subjectGrade = Math.min(100, Math.max(75, currentSelectedStudent.finalNumericGrade + variation - 2));
-                            const phEquiv = computePhilippineGrade(subjectGrade);
-
-                            return (
-                              <tr key={subj.code} className="hover:bg-slate-800/40">
-                                <td className="py-2.5 px-4 font-mono font-bold text-indigo-400">{subj.code}</td>
-                                <td className="py-2.5 px-4 font-bold text-white">{subj.title}</td>
-                                <td className="py-2.5 px-3 text-center font-mono text-slate-400">{subj.lec} / {subj.lab}</td>
-                                <td className="py-2.5 px-3 text-center font-mono text-slate-200">{subj.units.toFixed(1)}</td>
-                                <td className="py-2.5 px-3 text-center font-mono font-bold text-emerald-400">{subjectGrade}%</td>
-                                <td className="py-2.5 px-3 text-center font-mono font-bold text-amber-300">{phEquiv.phGrade}</td>
-                                <td className="py-2.5 px-4 text-center">
-                                  <span className="text-[10px] font-black text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
-                                    PASSED
-                                  </span>
-                                </td>
-                              </tr>
+                          {(() => {
+                            const plan = getStudentCurriculumPlan(
+                              currentSelectedStudent.trackId,
+                              currentSelectedStudent.completedActivities,
+                              currentSelectedStudent.examAverage
                             );
-                          })}
+
+                            return plan.subjects.map((subj) => {
+                              const isDone = subj.status === 'Completed';
+                              const isCurrent = subj.status === 'In Progress';
+
+                              return (
+                                <tr key={subj.code} className="hover:bg-slate-800/40">
+                                  <td className="py-2.5 px-4 font-mono font-bold text-indigo-400">{subj.code}</td>
+                                  <td className="py-2.5 px-4 font-bold text-white">{subj.title}</td>
+                                  <td className="py-2.5 px-3 text-center font-mono text-slate-400">{subj.lecHours} / {subj.labHours}</td>
+                                  <td className="py-2.5 px-3 text-center font-mono text-slate-200">{subj.units.toFixed(1)}</td>
+                                  <td className={`py-2.5 px-3 text-center font-mono font-bold ${
+                                    isDone ? 'text-emerald-400' : isCurrent ? 'text-cyan-300' : 'text-slate-500'
+                                  }`}>
+                                    {subj.numericGrade ? `${subj.numericGrade}%` : isCurrent ? 'IP' : '--'}
+                                  </td>
+                                  <td className={`py-2.5 px-3 text-center font-mono font-bold ${
+                                    isDone ? 'text-amber-300' : isCurrent ? 'text-cyan-300' : 'text-slate-500'
+                                  }`}>
+                                    {subj.phGrade || '--'}
+                                  </td>
+                                  <td className="py-2.5 px-4 text-center">
+                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded border ${
+                                      isDone
+                                        ? 'text-emerald-400 bg-emerald-950/60 border-emerald-500/30'
+                                        : isCurrent
+                                        ? 'text-cyan-300 bg-cyan-950/60 border-cyan-500/30'
+                                        : 'text-slate-500 bg-slate-900 border-slate-800'
+                                    }`}>
+                                      {isDone ? 'PASSED' : isCurrent ? 'CURRENTLY ENROLLED' : 'PREREQUISITE REQUIRED'}
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            });
+                          })()}
                         </tbody>
                       </table>
                     </div>
@@ -1327,13 +1661,15 @@ export const GradebookModal = ({
                         <div>
                           <span className="text-slate-400 block text-[10px]">General Weighted Average (GWA)</span>
                           <span className="text-xl font-black text-amber-300 font-mono">
-                            {currentSelectedStudent.philippineGrade || '1.50'}
+                            {currentSelectedStudent.finalNumericGrade === 0 || currentSelectedStudent.philippineGrade === 'IP' 
+                              ? 'IP (1st Term In Progress)' 
+                              : currentSelectedStudent.philippineGrade || 'IP'}
                           </span>
                         </div>
                         <div>
                           <span className="text-slate-400 block text-[10px]">Cumulative GPA (4.0 Scale)</span>
                           <span className="text-xl font-black text-emerald-400 font-mono">
-                            {currentSelectedStudent.gpa.toFixed(2)} / 4.00
+                            {currentSelectedStudent.finalNumericGrade === 0 ? '0.00 / 4.00' : `${currentSelectedStudent.gpa.toFixed(2)} / 4.00`}
                           </span>
                         </div>
                         <div>
@@ -1342,7 +1678,9 @@ export const GradebookModal = ({
                         </div>
                         <div>
                           <span className="text-slate-400 block text-[10px]">Total Earned Units</span>
-                          <span className="font-bold text-white">18.0 Credits</span>
+                          <span className="font-bold text-white">
+                            {getStudentCurriculumPlan(currentSelectedStudent.trackId, currentSelectedStudent.completedActivities).earnedUnits.toFixed(1)} / {getStudentCurriculumPlan(currentSelectedStudent.trackId).totalCurriculumUnits.toFixed(1)} Credits
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -1396,7 +1734,45 @@ export const GradebookModal = ({
             <div className="space-y-6">
               {currentSelectedStudent ? (
                 <div className="bg-slate-950 border-2 border-amber-500/50 rounded-3xl p-6 sm:p-10 text-white space-y-6 shadow-2xl relative overflow-hidden">
-                  <div className="max-w-3xl mx-auto border-4 border-double border-amber-500/40 p-8 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 text-center space-y-6">
+                  
+                  {/* Graduation Requirement Status Banner */}
+                  {!currentSelectedStudent.certificateIssued && (
+                    <div className="bg-amber-950/40 border border-amber-500/40 rounded-2xl p-5 space-y-3">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <span className="text-xs font-black text-amber-300 uppercase tracking-wider flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 text-amber-400" />
+                          Curriculum Requirements in Progress ({currentSelectedStudent.completedActivities} / {currentSelectedStudent.totalActivities} Lessons Completed)
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-900 px-2 py-0.5 rounded">
+                          Official Diploma Unlocks at 100% Curriculum Completion
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-1">
+                        <div className={`p-3 rounded-xl border ${currentSelectedStudent.completedActivities >= currentSelectedStudent.totalActivities ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' : 'bg-slate-900 border-slate-800 text-slate-400'}`}>
+                          <span className="font-bold block">1. Curriculum Completion</span>
+                          <span className="text-[10px]">{currentSelectedStudent.completedActivities} of {currentSelectedStudent.totalActivities} completed ({currentSelectedStudent.progressPercent}%)</span>
+                        </div>
+                        <div className={`p-3 rounded-xl border ${currentSelectedStudent.finalNumericGrade >= 75 ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' : 'bg-slate-900 border-slate-800 text-slate-400'}`}>
+                          <span className="font-bold block">2. Passing Grade (≥ 75%)</span>
+                          <span className="text-[10px]">{currentSelectedStudent.finalNumericGrade > 0 ? `${currentSelectedStudent.finalNumericGrade}% Grade` : 'Pending Assessments'}</span>
+                        </div>
+                        <div className={`p-3 rounded-xl border ${currentSelectedStudent.attendancePercent >= 80 ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' : 'bg-slate-900 border-slate-800 text-slate-400'}`}>
+                          <span className="font-bold block">3. Minimum Attendance (≥ 80%)</span>
+                          <span className="text-[10px]">{currentSelectedStudent.attendancePercent}% logged in SF2</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="max-w-3xl mx-auto border-4 border-double border-amber-500/40 p-8 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 text-center space-y-6 relative">
+                    {!currentSelectedStudent.certificateIssued && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-10">
+                        <span className="text-5xl sm:text-7xl font-black text-amber-500/10 rotate-[-25deg] uppercase tracking-widest border-4 border-dashed border-amber-500/15 px-8 py-3 rounded-3xl">
+                          IN PROGRESS
+                        </span>
+                      </div>
+                    )}
+
                     <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-500 text-slate-950 flex items-center justify-center mx-auto shadow-xl shadow-amber-500/20">
                       <Award className="w-10 h-10" />
                     </div>
@@ -1880,20 +2256,36 @@ export const GradebookModal = ({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-800">
+                <div className="flex items-center justify-between pt-4 border-t border-slate-800">
                   <button
                     type="button"
-                    onClick={() => setIsEditModalOpen(false)}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold cursor-pointer"
+                    onClick={() => {
+                      if (editingStudent && window.confirm(`Reset "${editingStudent.studentName}" to starting journey (Real 0% progress and Day 1 attendance)?`)) {
+                        const updated = resetStudentToStartingJourney(editingStudent.email);
+                        setRoster(updated);
+                        setIsEditModalOpen(false);
+                      }
+                    }}
+                    className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                   >
-                    Cancel
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Reset to 0% Start</span>
                   </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black rounded-xl shadow-lg cursor-pointer"
-                  >
-                    Save Changes
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditModalOpen(false)}
+                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black rounded-xl shadow-lg cursor-pointer"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>

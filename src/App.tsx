@@ -1172,6 +1172,7 @@ export function App() {
                                 markLessonCompleted(curLesson.id);
                               }
                             }}
+                            studentEmail={currentUser?.email || undefined}
                             hasNextLesson={hasNext}
                             nextLessonTitle={nextTitle}
                             onNextLesson={onNext}
