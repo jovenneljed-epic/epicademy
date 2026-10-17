@@ -45,6 +45,7 @@ interface CourseBuilderModalProps {
   onCourseCreated: (newTrack: Track) => void;
   onPreviewCourse?: (track: Track) => void;
   userEmail?: string;
+  userRole?: string;
 }
 
 export const CourseBuilderModal = ({
@@ -53,6 +54,7 @@ export const CourseBuilderModal = ({
   onCourseCreated,
   onPreviewCourse,
   userEmail,
+  userRole,
 }: CourseBuilderModalProps) => {
   // Main Studio Navigation Tabs
   const [studioTab, setStudioTab] = useState<'essentials' | 'curriculum' | 'lesson-suite' | 'my-courses' | 'gradebook'>('essentials');
@@ -189,6 +191,63 @@ export const CourseBuilderModal = ({
   };
 
   if (!isOpen) return null;
+
+  const isGuestUser = userRole === 'guest' || userEmail?.toLowerCase().startsWith('guest@') || !userEmail;
+  const isStudentUser = userRole === 'student';
+  const canAccessBuilder = !isGuestUser && !isStudentUser && (userRole === 'admin' || userRole === 'educator' || userRole === 'contributor');
+
+  if (!canAccessBuilder) {
+    return (
+      <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl relative text-white">
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          
+          <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/10">
+            <AlertCircle className="w-8 h-8" />
+          </div>
+
+          <span className="text-[10px] uppercase font-black px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+            Role Permission Required
+          </span>
+
+          <h3 className="text-xl font-black text-white mt-3 mb-2">
+            {isGuestUser ? 'Guest Mode: View Only' : 'Student Access: Course Access Only'}
+          </h3>
+          
+          <p className="text-xs sm:text-sm text-slate-400 leading-relaxed mb-5">
+            {isGuestUser
+              ? 'Guests have viewing permissions only. Course creation and authoring require an active Contributor, Teacher, or Administrator account.'
+              : 'Student accounts are configured for course learning and classroom access only. To author courses, an Administrator must assign you the Contributor or Educator role in Account Settings.'}
+          </p>
+
+          <div className="bg-slate-950/70 rounded-2xl p-3 border border-slate-800 text-xs text-left mb-6 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Current Role:</span>
+              <span className="font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                {userRole || (isGuestUser ? 'guest' : 'student')}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-slate-500">Allowed Authoring Roles:</span>
+              <span className="text-slate-300 font-semibold">Contributor, Educator, Admin</span>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Helpers to get current module and lesson
   const currentModule = modules[selectedModuleIdx] || modules[0];
@@ -594,17 +653,19 @@ export const CourseBuilderModal = ({
               <span>4. My Courses ({teacherCourses.length})</span>
             </button>
 
-            <button
-              onClick={() => setStudioTab('gradebook')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                studioTab === 'gradebook'
-                  ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              <Users className="w-3.5 h-3.5 text-emerald-500" />
-              <span>5. Faculty Gradebook &amp; Cohorts</span>
-            </button>
+            {(userRole === 'admin' || userRole === 'educator' || !userRole) && (
+              <button
+                onClick={() => setStudioTab('gradebook')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  studioTab === 'gradebook'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5 text-emerald-500" />
+                <span>5. Faculty Gradebook &amp; Cohorts</span>
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -1684,7 +1745,7 @@ export const CourseBuilderModal = ({
           )}
 
           {/* TAB 5: FACULTY GRADEBOOK & COHORT ACADEMIC ROSTER */}
-          {studioTab === 'gradebook' && (
+          {studioTab === 'gradebook' && (userRole === 'admin' || userRole === 'educator' || !userRole) && (
             <div className="flex-1 overflow-y-auto p-6 space-y-6 max-w-5xl mx-auto w-full animate-in fade-in duration-200">
               {/* Gradebook Header & Metric Cards */}
               <div className="bg-gradient-to-r from-emerald-950/40 via-slate-900 to-teal-950/40 border border-emerald-500/30 rounded-2xl p-6 text-white space-y-4">

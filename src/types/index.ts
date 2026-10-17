@@ -72,6 +72,34 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
   },
 };
 
+export const ROLE_LABELS: Record<UserRole, { title: string; badge: string; description: string }> = {
+  admin: {
+    title: 'Administrator',
+    badge: '🛡️ Admin Superuser',
+    description: 'Full system privileges: unlimited course bypass, manage all user accounts, assign roles & permissions, platform security.'
+  },
+  educator: {
+    title: 'Teacher / Educator',
+    badge: '👨‍🏫 Faculty Teacher',
+    description: 'Teacher permissions: create & author courses, access Faculty Portal, grade student submissions, inspect Student Gradebook & Roster.'
+  },
+  contributor: {
+    title: 'Contributor',
+    badge: '✍️ Contributor',
+    description: 'Course authoring privileges: create and draft courses in Course Studio, manage curriculum modules.'
+  },
+  student: {
+    title: 'Student / Trainee',
+    badge: '🎓 Student',
+    description: 'Course access only: enroll in free and paid tracks, complete lesson exercises, view personal Student Dossier & Certificates.'
+  },
+  guest: {
+    title: 'Guest Preview',
+    badge: '👀 Guest (View Only)',
+    description: 'View-only access: explore curriculum outlines and roadmaps. Cannot open classrooms, create courses, or access accounts.'
+  }
+};
+
 export interface TeacherProfile {
   id: string;
   email: string;

@@ -389,6 +389,30 @@ export function App() {
     setSelectedTrack(track);
   };
 
+  const handleOpenCourseBuilder = () => {
+    const role = (currentUser?.role || '').toLowerCase().trim();
+    const cleanEmail = (currentUser?.email || '').toLowerCase().trim();
+    const isGuest = role === 'guest' || cleanEmail.startsWith('guest@') || !currentUser;
+
+    if (isGuest) {
+      alert('👀 Guest Preview Mode: Guest role is strictly view-only. Course creation features are reserved for Contributors, Teachers, and Administrators.');
+      handleOpenAuth('signin');
+      return;
+    }
+
+    if (role === 'student') {
+      alert('🎓 Student Role: Student accounts have Course Access Only privileges. Course creation features are reserved for Contributors, Teachers, and Administrators.');
+      return;
+    }
+
+    if (role === 'contributor' || role === 'educator' || role === 'admin') {
+      setCourseBuilderOpen(true);
+      return;
+    }
+
+    alert('Access restricted: Course creation requires Contributor, Teacher, or Admin role.');
+  };
+
   const handleCourseCreated = (_newTrack: Track) => {
     setRefreshTrigger(prev => prev + 1);
     const tracksSection = document.getElementById('tracks');
@@ -504,8 +528,15 @@ export function App() {
         currentPerspective={perspective}
         onTogglePerspective={setPerspective}
         onOpenAuth={handleOpenAuth}
-        onOpenCourseBuilder={() => setCourseBuilderOpen(true)}
-        onOpenTeacherSetup={() => setTeacherSetupOpen(true)}
+        onOpenCourseBuilder={handleOpenCourseBuilder}
+        onOpenTeacherSetup={() => {
+          const r = (currentUser?.role || '').toLowerCase().trim();
+          if (r !== 'admin' && r !== 'educator') {
+            alert('👨‍🏫 Faculty Portal: Access is reserved for Faculty Teachers and Administrators.');
+            return;
+          }
+          setTeacherSetupOpen(true);
+        }}
         onOpenApplyTenant={() => {
           if (currentUser?.role === 'guest' || currentUser?.email?.toLowerCase().startsWith('guest@')) {
             alert('👀 Guest Preview Mode: Please Sign In or Enroll as a Student to apply as a mentor.');
@@ -571,7 +602,7 @@ export function App() {
           onSelectTrack={(track) => setSelectedTrack(track)}
           onEnroll={handleEnrollTrack}
           onOpenAuth={handleOpenAuth}
-          onOpenCourseBuilder={() => setCourseBuilderOpen(true)}
+          onOpenCourseBuilder={handleOpenCourseBuilder}
           refreshTrigger={refreshTrigger}
           currentUser={currentUser}
         />
@@ -655,6 +686,7 @@ export function App() {
           openTrackClassroom(track);
         }}
         userEmail={currentUser?.email}
+        userRole={currentUser?.role}
       />
 
       <TeacherSetupModal
@@ -663,7 +695,7 @@ export function App() {
         onTeacherCreated={(teacher) => {
           setCurrentUser({ email: teacher.email, role: 'educator' });
         }}
-        onOpenCourseBuilder={() => setCourseBuilderOpen(true)}
+        onOpenCourseBuilder={handleOpenCourseBuilder}
       />
 
       <DeveloperProfileModal

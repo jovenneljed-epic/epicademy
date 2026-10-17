@@ -15,7 +15,9 @@ import {
   Mail, 
   User as UserIcon,
   Sparkles,
-  ChevronDown
+  ChevronDown,
+  Sliders,
+  Eye
 } from 'lucide-react';
 import { 
   fetchAllUserProfiles, 
@@ -45,7 +47,8 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   const [profiles, setProfiles] = useState<UserProfileItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'admin' | 'educator' | 'contributor' | 'student' | 'active' | 'disabled'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'admin' | 'educator' | 'contributor' | 'student' | 'guest' | 'active' | 'disabled'>('all');
+  const [activeView, setActiveView] = useState<'accounts' | 'matrix'>('accounts');
   
   // Add Account Form State
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
@@ -93,8 +96,52 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     const educators = profiles.filter(p => p.role === 'educator').length;
     const contributors = profiles.filter(p => p.role === 'contributor').length;
     const students = profiles.filter(p => p.role === 'student').length;
-    return { total, active, disabled, admins, educators, contributors, students };
+    const guests = profiles.filter(p => p.role === 'guest').length;
+    return { total, active, disabled, admins, educators, contributors, students, guests };
   }, [profiles]);
+
+  // Helper for role permissions display tags
+  const getRolePermissionPills = (role: UserRole) => {
+    switch (role) {
+      case 'admin':
+        return [
+          { text: '🛡️ Full Platform Bypass', color: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' },
+          { text: '👥 User & Role RBAC', color: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' },
+          { text: '🔨 Course Studio & Creator', color: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' },
+          { text: '👨‍🏫 Faculty Portal & Gradebook', color: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' },
+        ];
+      case 'educator':
+        return [
+          { text: '👨‍🏫 Teacher Permissions', color: 'bg-purple-500/15 text-purple-300 border-purple-500/30' },
+          { text: '🔨 Create & Edit Courses', color: 'bg-purple-500/15 text-purple-300 border-purple-500/30' },
+          { text: '📊 Faculty Gradebook & Roster', color: 'bg-purple-500/15 text-purple-300 border-purple-500/30' },
+          { text: '📚 Access All Courses', color: 'bg-purple-500/15 text-purple-300 border-purple-500/30' },
+        ];
+      case 'contributor':
+        return [
+          { text: '✍️ Course Author Features', color: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+          { text: '🔨 Create & Draft Courses', color: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+          { text: '📝 Lesson & Activity Suite', color: 'bg-amber-500/15 text-amber-300 border-amber-500/30' },
+          { text: '🚫 No Faculty/Admin Access', color: 'bg-slate-800 text-slate-400 border-slate-700' },
+        ];
+      case 'student':
+        return [
+          { text: '🎓 Student Learner', color: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+          { text: '📚 Course Access Only', color: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+          { text: '💻 Interactive Quizzes & Labs', color: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+          { text: '🚫 No Course Creation', color: 'bg-rose-500/10 text-rose-300/80 border-rose-500/20' },
+        ];
+      case 'guest':
+        return [
+          { text: '👀 View Only', color: 'bg-slate-800 text-slate-300 border-slate-600' },
+          { text: '🗺️ Curriculum Preview Only', color: 'bg-slate-800 text-slate-300 border-slate-600' },
+          { text: '🚫 No Course Access', color: 'bg-rose-500/15 text-rose-300 border-rose-500/30' },
+          { text: '🚫 No Course Creation', color: 'bg-rose-500/15 text-rose-300 border-rose-500/30' },
+        ];
+      default:
+        return [];
+    }
+  };
 
   // Filtered profiles
   const filteredProfiles = useMemo(() => {
@@ -113,6 +160,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
       if (statusFilter === 'educator') return p.role === 'educator';
       if (statusFilter === 'contributor') return p.role === 'contributor';
       if (statusFilter === 'student') return p.role === 'student';
+      if (statusFilter === 'guest') return p.role === 'guest';
       return true;
     });
   }, [profiles, searchQuery, statusFilter]);
@@ -322,47 +370,82 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
           </button>
         </div>
 
+        {/* Navigation Tabs Bar */}
+        <div className="flex items-center gap-2 px-6 pt-3 pb-2 border-b border-slate-800 bg-slate-900/60 shrink-0">
+          <button
+            onClick={() => setActiveView('accounts')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeView === 'accounts'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                : 'bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+          >
+            <Shield className="w-4 h-4" />
+            <span>Managed Accounts &amp; Role Assignment ({profiles.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveView('matrix')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeView === 'matrix'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+                : 'bg-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+          >
+            <Sliders className="w-4 h-4 text-amber-400" />
+            <span>Roles &amp; Permissions Matrix</span>
+            <span className="text-[10px] uppercase font-black px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              RBAC System
+            </span>
+          </button>
+        </div>
+
         {/* Metrics Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 p-4 bg-slate-950/40 border-b border-slate-800/80 shrink-0">
-          <div className="bg-slate-800/50 border border-slate-800 rounded-2xl p-2.5 flex flex-col">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 p-3 bg-slate-950/40 border-b border-slate-800/80 shrink-0">
+          <div className="bg-slate-800/50 border border-slate-800 rounded-xl p-2 flex flex-col">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total</span>
-            <span className="text-xl font-black text-white mt-0.5">{metrics.total}</span>
+            <span className="text-lg font-black text-white mt-0.5">{metrics.total}</span>
           </div>
-          <div className="bg-emerald-950/30 border border-emerald-500/30 rounded-2xl p-2.5 flex flex-col">
+          <div className="bg-emerald-950/30 border border-emerald-500/30 rounded-xl p-2 flex flex-col">
             <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" /> Active
             </span>
-            <span className="text-xl font-black text-emerald-400 mt-0.5">{metrics.active}</span>
+            <span className="text-lg font-black text-emerald-400 mt-0.5">{metrics.active}</span>
           </div>
-          <div className="bg-rose-950/30 border border-rose-500/30 rounded-2xl p-2.5 flex flex-col">
+          <div className="bg-rose-950/30 border border-rose-500/30 rounded-xl p-2 flex flex-col">
             <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1">
               <UserX className="w-3 h-3" /> Disabled
             </span>
-            <span className="text-xl font-black text-rose-400 mt-0.5">{metrics.disabled}</span>
+            <span className="text-lg font-black text-rose-400 mt-0.5">{metrics.disabled}</span>
           </div>
-          <div className="bg-indigo-950/30 border border-indigo-500/30 rounded-2xl p-2.5 flex flex-col">
+          <div className="bg-indigo-950/30 border border-indigo-500/30 rounded-xl p-2 flex flex-col">
             <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1">
               <Shield className="w-3 h-3" /> Admins
             </span>
-            <span className="text-xl font-black text-indigo-300 mt-0.5">{metrics.admins}</span>
+            <span className="text-lg font-black text-indigo-300 mt-0.5">{metrics.admins}</span>
           </div>
-          <div className="bg-purple-950/30 border border-purple-500/30 rounded-2xl p-2.5 flex flex-col">
+          <div className="bg-purple-950/30 border border-purple-500/30 rounded-xl p-2 flex flex-col">
             <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1">
               <GraduationCap className="w-3 h-3" /> Educators
             </span>
-            <span className="text-xl font-black text-purple-300 mt-0.5">{metrics.educators}</span>
+            <span className="text-lg font-black text-purple-300 mt-0.5">{metrics.educators}</span>
           </div>
-          <div className="bg-amber-950/30 border border-amber-500/30 rounded-2xl p-2.5 flex flex-col">
+          <div className="bg-amber-950/30 border border-amber-500/30 rounded-xl p-2 flex flex-col">
             <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
               <Sparkles className="w-3 h-3" /> Contributors
             </span>
-            <span className="text-xl font-black text-amber-300 mt-0.5">{metrics.contributors}</span>
+            <span className="text-lg font-black text-amber-300 mt-0.5">{metrics.contributors}</span>
           </div>
-          <div className="bg-blue-950/30 border border-blue-500/30 rounded-2xl p-2.5 flex flex-col col-span-2 sm:col-span-1">
+          <div className="bg-blue-950/30 border border-blue-500/30 rounded-xl p-2 flex flex-col">
             <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1">
               <UserIcon className="w-3 h-3" /> Students
             </span>
-            <span className="text-xl font-black text-blue-300 mt-0.5">{metrics.students}</span>
+            <span className="text-lg font-black text-blue-300 mt-0.5">{metrics.students}</span>
+          </div>
+          <div className="bg-slate-800/40 border border-slate-700 rounded-xl p-2 flex flex-col">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <Eye className="w-3 h-3" /> Guests
+            </span>
+            <span className="text-lg font-black text-slate-300 mt-0.5">{metrics.guests}</span>
           </div>
         </div>
 
@@ -389,7 +472,9 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
         {/* Main Content Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
-          {/* Action Toolbar */}
+          {activeView === 'accounts' ? (
+            <>
+              {/* Action Toolbar */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             {/* Search */}
             <div className="relative flex-1">
@@ -444,6 +529,14 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                 }`}
               >
                 Students ({metrics.students})
+              </button>
+              <button
+                onClick={() => setStatusFilter('guest')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 ${
+                  statusFilter === 'guest' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                Guests ({metrics.guests})
               </button>
               <button
                 onClick={() => setStatusFilter('active')}
@@ -544,10 +637,11 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                     onChange={e => setNewRole(e.target.value as UserRole)}
                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500 cursor-pointer"
                   >
-                    <option value="student">🎓 Student (Learner / Trainee)</option>
-                    <option value="contributor">✍️ Contributor (Course &amp; Lesson Author)</option>
-                    <option value="educator">👨‍🏫 Educator (Faculty &amp; Instructor)</option>
-                    <option value="admin">🛡️ Admin (System Administrator - Full Access)</option>
+                    <option value="student">🎓 Student (Course Access Only)</option>
+                    <option value="contributor">✍️ Contributor (Can Create Courses)</option>
+                    <option value="educator">👨‍🏫 Educator (Teacher Permissions &amp; Gradebook)</option>
+                    <option value="admin">🛡️ Admin (Superuser - Full RBAC)</option>
+                    <option value="guest">👀 Guest (Preview / View Only)</option>
                   </select>
                 </div>
 
@@ -654,13 +748,16 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                                     ? 'bg-purple-950 text-purple-300 border-purple-500/40'
                                     : user.role === 'contributor'
                                     ? 'bg-amber-950 text-amber-300 border-amber-500/40'
-                                    : 'bg-blue-950 text-blue-300 border-blue-500/40'
+                                    : user.role === 'student'
+                                    ? 'bg-blue-950 text-blue-300 border-blue-500/40'
+                                    : 'bg-slate-800 text-slate-300 border-slate-600'
                                 }`}
                               >
-                                <option value="admin">🛡️ Admin</option>
-                                <option value="educator">👨‍🏫 Educator</option>
-                                <option value="contributor">✍️ Contributor</option>
-                                <option value="student">🎓 Student</option>
+                                <option value="admin">🛡️ Admin (Superuser)</option>
+                                <option value="educator">👨‍🏫 Educator (Teacher Permissions)</option>
+                                <option value="contributor">✍️ Contributor (Course Author)</option>
+                                <option value="student">🎓 Student (Course Access Only)</option>
+                                <option value="guest">👀 Guest (View Only)</option>
                               </select>
                               <ChevronDown className="w-2.5 h-2.5 absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                             </div>
@@ -696,6 +793,15 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
                               </>
                             )}
                           </p>
+
+                          {/* Active Granted Permissions Tags */}
+                          <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                            {getRolePermissionPills(user.role).map((pill, idx) => (
+                              <span key={idx} className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${pill.color}`}>
+                                {pill.text}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
 
@@ -741,8 +847,395 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
               </div>
             )}
           </div>
+        </>
+      ) : (
+        /* Roles & Permissions Matrix View */
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Architecture Info Banner */}
+          <div className="bg-gradient-to-r from-indigo-950/60 via-slate-900 to-purple-950/60 border border-indigo-500/30 rounded-3xl p-6 text-white space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center shadow-lg shadow-indigo-500/10 shrink-0">
+                  <Sliders className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-base sm:text-lg font-black text-white">Institutional Roles &amp; Permissions Matrix</h4>
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      Active Security
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Guaranteed role separation: Guests view only, Students access courses, Contributors create courses, Teachers manage faculty &amp; gradebooks, Admins govern accounts.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveView('accounts')}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2 shrink-0"
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span>Assign Roles to Users</span>
+              </button>
+            </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs text-slate-300">
+              <div className="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800 space-y-1">
+                <div className="font-bold text-white flex items-center gap-1.5">
+                  <Shield className="w-4 h-4 text-indigo-400" />
+                  <span>Supabase Source of Truth</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Every user session pulls directly from <code className="text-indigo-300 bg-indigo-950/60 px-1 py-0.5 rounded border border-indigo-500/20">profiles.role</code>. No browser tampering can elevate permissions.
+                </p>
+              </div>
+              <div className="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800 space-y-1">
+                <div className="font-bold text-white flex items-center gap-1.5">
+                  <Lock className="w-4 h-4 text-emerald-400" />
+                  <span>Zero Guest Course Creation</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Guests and students are strictly blocked from Course Studio. Course authoring requires verified Contributor, Educator, or Admin role.
+                </p>
+              </div>
+              <div className="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800 space-y-1">
+                <div className="font-bold text-white flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <span>Instant Admin RBAC Delegation</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Admins can promote or demote any registered account in real time. Changes sync instantly across all devices.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Capability Comparison Matrix Table */}
+          <div className="bg-slate-950/60 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+            <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between">
+              <div>
+                <h5 className="font-black text-sm text-white">Role Permission Comparison Matrix</h5>
+                <p className="text-xs text-slate-400">Strict permission boundaries enforced across all components and API layers</p>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700">
+                5 Distinct Profiles
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-800 bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[10px]">
+                    <th className="py-3.5 px-4 font-bold">Platform Capability / Security Boundary</th>
+                    <th className="py-3.5 px-3 font-bold text-center">👀 Guest</th>
+                    <th className="py-3.5 px-3 font-bold text-center">🎓 Student</th>
+                    <th className="py-3.5 px-3 font-bold text-center">✍️ Contributor</th>
+                    <th className="py-3.5 px-3 font-bold text-center">👨‍🏫 Teacher</th>
+                    <th className="py-3.5 px-3 font-bold text-center">🛡️ Admin</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  <tr className="hover:bg-slate-900/30">
+                    <td className="py-3.5 px-4 font-medium text-slate-300">
+                      <span className="font-bold text-white block">Browse Curriculum Catalog &amp; Roadmaps</span>
+                      <span className="text-[11px] text-slate-500">Public syllabus, level pathways &amp; track details</span>
+                    </td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Full Bypass</td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-900/30">
+                    <td className="py-3.5 px-4 font-medium text-slate-300">
+                      <span className="font-bold text-white block">Access Interactive Classrooms &amp; Video Lessons</span>
+                      <span className="text-[11px] text-slate-500">Video player, lecture notes &amp; modular curriculum</span>
+                    </td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Full Bypass</td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-900/30">
+                    <td className="py-3.5 px-4 font-medium text-slate-300">
+                      <span className="font-bold text-white block">Take Modular Exams &amp; Coding Sandboxes</span>
+                      <span className="text-[11px] text-slate-500">Submit assessments and run live programming tests</span>
+                    </td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Full Bypass</td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-900/30">
+                    <td className="py-3.5 px-4 font-medium text-slate-300">
+                      <span className="font-bold text-white block">Create &amp; Draft Courses in Course Studio</span>
+                      <span className="text-[11px] text-slate-500">Access builder, define modules &amp; author lessons</span>
+                    </td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-amber-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-purple-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Full Access</td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-900/30">
+                    <td className="py-3.5 px-4 font-medium text-slate-300">
+                      <span className="font-bold text-white block">Curriculum Modular Suite &amp; Quiz Editor</span>
+                      <span className="text-[11px] text-slate-500">Build multiple choice tests, scoring rubrics &amp; labs</span>
+                    </td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-amber-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-purple-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Full Access</td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-900/30">
+                    <td className="py-3.5 px-4 font-medium text-slate-300">
+                      <span className="font-bold text-white block">Faculty Portal &amp; Teacher Setup</span>
+                      <span className="text-[11px] text-slate-500">Manage institution faculty bio, departments &amp; profiles</span>
+                    </td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-purple-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Full Access</td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-900/30">
+                    <td className="py-3.5 px-4 font-medium text-slate-300">
+                      <span className="font-bold text-white block">Institutional Student Gradebook &amp; Cohort Roster</span>
+                      <span className="text-[11px] text-slate-500">Inspect cohort marks, attendance &amp; export CSV data</span>
+                    </td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-purple-400 font-bold">✓ Granted</td>
+                    <td className="py-3.5 px-3 text-center text-emerald-400 font-bold">✓ Full Access</td>
+                  </tr>
+
+                  <tr className="hover:bg-slate-900/30">
+                    <td className="py-3.5 px-4 font-medium text-slate-300">
+                      <span className="font-bold text-white block">Account Settings &amp; Role Management (RBAC)</span>
+                      <span className="text-[11px] text-slate-500">Assign roles, create accounts, disable &amp; delete profiles</span>
+                    </td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-rose-400 font-semibold">✕ Blocked</td>
+                    <td className="py-3.5 px-3 text-center text-indigo-400 font-black">✓ Superuser Only</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 5 Distinct Role Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* 1. Guest */}
+            <div className="bg-slate-950/70 border border-slate-800 rounded-3xl p-5 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xl">👀</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                    View Only
+                  </span>
+                </div>
+                <div>
+                  <h5 className="font-black text-sm text-white">Guest Account</h5>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Strictly view-only access. Guests can preview course catalogs, curriculum outlines, and roadmaps without an active account.
+                  </p>
+                </div>
+                <div className="space-y-1.5 text-xs pt-1">
+                  <div className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <span>✓</span> Public catalog &amp; roadmaps
+                  </div>
+                  <div className="text-rose-400 font-semibold flex items-center gap-1.5">
+                    <span>✕</span> Cannot create courses
+                  </div>
+                  <div className="text-rose-400 font-semibold flex items-center gap-1.5">
+                    <span>✕</span> Cannot open classrooms or labs
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setStatusFilter('guest');
+                  setActiveView('accounts');
+                }}
+                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              >
+                Filter Guests ({metrics.guests})
+              </button>
+            </div>
+
+            {/* 2. Student */}
+            <div className="bg-slate-950/70 border border-blue-500/20 rounded-3xl p-5 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xl">🎓</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-500/40">
+                    Course Access Only
+                  </span>
+                </div>
+                <div>
+                  <h5 className="font-black text-sm text-white">Student Account</h5>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Full student learner permissions. Can enroll in courses, view video lectures, complete interactive worksheets, take modular exams, and earn certificates.
+                  </p>
+                </div>
+                <div className="space-y-1.5 text-xs pt-1">
+                  <div className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <span>✓</span> Full classroom &amp; course access
+                  </div>
+                  <div className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <span>✓</span> Interactive labs &amp; coding sandboxes
+                  </div>
+                  <div className="text-rose-400 font-semibold flex items-center gap-1.5">
+                    <span>✕</span> Cannot create or author courses
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setStatusFilter('student');
+                  setActiveView('accounts');
+                }}
+                className="w-full py-2 bg-blue-900/40 hover:bg-blue-800/60 text-blue-200 border border-blue-500/30 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              >
+                Filter Students ({metrics.students})
+              </button>
+            </div>
+
+            {/* 3. Contributor */}
+            <div className="bg-slate-950/70 border border-amber-500/20 rounded-3xl p-5 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xl">✍️</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-500/40">
+                    Create Course Features
+                  </span>
+                </div>
+                <div>
+                  <h5 className="font-black text-sm text-white">Contributor Account</h5>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Curriculum authoring privileges. Can launch the Course Studio / Builder, create and draft new tracks, build subject modules, and author lessons and quizzes.
+                  </p>
+                </div>
+                <div className="space-y-1.5 text-xs pt-1">
+                  <div className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <span>✓</span> Course Studio &amp; authoring tools
+                  </div>
+                  <div className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <span>✓</span> Create modules, exams &amp; exercises
+                  </div>
+                  <div className="text-rose-400 font-semibold flex items-center gap-1.5">
+                    <span>✕</span> No Faculty Gradebook or Account Admin
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setStatusFilter('contributor');
+                  setActiveView('accounts');
+                }}
+                className="w-full py-2 bg-amber-900/40 hover:bg-amber-800/60 text-amber-200 border border-amber-500/30 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              >
+                Filter Contributors ({metrics.contributors})
+              </button>
+            </div>
+
+            {/* 4. Teacher / Educator */}
+            <div className="bg-slate-950/70 border border-purple-500/20 rounded-3xl p-5 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xl">👨‍🏫</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-950 text-purple-300 border border-purple-500/40">
+                    Teacher Permissions
+                  </span>
+                </div>
+                <div>
+                  <h5 className="font-black text-sm text-white">Teacher / Educator Account</h5>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Institutional academic faculty. In addition to course creation, teachers can access the Faculty Portal, Teacher Setup, and the Student Gradebook with cohort grading.
+                  </p>
+                </div>
+                <div className="space-y-1.5 text-xs pt-1">
+                  <div className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <span>✓</span> Create courses &amp; author curricula
+                  </div>
+                  <div className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <span>✓</span> Faculty Portal &amp; Teacher Setup
+                  </div>
+                  <div className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <span>✓</span> Student Gradebook &amp; CSV Export
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setStatusFilter('educator');
+                  setActiveView('accounts');
+                }}
+                className="w-full py-2 bg-purple-900/40 hover:bg-purple-800/60 text-purple-200 border border-purple-500/30 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              >
+                Filter Teachers ({metrics.educators})
+              </button>
+            </div>
+
+            {/* 5. Administrator */}
+            <div className="bg-slate-950/70 border border-indigo-500/30 rounded-3xl p-5 flex flex-col justify-between space-y-4 md:col-span-2 lg:col-span-2">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🛡️</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-500/40">
+                      Superuser &amp; Role Management
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-emerald-400 font-bold">Superuser Authority</span>
+                </div>
+                <div>
+                  <h5 className="font-black text-sm text-white">System Administrator</h5>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    Complete platform governance. Has access to the Account Settings &amp; Security Center, can create staff accounts, instantly assign and reconfigure permissions for any registered user, enable or disable logins, and bypass course paywalls.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                  <div className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <span>✓</span> Assign roles &amp; permissions to all accounts
+                  </div>
+                  <div className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <span>✓</span> Add, disable &amp; permanently delete accounts
+                  </div>
+                  <div className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <span>✓</span> Full bypass of free &amp; paid course tracks
+                  </div>
+                  <div className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <span>✓</span> Live Supabase database synchronization
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setStatusFilter('admin');
+                  setActiveView('accounts');
+                }}
+                className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black rounded-xl shadow-md transition-all cursor-pointer"
+              >
+                Filter Admins ({metrics.admins})
+              </button>
+            </div>
+          </div>
         </div>
+      )}
+    </div>
 
         {/* Footer */}
         <div className="px-6 py-4 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 shrink-0">

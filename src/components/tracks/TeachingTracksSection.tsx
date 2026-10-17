@@ -65,6 +65,12 @@ export const TeachingTracksSection = ({
   const [viewMode, setViewMode] = useState<'roadmap' | 'grid'>('roadmap');
   const [activeBundleTab, setActiveBundleTab] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
 
+  const userRole = (currentUser?.role || '').toLowerCase().trim();
+  const userEmail = (currentUser?.email || '').toLowerCase().trim();
+  const isGuestUser = userRole === 'guest' || userEmail.startsWith('guest@') || !currentUser;
+  const isStudentUser = userRole === 'student';
+  const canCreateCourse = !isGuestUser && !isStudentUser && Boolean(userRole === 'admin' || userRole === 'educator' || userRole === 'contributor');
+
   const loadTracks = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -171,14 +177,16 @@ export const TeachingTracksSection = ({
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
               </button>
 
-              <button
-                type="button"
-                onClick={onOpenCourseBuilder}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-blue-600/20 transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-              >
-                <Plus className="w-4 h-4" />
-                <span>+ Create New Course</span>
-              </button>
+              {canCreateCourse && (
+                <button
+                  type="button"
+                  onClick={onOpenCourseBuilder}
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-blue-600/20 transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap animate-in fade-in"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Create New Course</span>
+                </button>
+              )}
             </div>
           </div>
 
